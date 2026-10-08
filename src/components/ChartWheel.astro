@@ -1,0 +1,81 @@
+---
+// Dekoratives Horoskop-Rad im Stil des Moodboards. Rein ornamental, keine echte Berechnung.
+interface Props {
+  size?: number;
+  class?: string;
+  glyphs?: boolean;
+}
+const { size = 320, class: className, glyphs = true } = Astro.props;
+
+const signs = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'];
+const planets = ['☉', '☽', '☿', '♀', '♂', '♃', '♄', '♅', '♆', '♇'];
+const planetDeg = [12, 47, 83, 131, 158, 199, 236, 271, 305, 338];
+
+// U+FE0E erzwingt Textdarstellung statt Emoji
+const asText = (g: string) => g + '\uFE0E';
+
+const c = 100;
+const pt = (r: number, deg: number) => {
+  const a = ((deg - 90) * Math.PI) / 180;
+  return [c + r * Math.cos(a), c + r * Math.sin(a)];
+};
+const fmt = (n: number) => n.toFixed(2);
+
+// Aspektlinien zwischen ausgewählten Planeten
+const aspects = [[0, 3], [0, 6], [1, 4], [1, 8], [2, 5], [2, 9], [3, 7], [4, 9], [5, 8], [6, 9], [0, 5]];
+---
+
+<svg
+  class={className}
+  width={size}
+  height={size}
+  viewBox="-4 -4 208 208"
+  fill="none"
+  stroke="currentColor"
+  aria-hidden="true"
+>
+  <circle cx={c} cy={c} r="96" stroke-width="0.8" />
+  <circle cx={c} cy={c} r="82" stroke-width="0.5" />
+  <circle cx={c} cy={c} r="44" stroke-width="0.6" />
+  <circle cx={c} cy={c} r="38" stroke-width="0.3" opacity="0.6" />
+
+  {Array.from({ length: 72 }, (_, i) => {
+    const [x1, y1] = pt(96, i * 5);
+    const [x2, y2] = pt(i % 6 === 0 ? 82 : 93, i * 5);
+    return <line x1={fmt(x1)} y1={fmt(y1)} x2={fmt(x2)} y2={fmt(y2)} stroke-width="0.4" />;
+  })}
+
+  {Array.from({ length: 12 }, (_, i) => {
+    const [x1, y1] = pt(44, i * 30 + 8);
+    const [x2, y2] = pt(82, i * 30 + 8);
+    return <line x1={fmt(x1)} y1={fmt(y1)} x2={fmt(x2)} y2={fmt(y2)} stroke-width="0.3" opacity="0.7" />;
+  })}
+
+  <line x1="-2" y1={c} x2="202" y2={c} stroke-width="0.6" />
+  <line x1={c} y1="-2" x2={c} y2="202" stroke-width="0.6" />
+
+  {aspects.map(([a, b]) => {
+    const [x1, y1] = pt(38, planetDeg[a]);
+    const [x2, y2] = pt(38, planetDeg[b]);
+    return <line x1={fmt(x1)} y1={fmt(y1)} x2={fmt(x2)} y2={fmt(y2)} stroke-width="0.35" opacity="0.8" />;
+  })}
+
+  {planetDeg.map((d) => {
+    const [x, y] = pt(38, d);
+    return <circle cx={fmt(x)} cy={fmt(y)} r="1.2" fill="currentColor" stroke="none" />;
+  })}
+
+  {glyphs && signs.map((s, i) => {
+    const [x, y] = pt(89, i * 30 + 15);
+    return (
+      <text x={fmt(x)} y={fmt(y)} font-size="7" fill="currentColor" stroke="none" font-family="'Apple Symbols', 'Segoe UI Symbol', 'Noto Sans Symbols', serif" text-anchor="middle" dominant-baseline="central">{asText(s)}</text>
+    );
+  })}
+
+  {glyphs && planets.map((p, i) => {
+    const [x, y] = pt(62, planetDeg[i]);
+    return (
+      <text x={fmt(x)} y={fmt(y)} font-size="8" fill="currentColor" stroke="none" font-family="'Apple Symbols', 'Segoe UI Symbol', 'Noto Sans Symbols', serif" text-anchor="middle" dominant-baseline="central">{asText(p)}</text>
+    );
+  })}
+</svg>

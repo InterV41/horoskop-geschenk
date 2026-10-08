@@ -1,0 +1,580 @@
+---
+import Base from '../layouts/Base.astro';
+import ChartWheel from '../components/ChartWheel.astro';
+import Sheet from '../components/Sheet.astro';
+
+const brand = 'Horoskop Geschenk';
+const price = '35 €';
+
+const nav = [
+  { label: 'Das Horoskop', href: '#fassungen' },
+  { label: 'Geschichte der Astrologie', href: '#astrologie' },
+  { label: 'Datenschutz', href: '#' },
+];
+
+const steps = [
+  { n: 'I', title: 'Daten eingeben', text: 'Vorname, Geburtsdatum, Uhrzeit und Ort. Dazu wählst du Light oder Dark.' },
+  { n: 'II', title: 'Berechnet und geprüft', text: 'Astronomisch exakt berechnet, von Hand geprüft und sorgfältig gesetzt.' },
+  { n: 'III', title: 'PDF per Mail', text: 'In der Regel innerhalb von 12 bis 24 Stunden. Am besten einen Tag vorher bestellen.' },
+];
+---
+
+<Base
+  title={`${brand} · Dein persönliches Geburtshoroskop`}
+  description="Aus Geburtsdatum, Uhrzeit und Ort wird dein persönliches Horoskop berechnet. 22 Seiten als PDF, auch als Last-Minute-Geschenk."
+>
+  <header class="site-header">
+    <div class="wrap site-header__inner">
+      <a href="/" class="brand">{brand}</a>
+      <nav aria-label="Hauptnavigation">
+        <ul class="nav">
+          {nav.map((item) => <li><a href={item.href}>{item.label}</a></li>)}
+        </ul>
+      </nav>
+      <div class="site-header__actions">
+        <button class="theme-toggle" type="button" aria-label="Darstellung wechseln" title="Light / Dark">
+          <span class="theme-toggle__icon" aria-hidden="true"></span>
+        </button>
+        <a class="btn btn--small" href="#bestellen">Bestellen</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero wrap">
+      <div class="hero__text">
+        <p class="eyebrow">Geburtshoroskop als Geschenk</p>
+        <h1>Dein persönliches Geburts&shy;horoskop.</h1>
+        <p class="hero__claim">Schnell da, perfekt verschenkt.</p>
+        <p class="hero__lead">
+          Aus Geburtsdatum, Uhrzeit und Ort wird dein persönliches Horoskop berechnet. 22 Seiten,
+          ausführlich gedeutet, hochwertig gesetzt. Als PDF zum Ausdrucken, auch als Last-Minute-Geschenk.
+        </p>
+        <div class="hero__ctas">
+          <a class="btn" href="#">Horoskop bestellen · {price}</a>
+          <a class="btn btn--ghost" href="#">Vorschau ansehen</a>
+        </div>
+      </div>
+      <div class="hero__sheets" aria-hidden="true">
+        <Sheet kind="chapter" class="hero__sheet hero__sheet--back" />
+        <Sheet kind="cover" class="hero__sheet hero__sheet--front" />
+      </div>
+    </section>
+
+    <section id="fassungen" class="band">
+      <div class="wrap center">
+        <p class="eyebrow">Zwei Fassungen</p>
+        <h2>Light oder Dark</h2>
+        <p class="lead-narrow">Beide Fassungen enthalten denselben Inhalt. Du wählst nur, wie dein Horoskop aussehen soll.</p>
+        <div class="variants">
+          <figure>
+            <div class="variants__pair">
+              <Sheet kind="cover" variant="light" />
+              <Sheet kind="chapter" variant="light" />
+            </div>
+            <figcaption>Light</figcaption>
+          </figure>
+          <figure>
+            <div class="variants__pair">
+              <Sheet kind="cover" variant="dark" />
+              <Sheet kind="chapter" variant="dark" />
+            </div>
+            <figcaption>Dark</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="steps-section wrap center">
+      <p class="eyebrow">So funktioniert es</p>
+      <h2>In drei Schritten</h2>
+      <ol class="steps">
+        {steps.map((s) => (
+          <li>
+            <span class="steps__n">{s.n}</span>
+            <h3>{s.title}</h3>
+            <p>{s.text}</p>
+          </li>
+        ))}
+      </ol>
+    </section>
+
+    <section id="astrologie" class="band">
+      <div class="wrap about">
+        <ChartWheel size={300} class="about__wheel" />
+        <div>
+          <p class="eyebrow">Über die Astrologie</p>
+          <h2>Berechnet auf die Minute. Gedeutet mit Offenheit.</h2>
+          <p>
+            Am Tag deiner Geburt standen Sonne, Mond und Planeten an einer ganz bestimmten Stelle am Himmel.
+            Diese Positionen lassen sich astronomisch exakt berechnen. Die Astrologie ist dabei ein
+            Deutungssystem, keine Vorhersage.
+          </p>
+          <a href="#" class="text-link">Mehr zur Geschichte der Astrologie</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="bestellen" class="order wrap">
+      <div class="order__info">
+        <p class="eyebrow">Bestellen</p>
+        <p class="order__price">{price}</p>
+        <p>Vollversion, 22 Seiten als PDF. Keine Abos, keine Folgekosten.</p>
+        <hr />
+        <h3>Nur das Nötigste</h3>
+        <p>Wir fragen keinen Nachnamen ab. Deine Geburtsdaten werden nach der Auslieferung gelöscht.</p>
+      </div>
+
+      <form class="order__form" id="order-form" novalidate>
+        <div class="field">
+          <label for="f-name">Vorname</label>
+          <input id="f-name" name="vorname" placeholder="z. B. Anna" autocomplete="given-name" />
+        </div>
+        <div class="field">
+          <label for="f-ort">Geburtsort</label>
+          <input id="f-ort" name="geburtsort" placeholder="z. B. München" />
+        </div>
+        <div class="field">
+          <label for="f-datum">Geburtsdatum</label>
+          <input id="f-datum" name="geburtsdatum" placeholder="TT.MM.JJJJ" inputmode="numeric" />
+        </div>
+        <div class="field">
+          <label for="f-zeit">Geburtszeit</label>
+          <input id="f-zeit" name="geburtszeit" placeholder="SS:MM" inputmode="numeric" />
+        </div>
+        <fieldset class="field field--full">
+          <legend>Fassung</legend>
+          <label class="radio"><input type="radio" name="fassung" value="light" checked /> Light</label>
+          <label class="radio"><input type="radio" name="fassung" value="dark" /> Dark</label>
+        </fieldset>
+        <label class="check field--full">
+          <input type="checkbox" name="widerruf" />
+          <span>Ich stimme zu, dass die Erstellung sofort beginnt, und verzichte damit auf mein Widerrufsrecht.</span>
+        </label>
+        <button class="btn field--full" type="submit">Kostenpflichtig bestellen · {price}</button>
+        <p class="order__note field--full" id="order-note" hidden>Die Bestellung ist noch nicht freigeschaltet.</p>
+      </form>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap site-footer__inner">
+      <p>
+        Das Horoskop dient der Unterhaltung und Selbstreflexion. Es ersetzt keine medizinische,
+        psychologische oder rechtliche Beratung.
+      </p>
+      <ul>
+        <li><a href="#">Impressum</a></li>
+        <li><a href="#">Datenschutz</a></li>
+        <li><a href="#">AGB</a></li>
+        <li><a href="#">Widerruf</a></li>
+      </ul>
+    </div>
+  </footer>
+</Base>
+
+<script>
+  const root = document.documentElement;
+  document.querySelector('.theme-toggle')?.addEventListener('click', () => {
+    const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    root.dataset.theme = next;
+    try {
+      localStorage.setItem('theme', next);
+    } catch {}
+  });
+
+  // Noch kein Checkout angebunden: Formular nicht absenden, Daten nirgendwohin schicken.
+  document.getElementById('order-form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    document.getElementById('order-note')?.removeAttribute('hidden');
+  });
+</script>
+
+<style>
+  .site-header {
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: color-mix(in srgb, var(--paper) 92%, transparent);
+    backdrop-filter: blur(6px);
+  }
+  .site-header__inner {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    min-height: 64px;
+  }
+  .brand {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .nav {
+    display: flex;
+    gap: 1.8rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 0.95rem;
+  }
+  .nav a {
+    text-decoration: none;
+    color: var(--ink-2);
+  }
+  .nav a:hover {
+    color: var(--ink);
+  }
+  nav {
+    margin-left: auto;
+  }
+  .site-header__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+  }
+  .btn--small {
+    padding: 0.4rem 1.1rem;
+    font-size: 0.95rem;
+    font-family: var(--font-body);
+  }
+  .theme-toggle {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--line);
+    background: transparent;
+    border-radius: 50%;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+  }
+  .theme-toggle__icon {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: inset -5px -3px 0 0 var(--paper);
+  }
+  :root[data-theme='dark'] .theme-toggle__icon {
+    box-shadow: none;
+  }
+
+  .hero {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 3rem;
+    align-items: center;
+    padding-block: clamp(3rem, 7vw, 6rem);
+  }
+  .hero h1 {
+    font-size: clamp(2.6rem, 6vw, 4.4rem);
+    hyphens: manual;
+  }
+  .hero__claim {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: clamp(1.4rem, 2.6vw, 1.9rem);
+    color: var(--accent);
+    margin: 1.4rem 0 1rem;
+  }
+  .hero__lead {
+    color: var(--ink-2);
+    max-width: 34rem;
+  }
+  .hero__ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+    margin-top: 2rem;
+  }
+  .hero__sheets {
+    position: relative;
+    height: 100%;
+    min-height: 340px;
+  }
+  .hero__sheets :global(.sheet.hero__sheet) {
+    position: absolute;
+    width: 52%;
+  }
+  .hero__sheets :global(.sheet.hero__sheet--back) {
+    left: 4%;
+    top: 16%;
+    transform: rotate(-4deg);
+  }
+  .hero__sheets :global(.sheet.hero__sheet--front) {
+    right: 4%;
+    top: 0;
+    transform: rotate(3deg);
+  }
+
+  .band {
+    background: var(--surface);
+    border-block: 1px solid var(--line);
+    padding-block: clamp(3.5rem, 8vw, 6rem);
+  }
+  .center {
+    text-align: center;
+  }
+  h2 {
+    font-size: clamp(2rem, 4.2vw, 2.9rem);
+  }
+  .lead-narrow {
+    color: var(--ink-2);
+    max-width: 28rem;
+    margin: 1rem auto 0;
+  }
+  .variants {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    margin-top: 3rem;
+  }
+  .variants figure {
+    margin: 0;
+  }
+  .variants__pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+  }
+  .variants figcaption {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    margin-top: 1rem;
+  }
+
+  .steps-section {
+    padding-block: clamp(3.5rem, 8vw, 6rem);
+  }
+  .steps {
+    list-style: none;
+    padding: 0;
+    margin: 3rem 0 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2.5rem;
+  }
+  .steps__n {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 2.6rem;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .steps__n::after {
+    content: '';
+    display: block;
+    width: 28px;
+    height: 1px;
+    background: var(--accent);
+    margin: 0.7rem auto 0.9rem;
+  }
+  .steps h3 {
+    font-size: 1.5rem;
+  }
+  .steps p {
+    color: var(--ink-2);
+    font-size: 1rem;
+    max-width: 18rem;
+    margin: 0.6rem auto 0;
+  }
+
+  .about {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: clamp(2rem, 6vw, 5rem);
+    align-items: center;
+  }
+  :global(.about__wheel) {
+    color: var(--accent);
+    max-width: 100%;
+    height: auto;
+  }
+  .about p {
+    color: var(--ink-2);
+    max-width: 34rem;
+  }
+  .text-link {
+    color: var(--ink);
+    text-underline-offset: 4px;
+  }
+
+  .order {
+    display: grid;
+    grid-template-columns: 1fr 1.25fr;
+    gap: clamp(2rem, 6vw, 5rem);
+    padding-block: clamp(3.5rem, 8vw, 6rem);
+    align-items: start;
+  }
+  .order__price {
+    font-family: var(--font-display);
+    font-size: 2.6rem;
+    margin: 0;
+  }
+  .order__info p {
+    color: var(--ink-2);
+  }
+  .order__info hr {
+    border: 0;
+    border-top: 1px solid var(--line);
+    margin: 1.5rem 0;
+  }
+  .order__info h3 {
+    font-size: 1.5rem;
+  }
+  .order__form {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: clamp(1.25rem, 4vw, 2rem);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem 1rem;
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.9rem;
+  }
+  .field--full {
+    grid-column: 1 / -1;
+  }
+  .field input {
+    font: inherit;
+    font-size: 1rem;
+    padding: 0.55rem 0.7rem;
+    background: var(--paper);
+    color: var(--ink);
+    border: 1px solid var(--line);
+  }
+  .field input::placeholder {
+    color: var(--ink-2);
+    opacity: 0.7;
+  }
+  fieldset.field {
+    border: 0;
+    padding: 0;
+    margin: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 1.4rem;
+  }
+  fieldset legend {
+    width: 100%;
+    margin-bottom: 0.3rem;
+  }
+  .radio,
+  .check {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    accent-color: var(--accent);
+  }
+  .check {
+    align-items: flex-start;
+    font-size: 0.82rem;
+    color: var(--ink-2);
+  }
+  .check input {
+    margin-top: 0.2rem;
+  }
+  .order__note {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--accent);
+    text-align: center;
+  }
+
+  .site-footer {
+    border-top: 1px solid var(--line);
+    padding-block: 2rem;
+    font-size: 0.85rem;
+    color: var(--ink-2);
+  }
+  .site-footer__inner {
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem;
+    align-items: center;
+  }
+  .site-footer p {
+    max-width: 30rem;
+    margin: 0;
+  }
+  .site-footer ul {
+    display: flex;
+    gap: 1.4rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .site-footer a {
+    text-underline-offset: 3px;
+  }
+
+  @media (max-width: 900px) {
+    .nav {
+      display: none;
+    }
+    .site-header__actions {
+      margin-left: auto;
+    }
+    .hero,
+    .order {
+      grid-template-columns: 1fr;
+    }
+    .hero__sheets {
+      min-height: 0;
+      aspect-ratio: 1 / 0.85;
+      max-width: 460px;
+      width: 100%;
+      margin-inline: auto;
+    }
+    .variants {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .steps {
+      grid-template-columns: 1fr;
+    }
+    .about {
+      grid-template-columns: 1fr;
+      text-align: center;
+    }
+    :global(.about__wheel) {
+      margin-inline: auto;
+      width: 220px;
+    }
+    .about p {
+      margin-inline: auto;
+    }
+    .site-footer__inner {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .site-header__inner {
+      gap: 0.75rem;
+    }
+    .brand {
+      font-size: 0.95rem;
+      letter-spacing: 0.04em;
+    }
+    .site-header__actions {
+      gap: 0.5rem;
+    }
+    .btn--small {
+      padding: 0.35rem 0.8rem;
+    }
+    .order__form {
+      grid-template-columns: 1fr;
+    }
+    .hero__ctas .btn {
+      width: 100%;
+    }
+  }
+</style>

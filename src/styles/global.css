@@ -1,0 +1,134 @@
+/* Farbwerte und Schriften aus dem Moodboard (Stand 22.09.2026) */
+:root {
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'EB Garamond', Georgia, serif;
+
+  --paper: #f7f2e8;
+  --surface: #efe6d3;
+  --ink: #2a2520;
+  --ink-2: #5b5246;
+  --accent: #7a5d20;
+  --line: #d8cbb1;
+  --btn-bg: var(--ink);
+  --btn-fg: var(--paper);
+  --stars: rgb(122 93 32 / 0.25);
+
+  --wrap: 1100px;
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --paper: #0d1430;
+  --surface: #151e42;
+  --ink: #eee7d7;
+  --ink-2: #b9b2a2;
+  --accent: #d6b56e;
+  --line: #2b3560;
+  --btn-bg: var(--accent);
+  --btn-fg: #0d1430;
+  --stars: rgb(255 255 255 / 0.55);
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(1.2px 1.2px at 12% 18%, var(--stars) 50%, transparent 51%),
+    radial-gradient(1px 1px at 68% 9%, var(--stars) 50%, transparent 51%),
+    radial-gradient(1.4px 1.4px at 84% 42%, var(--stars) 50%, transparent 51%),
+    radial-gradient(1px 1px at 33% 61%, var(--stars) 50%, transparent 51%),
+    radial-gradient(1.2px 1.2px at 52% 88%, var(--stars) 50%, transparent 51%),
+    radial-gradient(1px 1px at 92% 77%, var(--stars) 50%, transparent 51%),
+    radial-gradient(1px 1px at 5% 92%, var(--stars) 50%, transparent 51%);
+  background-size: 640px 640px;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1.125rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 1.1;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+.wrap {
+  max-width: var(--wrap);
+  margin-inline: auto;
+  padding-inline: clamp(16px, 5vw, 72px);
+}
+
+.eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 0.9rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.8rem 1.8rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  letter-spacing: 0.03em;
+  text-decoration: none;
+  border: 1px solid var(--btn-bg);
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  cursor: pointer;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.btn:hover {
+  opacity: 0.88;
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.btn--ghost:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  opacity: 1;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  * {
+    transition: none !important;
+  }
+}

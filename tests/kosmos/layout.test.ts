@@ -46,4 +46,17 @@ describe('layout', () => {
     // schnellste echte Bewegung in der Verwandlung: rund 10 Einheiten pro Bild; ein Sprung wären Hunderte
     expect(max).toBeLessThan(25);
   });
+  it('kein Körper kippt mitten in der Verwandlung auf die andere Seite (30 Durchläufe)', () => {
+    // Merkur sprang in der Prüfung um Durchlauf 17 und 27, wenn der kurze Weg die Richtung wechselte
+    const richtungen = new Map<string, number>();
+    let u = { t: 0, tau: 0 }, vorher = layout(0, phase(EINSTIEG), aszendent(0), richtungen), max = 0;
+    for (let i = 0; i < 60 * 40 * 30; i++) {
+      u = schritt(u, 1 / 60);
+      const L = layout(u.tau, phase(u.t + EINSTIEG), aszendent(u.t), richtungen);
+      for (const id of Object.keys(L.koerper) as (keyof typeof L.koerper)[])
+        max = Math.max(max, Math.hypot(L.koerper[id].x - vorher.koerper[id].x, L.koerper[id].y - vorher.koerper[id].y));
+      vorher = L;
+    }
+    expect(max).toBeLessThan(25);
+  }, 60000);
 });

@@ -16,7 +16,7 @@ const { class: className } = Astro.props;
 
 <script>
   import { baueSzene } from '../scripts/kosmos/szene';
-  import { layout, aszendent, ASC0 } from '../scripts/kosmos/layout';
+  import { layout, aszendent, ASC0, type Richtungen } from '../scripts/kosmos/layout';
   import { schritt, phase, EINSTIEG, type Uhr } from '../scripts/kosmos/zeitplan';
 
   document.querySelectorAll<HTMLElement>('[data-kosmos]').forEach((host, nr) => {
@@ -32,7 +32,8 @@ const { class: className } = Astro.props;
     }
 
     let uhr: Uhr = { t: 0, tau: 0 };
-    const bild = () => szene.zeichne(layout(uhr.tau, phase(uhr.t + EINSTIEG), aszendent(uhr.t)));
+    const richtungen: Richtungen = new Map();
+    const bild = () => szene.zeichne(layout(uhr.tau, phase(uhr.t + EINSTIEG), aszendent(uhr.t), richtungen));
 
     /* Läuft nur, solange das Rad sichtbar und der Tab im Vordergrund ist */
     let last: number | null = null, raf = 0, laeuft = false, imBild = false;

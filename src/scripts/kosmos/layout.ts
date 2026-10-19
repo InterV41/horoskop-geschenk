@@ -72,11 +72,22 @@ const mix = (a: number, b: number, q: number) => a + (b - a) * q;
 const klemm = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
 const fenster = (p: number, f: readonly [number, number]) => teil(p, f[0], f[1]);
 
+/* Während einer Verwandlung merkt sich jeder Körper seinen Drehweg (vorzeichenbehaftet, Grad).
+   Start- und Zielwinkel wandern mit; ohne Gedächtnis könnte der kürzere Weg mittendrin
+   die Seite wechseln und der Planet über das Bild springen. Die Bildschleife hält eine Map. */
+export type Richtungen = Map<string, number>;
+
 /* Polar um die Bildmitte mischen: Bahnen auf Bögen statt quer durch die Mitte.
    Hat ein Ende Radius 0, gilt der Winkel des anderen Endes. */
-function mischePolar(r0: number, w0: number, r1: number, w1: number, q: number): [number, number] {
+function mischePolar(r0: number, w0: number, r1: number, w1: number, q: number, weg?: { r: Richtungen; id: string }): [number, number] {
   const a = r0 < 1e-6 ? w1 : w0, b = r1 < 1e-6 ? w0 : w1;
-  return [mix(r0, r1, q), mixWinkel(a, b, q)];
+  let d = ((b - a + 540) % 360) - 180;
+  if (weg) {
+    const alt = weg.r.get(weg.id);
+    if (alt !== undefined) d += 360 * Math.round((alt - d) / 360); // dem bisherigen Weg stetig folgen
+    weg.r.set(weg.id, d);
+  }
+  return [mix(r0, r1, q), norm(a + d * q)];
 }
 
 /* Bildpunkt (ungekippt) in Polarkoordinaten */
@@ -84,8 +95,10 @@ function polar(x: number, y: number): [number, number] {
   return [Math.hypot(x, y), norm((Math.atan2(-y, x) * 180) / Math.PI)];
 }
 
-export function layout(tau: number, p: number, asc: number): Layout {
+export function layout(tau: number, p: number, asc: number, richtungen?: Richtungen): Layout {
   const rot = 180 - asc;
+  if (richtungen && (p <= 0 || p >= 1)) richtungen.clear(); // außerhalb der Verwandlung neu wählen
+  const unterwegs = richtungen && p > 0 && p < 1 ? richtungen : undefined;
   const scr = (lon: number) => norm(lon + rot);
 
   const aufrichten = fenster(p, F.aufrichten);
@@ -105,7 +118,7 @@ export function layout(tau: number, p: number, asc: number): Layout {
   const koerper = {} as Record<RadixId | 'erde', KoerperLayout>;
   const setze = (id: RadixId | 'erde', r1: number, w1: number, q: number, groesse: number, kugelDeckkraft: number, zeichenDeckkraft: number) => {
     const [r0, w0] = start[id];
-    const [r, w] = mischePolar(r0, w0, r1, w1, q);
+    const [r, w] = mischePolar(r0, w0, r1, w1, q, unterwegs && { r: unterwegs, id });
     const [x, y] = pt(r, w);
     const tiefe = r0 > 0 ? Math.sin((w0 * Math.PI) / 180) : 0; // oben = hinten
     const massstab = 1 - 0.18 * ((tiefe + 1) / 2) * (1 - aufrichten);

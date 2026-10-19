@@ -1,0 +1,173 @@
+---
+// Startseite: Sonnensystem, das sich endlos in die Radix verwandelt und zurück.
+// Folgt der Ansicht der Seite (hell oder dunkel). Erfundene Konstellation, gehört zu keiner realen Person.
+import '@fontsource/stix-two-text/400.css';
+import '@fontsource/stix-two-text/500.css';
+import '@fontsource/noto-sans-symbols/400.css';
+import '@fontsource/noto-sans-symbols-2/400.css';
+
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+---
+
+<div class:list={['radix', className]} data-kosmos></div>
+
+<script>
+  import { baueSzene } from '../scripts/kosmos/szene';
+  import { layout, aszendent, ASC0 } from '../scripts/kosmos/layout';
+  import { schritt, phase, EINSTIEG, type Uhr } from '../scripts/kosmos/zeitplan';
+
+  document.querySelectorAll<HTMLElement>('[data-kosmos]').forEach((host, nr) => {
+    const szene = baueSzene(host, nr);
+    const setzeStrich = () => szene.setzeStrich(parseFloat(getComputedStyle(host).getPropertyValue('--rx-dick')) || 1);
+
+    /* Bei "Bewegung reduzieren" steht die Radix still */
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setzeStrich();
+      szene.zeichne(layout(0, 1, ASC0));
+      document.addEventListener('themechange', setzeStrich);
+      return;
+    }
+
+    let uhr: Uhr = { t: 0, tau: 0 };
+    const bild = () => szene.zeichne(layout(uhr.tau, phase(uhr.t + EINSTIEG), aszendent(uhr.t)));
+
+    /* Läuft nur, solange das Rad sichtbar und der Tab im Vordergrund ist */
+    let last: number | null = null, raf = 0, laeuft = false, imBild = false;
+    const loop = (ts: number) => {
+      if (last !== null) uhr = schritt(uhr, (ts - last) / 1000);
+      last = ts;
+      bild();
+      raf = requestAnimationFrame(loop);
+    };
+    const pruefe = () => {
+      const soll = imBild && document.visibilityState === 'visible';
+      if (soll && !laeuft) { laeuft = true; last = null; raf = requestAnimationFrame(loop); }
+      if (!soll && laeuft) { laeuft = false; cancelAnimationFrame(raf); }
+    };
+
+    setzeStrich();
+    bild();
+    document.addEventListener('themechange', setzeStrich);
+    document.addEventListener('visibilitychange', pruefe);
+    new IntersectionObserver((e) => { imBild = e[0].isIntersecting; pruefe(); }).observe(host);
+  });
+</script>
+
+<style>
+  /* Farben wie in den Horoskop-PDFs */
+  .radix {
+    --rx-gold: #86662a; /* Linien, etwas dunkler als auf dem Deckblatt, damit sie auf Weiß tragen */
+    --rx-text: #5e4413; /* Schrift und Zeichen, dunkles Gold für gute Lesbarkeit */
+    --rx-dick: 1.6; /* Linienstärke: Faktor gegenüber der dunklen Fassung */
+    --rx-schnitt: 500; /* Schriftstärke */
+    --rx-disk: transparent; /* wie im Testhoroskop: das Rad liegt direkt auf dem Papier */
+    /* Sonnensystem */
+    --kx-stern: #b8914a;
+    --kx-stern-deckkraft: 0.45;
+    --kx-schatten: #5a4a35;
+    --kx-schleier: #f3e6c8;
+    --kx-nebel1: transparent;
+    --kx-nebel2: transparent;
+    --kx-hof: #f0c870;
+    --kx-hof-o: 0.5;
+    --kx-hof2: #f0c870;
+    --kx-hof2-o: 0.2;
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    color: var(--rx-gold);
+  }
+  :global(:root[data-theme='dark']) .radix {
+    --rx-gold: #e0c27e;
+    --rx-text: #e0c27e;
+    --rx-dick: 1;
+    --rx-schnitt: 400;
+    --rx-disk: rgb(7 16 42 / 0.5);
+    --kx-stern: #eee7d7;
+    --kx-stern-deckkraft: 1;
+    --kx-schatten: #0a0f22;
+    --kx-schleier: transparent;
+    --kx-nebel1: #4a3560;
+    --kx-nebel2: #5a4420;
+    --kx-hof: #ffe9b0;
+    --kx-hof-o: 0.55;
+    --kx-hof2: #e0b860;
+    --kx-hof2-o: 0.18;
+  }
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-theme='light'])) .radix {
+      --rx-gold: #e0c27e;
+      --rx-text: #e0c27e;
+      --rx-dick: 1;
+      --rx-schnitt: 400;
+      --rx-disk: rgb(7 16 42 / 0.5);
+      --kx-stern: #eee7d7;
+      --kx-stern-deckkraft: 1;
+      --kx-schatten: #0a0f22;
+      --kx-schleier: transparent;
+      --kx-nebel1: #4a3560;
+      --kx-nebel2: #5a4420;
+      --kx-hof: #ffe9b0;
+      --kx-hof-o: 0.55;
+      --kx-hof2: #e0b860;
+      --kx-hof2-o: 0.18;
+    }
+  }
+  .radix :global(svg) {
+    width: 100%;
+    height: 100%;
+    display: block;
+    overflow: visible;
+  }
+  .radix :global(.kx-sterne) {
+    fill: var(--kx-stern);
+    opacity: var(--kx-stern-deckkraft);
+  }
+  .radix :global(.kx-funkeln) {
+    animation: kx-funkeln 5s ease-in-out infinite;
+  }
+  @keyframes kx-funkeln {
+    0%, 100% { opacity: var(--o); }
+    50% { opacity: calc(var(--o) * 0.3); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .radix :global(.kx-funkeln) {
+      animation: none;
+    }
+  }
+  .radix :global(text) {
+    fill: var(--rx-text);
+    font-weight: var(--rx-schnitt);
+    text-anchor: middle;
+    dominant-baseline: central;
+    user-select: none;
+    font-family: 'STIX Two Text', 'Noto Sans Symbols', 'Noto Sans Symbols 2', 'Segoe UI Symbol', 'Apple Symbols', serif;
+  }
+  .radix :global(.rx-glyph) {
+    font-family: 'Noto Sans Symbols', 'Noto Sans Symbols 2', 'STIX Two Text', 'Segoe UI Symbol', 'Apple Symbols', serif;
+  }
+  .radix :global(.rx-name) {
+    font-size: 16px;
+    letter-spacing: 4.2px;
+    dominant-baseline: auto;
+  }
+  .radix :global(.rx-achse) {
+    font-size: 13px;
+    letter-spacing: 2.4px;
+  }
+  .radix :global(.rx-haus) {
+    font-size: 17px;
+  }
+  .radix :global(.rx-zeichen) {
+    font-size: 24px;
+  }
+  .radix :global(.rx-planet) {
+    font-size: 29px;
+  }
+  .radix :global(.rx-planet.gross) {
+    font-size: 32px;
+  }
+</style>

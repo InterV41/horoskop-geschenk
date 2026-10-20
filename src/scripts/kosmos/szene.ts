@@ -1,6 +1,6 @@
 // Szene: baut das SVG einmal auf und überträgt pro Bild ein Layout auf die Elemente.
 // Farben kommen aus CSS-Variablen der Komponente, so folgt alles der Ansicht hell oder dunkel.
-import { R, pt, type Layout } from './layout';
+import { R, pt, K_SCHRAEG, type Layout } from './layout';
 import { PLANETEN, RADIX_REIHE, type RadixId } from './modell';
 import { texte, type Sprache } from './texte';
 
@@ -77,8 +77,12 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
   el('ellipse', { class: 'kx-nebel', cx: 200, cy: 135, rx: 380, ry: 180, fill: verlauf('n2', [[0, 'var(--kx-nebel2)', '0.35'], [1, 'var(--kx-nebel2)', '0']]) }, nebel);
   el('ellipse', { class: 'kx-schleier', rx: 515, ry: 270, fill: verlauf('n3', [[0, 'var(--kx-schleier)', '0.7'], [1, 'var(--kx-schleier)', '0']]) }, nebel);
 
-  /* Bahnen, die zu den Ringen der Radix werden */
-  const ringe = PLANETEN.map(() => el('ellipse', { fill: 'none', stroke: C }, svg));
+  /* Bahnen, die zu den Ringen der Radix werden. Tiefe: hinten (oben) zart, vorne kräftig,
+     in der Draufsicht gleichmäßig wie die Ringe der Radix. */
+  const tiefe = el('linearGradient', { id: id('bahn'), x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+  const tiefeHinten = el('stop', { offset: 0, style: 'stop-color:currentColor', 'stop-opacity': 1 }, tiefe);
+  el('stop', { offset: 1, style: 'stop-color:currentColor', 'stop-opacity': 1 }, tiefe);
+  const ringe = PLANETEN.map(() => el('ellipse', { fill: 'none', stroke: `url(#${id('bahn')})` }, svg));
 
   /* Planetenkugeln: hinten liegen sie unter der Sonne, vorne darüber */
   const hinten = el('g', {}, svg);
@@ -171,6 +175,8 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
 
   function zeichne(l: Layout) {
     letztes = l;
+    const schraeg = (1 - l.K) / (1 - K_SCHRAEG); // 1 im Sonnensystem, 0 in der Radix
+    tiefeHinten.setAttribute('stop-opacity', (1 - 0.75 * schraeg).toFixed(3));
 
     l.ringe.forEach((r, i) => {
       const e = ringe[i];

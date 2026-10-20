@@ -36,7 +36,7 @@ const ZIELRINGE: Record<PlanetId, [number, number, number]> = {
   neptun: [R.out - 7, 0.45, 1],
   pluto: [R.out, 1.1, 1],
 };
-const BAHN_STRICH = 1.4, BAHN_DECKKRAFT = 0.6;
+const BAHN_STRICH = 1.1, BAHN_DECKKRAFT = 0.85; // fein, vorne klar; nach hinten blendet die Szene aus
 
 export interface KoerperLayout { x: number; y: number; kugelR: number; kugelDeckkraft: number; zeichenDeckkraft: number; punktX: number; punktY: number; hinten: boolean }
 export interface RingLayout { rx: number; ry: number; breite: number; deckkraft: number }

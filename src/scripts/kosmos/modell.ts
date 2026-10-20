@@ -22,7 +22,7 @@ export const PLANETEN: readonly Planet[] = [
   { id: 'erde', P: 1, start: 270, bildRadius: 160, groesse: 8.5, farbe: '#6f93c4' },
   { id: 'mars', P: 1.8808, start: 20, bildRadius: 205, groesse: 6.7, farbe: '#c27650' },
   { id: 'jupiter', P: 11.862, start: 105, bildRadius: 250, groesse: 16.5, farbe: '#d6b98c' },
-  { id: 'saturn', P: 29.457, start: 292, bildRadius: 295, groesse: 14, farbe: '#e0cc98', ring: true },
+  { id: 'saturn', P: 29.457, start: 292, bildRadius: 295, groesse: 11, farbe: '#e0cc98', ring: true },
   { id: 'uranus', P: 84.01, start: 280, bildRadius: 340, groesse: 10.3, farbe: '#9cc9cc' },
   { id: 'neptun', P: 164.8, start: 283, bildRadius: 385, groesse: 9.9, farbe: '#5d7ec4' },
   { id: 'pluto', P: 248, start: 226, bildRadius: 430, groesse: 3.6, farbe: '#a89c8a' },

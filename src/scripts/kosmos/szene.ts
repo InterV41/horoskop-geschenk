@@ -128,7 +128,10 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
      Ganzes per CSS, ihr Inhalt muss dafür nicht neu gezeichnet werden. */
   const ringDefs = el('defs', {}, ringSvg);
   el('circle', { r: R.out, style: 'fill:var(--rx-disk)' }, ringSvg);
-  el('circle', { r: R.hub, style: 'fill:var(--kx-nabe)' }, ringSvg); // Mitte der Radix
+  // Weiße Flächen im Wechsel mit dem Creme: Mitte, dritter Ring (Planeten), Ring der Tierkreisnamen
+  el('circle', { r: R.hub, style: 'fill:var(--kx-nabe)' }, ringSvg);
+  el('circle', { r: (R.asp + R.ring) / 2, fill: 'none', 'stroke-width': R.ring - R.asp, style: 'stroke:var(--kx-nabe)' }, ringSvg);
+  el('circle', { r: (R.band + R.out) / 2, fill: 'none', 'stroke-width': R.out - R.band, style: 'stroke:var(--kx-nabe)' }, ringSvg);
   const zodiac = el('g', {}, ringSvg);
   const BAND_MID = (R.out + R.band) / 2;
 

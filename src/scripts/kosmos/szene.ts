@@ -40,8 +40,7 @@ function sicht(e: Element, o: number) {
   setze(e, 'opacity', o.toFixed(3));
   return true;
 }
-/* Verschieben per transform: wird nicht auf ganze Pixel gerundet, langsame Bewegung bleibt weich */
-const schiebe = (e: Element, x: number, y: number) => e.setAttribute('transform', `translate(${f2(x)} ${f2(y)})`);
+
 /* Planetenfarbe Richtung Gold ziehen */
 function mischeGold(farbe: string, t: number) {
   const h = (s: string) => [1, 3, 5].map((i) => parseInt(s.slice(i, i + 2), 16));
@@ -155,7 +154,6 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
     return { top: mk(id('nt' + i)), bot: mk(id('nb' + i)) };
   });
   const ZEICHEN = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'];
-  const zeichen = ZEICHEN.map((z) => { const t = txt(radix, 'rx-glyph rx-zeichen', z + VS); t.setAttribute('x', '0'); t.setAttribute('y', '0'); return t; });
 
   /* Häuser: stehen fest, Aszendent links */
   const CUSPS = [0, 31, 60, 88, 119, 151, 180, 211, 240, 268, 299, 331];
@@ -187,14 +185,44 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
   const vorne = el('g', {}, svg);
   for (const k of Object.values(kugeln)) vorne.appendChild(k.g), (k.hinten = false);
 
-  /* Planetenzeichen und Punkte auf dem Aspektring */
+  /* Punkte auf dem Aspektring */
   const oben = el('g', {}, svg);
+
+  /* Bewegliche Zeichen (Planeten und Tierkreis) liegen nicht im SVG: Browser setzen SVG-Schrift
+     auf ganze Pixel, langsam bewegte Zeichen zittern dann. Als eigene Elemente verschiebt sie
+     die Grafikkarte stufenlos, gezeichnet wird jedes Zeichen nur einmal. */
+  const zeichenEbene = document.createElement('div');
+  zeichenEbene.className = 'kx-ebene-zeichen';
+  zeichenEbene.setAttribute('aria-hidden', 'true');
+  host.appendChild(zeichenEbene);
+  const span = (cls: string, inhalt: string) => {
+    const e = document.createElement('span');
+    e.className = 'kx-zeichen ' + cls;
+    e.textContent = inhalt;
+    zeichenEbene.appendChild(e);
+    return e;
+  };
+  const zeichen = ZEICHEN.map((z) => span('rx-zeichen', z + VS));
   const glyphen = RADIX_REIHE.map((r) => ({
     id: r.id,
-    text: el('text', { class: 'rx-glyph rx-planet' + (r.gross ? ' gross' : ''), x: 0, y: 0 }, oben),
+    text: span('rx-planet' + (r.gross ? ' gross' : ''), r.glyph),
     punkt: el('circle', { r: 3, fill: C }, oben),
   }));
-  glyphen.forEach((g, i) => (g.text.textContent = RADIX_REIHE[i].glyph));
+
+  /* Zeichenflächen-Einheit in Pixeln, damit die Zeichen zur Größe des Rads passen */
+  let einheit = host.clientWidth / 940 || 1;
+  const setzeEinheit = () => {
+    einheit = host.clientWidth / 940 || 1;
+    host.style.setProperty('--kx-einheit', einheit.toFixed(5) + 'px');
+    if (letztes) zeichne(letztes);
+  };
+  new ResizeObserver(setzeEinheit).observe(host);
+  const stelle = (e: HTMLElement, x: number, y: number, o: number) => {
+    if (o <= 0.001) { if (e.style.visibility !== 'hidden') e.style.visibility = 'hidden'; return; }
+    if (e.style.visibility) e.style.visibility = '';
+    e.style.opacity = o.toFixed(3);
+    e.style.transform = `translate3d(${(x * einheit).toFixed(3)}px, ${(y * einheit).toFixed(3)}px, 0) translate(-50%, -50%)`;
+  };
 
   let strich = 1;
   let letztes: Layout | null = null;
@@ -243,7 +271,8 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
         setze(n.bot, 'opacity', (1 - l.namenOben[i]).toFixed(2));
       });
     }
-    if (sicht(radix, l.radix)) zeichen.forEach((z, i) => schiebe(z, l.zeichen[i].x, l.zeichen[i].y));
+    sicht(radix, l.radix);
+    zeichen.forEach((z, i) => stelle(z, l.zeichen[i].x, l.zeichen[i].y, l.radix));
 
     l.aspekte.forEach((a, i) => {
       const [e1, e2] = aspLinien[i];
@@ -263,7 +292,7 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
 
     glyphen.forEach((g) => {
       const kl = l.koerper[g.id];
-      if (sicht(g.text, kl.zeichenDeckkraft)) schiebe(g.text, kl.x, kl.y);
+      stelle(g.text, kl.x, kl.y, kl.zeichenDeckkraft);
       if (sicht(g.punkt, kl.zeichenDeckkraft)) { g.punkt.setAttribute('cx', f2(kl.punktX)); g.punkt.setAttribute('cy', f2(kl.punktY)); }
     });
   }

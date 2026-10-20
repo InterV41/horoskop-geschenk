@@ -1,8 +1,9 @@
 // Zeitplan der Endlosschleife: Sonnensystem → Radix → Sonnensystem, ohne Anfang und Ende.
 
-/* Dauer eines Durchlaufs in Sekunden und Einstieg beim Laden (mitten im Sonnensystem) */
+/* Dauer eines Durchlaufs in Sekunden und Einstieg beim Laden: mitten in der fertigen Radix,
+   nach 20 s folgt die erste Verwandlung ins Sonnensystem */
 export const T = 40;
-export const EINSTIEG = 5;
+export const EINSTIEG = 16;
 
 /* Tempo der Modellzeit in Erdumläufen pro Sekunde. In der Radix wandert die Sonne 0,5° pro Sekunde. */
 export const TEMPO_RADIX = 0.5 / 360;

@@ -140,6 +140,34 @@ const { class: className, lang } = Astro.props;
     transform-origin: 50% 50%;
     will-change: transform, opacity;
   }
+  /* Bewegliche Zeichen: eigene Elemente, die Grafikkarte verschiebt sie stufenlos */
+  .radix :global(.kx-ebene-zeichen) {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .radix :global(.kx-zeichen) {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    line-height: 1;
+    white-space: nowrap;
+    color: var(--rx-text);
+    font-weight: var(--rx-schnitt);
+    font-family: 'Noto Sans Symbols', 'Noto Sans Symbols 2', 'STIX Two Text', 'Segoe UI Symbol', 'Apple Symbols', serif;
+    user-select: none;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+  }
+  .radix :global(.kx-zeichen.rx-zeichen) {
+    font-size: calc(24 * var(--kx-einheit, 1px));
+  }
+  .radix :global(.kx-zeichen.rx-planet) {
+    font-size: calc(29 * var(--kx-einheit, 1px));
+  }
+  .radix :global(.kx-zeichen.rx-planet.gross) {
+    font-size: calc(32 * var(--kx-einheit, 1px));
+  }
   /* Der Himmel läuft zum Rand weich ins Durchsichtige aus, keine Kante zur Seite */
   .radix :global(.kx-ebene-himmel) {
     will-change: transform;

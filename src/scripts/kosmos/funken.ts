@@ -6,10 +6,8 @@ import { glatt, teil } from './zeitplan';
 export interface Funke {
   heimX: number; // Platz im Sonnensystem, Zeichenflächen-Einheiten um die Mitte
   heimY: number;
-  u: number; // Ziel auf dem Bildschirm, 0…1 über Breite und Höhe der Fläche
-  v: number;
   d: number; // Verzögerung beim Hinausfliegen, Anteil der Ausbreitung
-  dreh: number; // Schwung der Bahn in Grad
+  weite: number; // wie weit hinaus auf seinem Strahl, 0 am Rad … 1 am Rand der Fläche
   groesse: number; // Durchmesser in Pixeln
   bleibt: boolean; // bleibt auch im Sonnensystem draußen
   funkelt: boolean;
@@ -25,14 +23,16 @@ export function erzeugeFunken(n: number): Funke[] {
   return Array.from({ length: n }, () => {
     const m = Math.pow(rnd(), 1.8); // viele kleine, wenige große
     const groesse = 1 + m * 2.4;
-    const r = 60 + rnd() * 330, w = rnd() * Math.PI * 2;
+    // Richtung gleichmäßig verteilt, damit die Sterne nach allen Seiten fliegen; der Abstand
+    // bleibt innerhalb der flachen Ellipse des schrägen Sonnensystems
+    const w = rnd() * Math.PI * 2, c = Math.cos(w), sn = Math.sin(w);
+    const ellipse = 1 / Math.sqrt((c * c) / (390 * 390) + (sn * sn) / (164 * 164));
+    const r = (0.2 + 0.8 * rnd()) * ellipse;
     return {
-      heimX: Math.cos(w) * r,
-      heimY: Math.sin(w) * r * 0.42, // in der Ebene des schrägen Sonnensystems
-      u: rnd(),
-      v: rnd(),
+      heimX: c * r,
+      heimY: sn * r,
       d: rnd() * STAFFEL,
-      dreh: (rnd() - 0.5) * 80,
+      weite: rnd(),
       groesse,
       bleibt: groesse < 1.9 && rnd() < 0.55,
       funkelt: rnd() < 0.5,
@@ -52,14 +52,38 @@ export function anteil(f: Funke, s: number): number {
   return f.bleibt ? 1 : glatt((s - f.d) / (1 - STAFFEL));
 }
 
-/* Ort auf einer geschwungenen Bahn um die Mitte, beginnt genau zu Hause und endet genau am Ziel */
-export function ort(f: Funke, a: number, heim: [number, number], ziel: [number, number]): [number, number] {
-  const rh = Math.hypot(heim[0], heim[1]), rz = Math.hypot(ziel[0], ziel[1]);
-  const wh = Math.atan2(heim[1], heim[0]), wz = Math.atan2(ziel[1], ziel[0]);
-  let dw = wz - wh;
-  if (dw > Math.PI) dw -= 2 * Math.PI;
-  if (dw < -Math.PI) dw += 2 * Math.PI;
-  const r = rh + (rz - rh) * a;
-  const w = wh + dw * a + ((f.dreh * Math.PI) / 180) * Math.sin(Math.PI * a);
-  return [Math.cos(w) * r, Math.sin(w) * r];
+/* Ort auf der geraden Bahn vom Zuhause zum Ziel. Ziel und Zuhause liegen auf demselben Strahl
+   von der Mitte, so fliegen alle Sterne sternförmig nach außen und kreuzen sich nicht. */
+export function ort(_f: Funke, a: number, heim: [number, number], ziel: [number, number]): [number, number] {
+  return [heim[0] + (ziel[0] - heim[0]) * a, heim[1] + (ziel[1] - heim[1]) * a];
+}
+
+/* Rechteck relativ zur Mitte des Rads, in Pixeln */
+export interface Rechteck { links: number; oben: number; rechts: number; unten: number }
+
+const drin = (x: number, y: number, r: Rechteck) => x >= r.links && x <= r.rechts && y >= r.oben && y <= r.unten;
+
+/* Ziel auf dem Strahl durch das Zuhause: zwischen dem Rad (minR) und dem Rand der Fläche, nie auf Text.
+   Liegt die gewünschte Weite auf Text, werden andere Weiten probiert; findet sich keine, gibt es kein Ziel. */
+export function strahlZiel(f: Funke, minR: number, rand: Rechteck, sperren: Rechteck[]): [number, number] | null {
+  const w = Math.atan2(f.heimY, f.heimX), c = Math.cos(w), s = Math.sin(w);
+  const grenzen = [c > 0 ? rand.rechts / c : c < 0 ? rand.links / c : Infinity, s > 0 ? rand.unten / s : s < 0 ? rand.oben / s : Infinity];
+  const maxD = Math.min(...grenzen.filter((t) => t > 0));
+  if (!(maxD > minR)) return null;
+  for (let k = 0; k < 8; k++) {
+    const anteilWeite = (f.weite + k * 0.137) % 1;
+    const d = minR + anteilWeite * (maxD - minR), x = c * d, y = s * d;
+    if (!sperren.some((r) => drin(x, y, r))) return [x, y];
+  }
+  return null;
+}
+
+/* 1 weit weg von Text, 0 auf Text, dazwischen ein weicher Rand */
+export function textFreiheit(x: number, y: number, sperren: Rechteck[], weich = 12): number {
+  let frei = 1;
+  for (const r of sperren) {
+    const dx = Math.max(r.links - x, 0, x - r.rechts), dy = Math.max(r.oben - y, 0, y - r.unten);
+    frei = Math.min(frei, Math.min(1, Math.hypot(dx, dy) / weich));
+  }
+  return frei;
 }

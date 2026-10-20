@@ -5,7 +5,7 @@
 import { R, pt, K_SCHRAEG, zerlegeAmKreis, type Layout } from './layout';
 import { PLANETEN, RADIX_REIHE, type RadixId } from './modell';
 import { texte, type Sprache } from './texte';
-import { erzeugeFunken, ausbreitung, anteil, ort } from './funken';
+import { erzeugeFunken, ausbreitung, anteil, ort, strahlZiel, textFreiheit, type Rechteck } from './funken';
 
 const NS = 'http://www.w3.org/2000/svg';
 const XL = 'http://www.w3.org/1999/xlink';
@@ -234,15 +234,25 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
     if (f.funkelt) licht.style.cssText = `--o:var(--kx-funken-deckkraft);animation-duration:${f.takt.toFixed(2)}s;animation-delay:-${f.versatz.toFixed(2)}s`;
     e.appendChild(licht);
     funkenEbene.appendChild(e);
-    return { f, e, ziel: [0, 0] as [number, number] };
+    return { f, e, ziel: null as [number, number] | null };
   });
-  /* Ziele über die ganze Fläche des ersten Bildschirms, gemessen von der Mitte des Rads */
+  /* Ziele auf dem Strahl jedes Sterns über die Fläche des ersten Bildschirms, gemessen von der Mitte
+     des Rads. Wo Text steht (Überschriften, Absätze, Knöpfe), landet kein Stern. */
   const flaeche = (host.closest('section') as HTMLElement | null) ?? host.parentElement ?? host;
   let funkenStand = -1;
+  let sperren: Rechteck[] = [];
   const setzeZiele = () => {
     const h = host.getBoundingClientRect(), fl = flaeche.getBoundingClientRect();
     const cx = h.left + h.width / 2, cy = h.top + h.height / 2;
-    funken.forEach((k) => (k.ziel = [fl.left + k.f.u * fl.width - cx, fl.top + k.f.v * fl.height - cy]));
+    const rand: Rechteck = { links: fl.left - cx, oben: fl.top - cy, rechts: fl.right - cx, unten: fl.bottom - cy };
+    const PUFFER = 16;
+    sperren = Array.from(flaeche.querySelectorAll<HTMLElement>('h1, h2, h3, p, a, button, li'))
+      .filter((e) => !host.contains(e) && e.textContent?.trim())
+      .map((e) => e.getBoundingClientRect())
+      .filter((r) => r.width > 0 && r.height > 0)
+      .map((r) => ({ links: r.left - cx - PUFFER, oben: r.top - cy - PUFFER, rechts: r.right - cx + PUFFER, unten: r.bottom - cy + PUFFER }));
+    const minR = (R.out + 30) * (host.clientWidth / 940 || 1); // erst außerhalb des Rads
+    funken.forEach((k) => (k.ziel = strahlZiel(k.f, minR, rand, sperren)));
     funkenStand = -1;
   };
   function zeichneFunken(p: number) {
@@ -250,10 +260,13 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
     if (s === funkenStand) return; // nur während der Verwandlung bewegen
     funkenStand = s;
     for (const k of funken) {
+      const heim: [number, number] = [k.f.heimX * einheit, k.f.heimY * einheit];
       const a = anteil(k.f, s);
-      const [x, y] = ort(k.f, a, [k.f.heimX * einheit, k.f.heimY * einheit], k.ziel);
+      // ohne Ziel (alles auf dem Strahl ist Text) bleibt der Stern zu Hause und blendet draußen aus
+      const [x, y] = ort(k.f, a, heim, k.ziel ?? heim);
+      const grund = k.f.bleibt ? (k.ziel ? 1 : 0) : (0.3 + 0.7 * a) * (k.ziel ? 1 : 1 - a);
       k.e.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) translate(-50%, -50%)`;
-      k.e.style.opacity = (k.f.bleibt ? 1 : 0.3 + 0.7 * a).toFixed(3);
+      k.e.style.opacity = (grund * textFreiheit(x, y, sperren)).toFixed(3);
     }
   }
 

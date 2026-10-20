@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { erzeugeFunken, ausbreitung, anteil, ort, strahlZiel, textFreiheit, type Rechteck } from '../../src/scripts/kosmos/funken';
+import { erzeugeFunken, ausbreitung, anteil, ort, strahlZiel, textFreiheit, sichtbarkeit, type Rechteck } from '../../src/scripts/kosmos/funken';
 
 /* Fläche des ersten Bildschirms, gemessen von der Mitte des Rads */
 const RAND: Rechteck = { links: -300, oben: -350, rechts: 900, unten: 350 };
@@ -70,6 +70,15 @@ describe('funken', () => {
     expect(amRand).toBeGreaterThan(0); expect(amRand).toBeLessThan(1); // weicher Übergang
   });
 
+  it('im Sonnensystem sind die hinausfliegenden Sterne unsichtbar, erst unterwegs erscheinen sie', () => {
+    const f = funken.find((x) => !x.bleibt)!, b = funken.find((x) => x.bleibt)!;
+    expect(sichtbarkeit(f, 0)).toBe(0);
+    expect(sichtbarkeit(f, 0.1)).toBeGreaterThan(0);
+    expect(sichtbarkeit(f, 0.1)).toBeLessThan(0.5);
+    expect(sichtbarkeit(f, 0.45)).toBe(1);
+    expect(sichtbarkeit(f, 1)).toBe(1);
+    expect(sichtbarkeit(b, 0)).toBe(1); // die bleibenden stehen immer draußen
+  });
   it('ist bei jedem Besuch gleich verteilt', () => {
     expect(erzeugeFunken(120)).toEqual(funken);
   });

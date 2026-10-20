@@ -5,7 +5,7 @@
 import { R, pt, K_SCHRAEG, zerlegeAmKreis, type Layout } from './layout';
 import { PLANETEN, RADIX_REIHE, type RadixId } from './modell';
 import { texte, type Sprache } from './texte';
-import { erzeugeFunken, ausbreitung, anteil, ort, strahlZiel, textFreiheit, type Rechteck } from './funken';
+import { erzeugeFunken, ausbreitung, anteil, ort, strahlZiel, textFreiheit, sichtbarkeit, type Rechteck } from './funken';
 
 const NS = 'http://www.w3.org/2000/svg';
 const XL = 'http://www.w3.org/1999/xlink';
@@ -264,7 +264,7 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
       const a = anteil(k.f, s);
       // ohne Ziel (alles auf dem Strahl ist Text) bleibt der Stern zu Hause und blendet draußen aus
       const [x, y] = ort(k.f, a, heim, k.ziel ?? heim);
-      const grund = k.f.bleibt ? (k.ziel ? 1 : 0) : (0.3 + 0.7 * a) * (k.ziel ? 1 : 1 - a);
+      const grund = k.ziel ? sichtbarkeit(k.f, a) : 0;
       k.e.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) translate(-50%, -50%)`;
       k.e.style.opacity = (grund * textFreiheit(x, y, sperren)).toFixed(3);
     }

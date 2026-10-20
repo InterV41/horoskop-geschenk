@@ -52,6 +52,12 @@ export function anteil(f: Funke, s: number): number {
   return f.bleibt ? 1 : glatt((s - f.d) / (1 - STAFFEL));
 }
 
+/* Deckkraft aus dem Flugfortschritt: im Sonnensystem unsichtbar, auf den ersten Metern der Bahn
+   blenden die Sterne ein. Die bleibenden stehen immer draußen und sind immer zu sehen. */
+export function sichtbarkeit(f: Funke, a: number): number {
+  return f.bleibt ? 1 : glatt(a / 0.4);
+}
+
 /* Ort auf der geraden Bahn vom Zuhause zum Ziel. Ziel und Zuhause liegen auf demselben Strahl
    von der Mitte, so fliegen alle Sterne sternförmig nach außen und kreuzen sich nicht. */
 export function ort(_f: Funke, a: number, heim: [number, number], ziel: [number, number]): [number, number] {

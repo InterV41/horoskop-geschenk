@@ -108,11 +108,12 @@ export function layout(tau: number, p: number, asc: number, richtungen?: Richtun
   const sonne = fenster(p, F.sonne);
   const l = laengen(tau);
 
-  /* Startpunkte im Sonnensystem, ungekippt, als [Radius, Winkel] */
+  /* Startpunkte im Sonnensystem, ungekippt, als [Radius, Winkel]. Das Sonnensystem dreht sich nicht
+     mit dem Tierkreis mit: sonst liefen die langsamen äußeren Planeten scheinbar rückwärts. */
   const start = {} as Record<RadixId | 'erde', [number, number]>;
-  for (const pl of PLANETEN) start[pl.id] = [pl.bildRadius, scr(sonnenWinkel(pl.id, tau))];
+  for (const pl of PLANETEN) start[pl.id] = [pl.bildRadius, sonnenWinkel(pl.id, tau)];
   start.sonne = [0, 0];
-  const erdPunkt = pt(...start.erde), mondVersatz = pt(MOND.bildRadius, scr(mondWinkel(tau)));
+  const erdPunkt = pt(...start.erde), mondVersatz = pt(MOND.bildRadius, mondWinkel(tau));
   start.mond = polar(erdPunkt[0] + mondVersatz[0], erdPunkt[1] + mondVersatz[1]);
 
   const koerper = {} as Record<RadixId | 'erde', KoerperLayout>;

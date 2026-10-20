@@ -94,7 +94,7 @@ Unter allem läuft **ein** Modell. Die Radix wird aus dem Sonnensystem berechnet
 
 - **Phasenuhr:** `t` = Sekunden seit Start (nur gezählt, solange die Animation läuft), `φ = (t + EINSTIEG) mod 40`. Daraus ergibt sich `p(φ)` nach der Ablauftabelle.
 - **Tempo der Modellzeit:** `dτ/dt = mix(TEMPO_SONNENSYSTEM, TEMPO_RADIX, p)` mit `TEMPO_RADIX = 0,5 / 360` Erdumläufen pro Sekunde. Im Sonnensystem läuft die Erde etwa 6-mal so schnell wie in der Radix. In der Radix entspricht das Tempo der bisherigen Animation: Die Sonne wandert rund 0,5° pro Sekunde durch den Tierkreis. `τ` wird Bild für Bild aufsummiert, dadurch ist es stetig und ohne Sprünge.
-- **Drehung:** Der Aszendent dreht sich immer mit 1° pro Sekunde (wie bisher), auch im Sonnensystem. Dort dreht sich das ganze System mit, sehr langsam, kaum bewusst wahrnehmbar.
+- **Drehung:** Der Aszendent dreht sich immer mit 1° pro Sekunde (wie bisher). Das Sonnensystem dreht sich **nicht** mit: Sonst liefen die langsamen äußeren Planeten scheinbar rückwärts (Änderung vom 20.10.2026). Den Unterschied gleicht die Verwandlung aus.
 
 Hinweis zur Nahtlosigkeit: Bei `φ = 0` und `φ = 40` ist der *Verwandlungszustand* gleich (beide Male mitten im Sonnensystem). Die Planeten stehen dann woanders, weil die Zeit weiterläuft. Genau das soll so sein, denn ein exakt gleiches Bild würde die Schleife verraten.
 
@@ -102,7 +102,7 @@ Hinweis zur Nahtlosigkeit: Bei `φ = 0` und `φ = 40` ist der *Verwandlungszusta
 
 Für jeden Körper gibt es zwei Endpunkte:
 
-- **Sonnensystem (p = 0):** `x = r_Bild · cos(α + Drehung)`, `y = r_Bild · sin(α + Drehung) · K`. Die Sonne steht in der Mitte.
+- **Sonnensystem (p = 0):** `x = r_Bild · cos(α)`, `y = r_Bild · sin(α) · K`. Die Sonne steht in der Mitte.
 - **Radix (p = 1):** auf der Planetenbahn der Radix, `SPUR = 292`, beim Bildwinkel aus `λ` und Aszendent, wie in der bestehenden Radix. Die Erde steht in der Mitte (Radius 0).
 
 Dazwischen wird **in Polarkoordinaten um die Bildmitte** gemischt: Der Radius gleitet linear, der Winkel nimmt den kürzeren Weg, und `K` wird mitgeführt. So ziehen die Planeten auf Bögen nach außen oder innen, statt quer durch die Mitte zu schneiden. Für Körper mit Radius 0 an einem Ende (Sonne am Anfang, Erde am Ende) gilt der Winkel des anderen Endes.

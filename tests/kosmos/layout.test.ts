@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { layout, mixWinkel, pt, aszendent, SPUR, R } from '../../src/scripts/kosmos/layout';
-import { schritt, phase, EINSTIEG } from '../../src/scripts/kosmos/zeitplan';
+import { schritt, phase, EINSTIEG, TEMPO_SONNENSYSTEM } from '../../src/scripts/kosmos/zeitplan';
 import { laengen } from '../../src/scripts/kosmos/modell';
 
 const norm = (x: number) => ((x % 360) + 360) % 360;
@@ -45,6 +45,17 @@ describe('layout', () => {
     }
     // schnellste echte Bewegung in der Verwandlung: rund 10 Einheiten pro Bild; ein Sprung wären Hunderte
     expect(max).toBeLessThan(25);
+  });
+  it('im Sonnensystem kreisen alle Planeten gleichsinnig gegen den Uhrzeigersinn', () => {
+    const K = 0.42, dt = 0.5, ids = ['merkur', 'venus', 'erde', 'mars', 'jupiter', 'saturn', 'uranus', 'neptun', 'pluto'] as const;
+    const winkel = (k: { x: number; y: number }) => norm((Math.atan2(-k.y / K, k.x) * 180) / Math.PI);
+    for (const t of [0, 7, 23]) {
+      const a = layout(t * TEMPO_SONNENSYSTEM, 0, aszendent(t)), b = layout((t + dt) * TEMPO_SONNENSYSTEM, 0, aszendent(t + dt));
+      for (const id of ids) {
+        const d = ((winkel(b.koerper[id]) - winkel(a.koerper[id]) + 540) % 360) - 180;
+        expect(d, id).toBeGreaterThan(0);
+      }
+    }
   });
   it('kein Körper kippt mitten in der Verwandlung auf die andere Seite (30 Durchläufe)', () => {
     // Merkur sprang in der Prüfung um Durchlauf 17 und 27, wenn der kurze Weg die Richtung wechselte

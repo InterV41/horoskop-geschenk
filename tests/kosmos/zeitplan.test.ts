@@ -11,8 +11,10 @@ describe('zeitplan', () => {
     expect(phase(12)).toBeCloseTo(0.5); expect(phase(14)).toBe(1);
     expect(phase(25)).toBe(1); expect(phase(38)).toBeCloseTo(0.5); expect(phase(40)).toBe(0);
   });
-  it('beginnt beim Laden mit der fertigen Radix und bleibt dort eine Weile', () => {
-    for (let t = 0; t <= 15; t += 0.25) expect(phase(EINSTIEG + t)).toBe(1);
+  it('beginnt beim Laden im Sonnensystem und verwandelt sich gleich sichtbar in die Radix', () => {
+    for (let t = 0; t <= 1.4; t += 0.1) expect(phase(EINSTIEG + t)).toBe(0);
+    expect(phase(EINSTIEG + 3.5)).toBeGreaterThan(0.3);
+    for (let t = 5.5; t <= 20; t += 0.5) expect(phase(EINSTIEG + t)).toBe(1);
   });
   it('ist periodisch', () => {
     for (const x of [0, 3, 11.3, 20, 37.7]) {

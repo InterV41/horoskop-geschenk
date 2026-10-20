@@ -38,7 +38,7 @@ Ein Durchlauf dauert `T = 40 s` und wiederholt sich ohne Pause. `p` ist der Verw
 
 Die Übergänge folgen einer weichen Kurve (smootherstep, `6x⁵ − 15x⁴ + 10x³`). Damit sind Tempo und Beschleunigung an den Rändern null, und das Auge findet keinen Knick. Hin- und Rückweg nutzen dieselbe Abbildung von `p` auf das Bild. Der Rückweg ist deshalb genau der Hinweg rückwärts, nur die Planeten stehen inzwischen woanders.
 
-**Einstieg:** Beim Laden beginnt die Animation bei `t = 16 s`, also mitten in der fertigen Radix (Wunsch vom 20.10.2026, vorher im Sonnensystem). Nach 20 Sekunden folgt die erste Verwandlung ins Sonnensystem. Der Wert steht als Konstante `EINSTIEG` im Code und lässt sich ändern.
+**Einstieg:** Beim Laden beginnt die Animation bei `t = 8,5 s`, also im Sonnensystem 1,5 Sekunden vor der Verwandlung. Nach gut 5 Sekunden steht die Radix, man sieht den Effekt also gleich beim Öffnen (Wunsch vom 20.10.2026, zwischenzeitlich Start in der Radix). Die Uhr läuft nur, solange das Rad im Bild ist. Der Wert steht als Konstante `EINSTIEG` im Code und lässt sich ändern.
 
 ### Die Verwandlung im Einzelnen
 

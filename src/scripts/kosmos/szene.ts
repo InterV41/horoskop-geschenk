@@ -246,7 +246,7 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
   /* Textflächen relativ zur Mitte des Rads messen */
   const messeSperren = (cx: number, cy: number) => {
     // Text und Formularfelder: Eingabefelder haben keinen eigenen Textinhalt, zählen aber immer
-    sperren = Array.from(flaeche.querySelectorAll<HTMLElement>('h1, h2, h3, p, a, button, li, label, input, textarea, select'))
+    sperren = Array.from(flaeche.querySelectorAll<HTMLElement>('h1, h2, h3, h4, p, a, button, li, dt, dd, figcaption, blockquote, td, th, label, input, textarea, select'))
       .filter((e) => !host.contains(e) && (e.matches('input, textarea, select') || e.textContent?.trim()))
       .map((e) => e.getBoundingClientRect())
       .filter((r) => r.width > 0 && r.height > 0)

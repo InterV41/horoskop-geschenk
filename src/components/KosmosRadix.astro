@@ -71,6 +71,7 @@ const { class: className, lang } = Astro.props;
     /* Sonnensystem */
     --kx-stern: #b8914a;
     --kx-stern-deckkraft: 0.45;
+    --kx-sterne: none; /* hell bleibt clean, ohne Sterne */
     --kx-schatten: #5a4a35;
     --kx-schleier: #f3e6c8;
     --kx-nebel1: transparent;
@@ -92,6 +93,7 @@ const { class: className, lang } = Astro.props;
     --rx-disk: rgb(7 16 42 / 0.5);
     --kx-stern: #eee7d7;
     --kx-stern-deckkraft: 1;
+    --kx-sterne: inline;
     --kx-schatten: #0a0f22;
     --kx-schleier: transparent;
     --kx-nebel1: #4a3560;
@@ -110,6 +112,7 @@ const { class: className, lang } = Astro.props;
       --rx-disk: rgb(7 16 42 / 0.5);
       --kx-stern: #eee7d7;
       --kx-stern-deckkraft: 1;
+      --kx-sterne: inline;
       --kx-schatten: #0a0f22;
       --kx-schleier: transparent;
       --kx-nebel1: #4a3560;
@@ -127,6 +130,7 @@ const { class: className, lang } = Astro.props;
     overflow: visible;
   }
   .radix :global(.kx-sterne) {
+    display: var(--kx-sterne);
     fill: var(--kx-stern);
     opacity: var(--kx-stern-deckkraft);
   }

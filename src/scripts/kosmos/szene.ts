@@ -128,6 +128,7 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
      Ganzes per CSS, ihr Inhalt muss dafür nicht neu gezeichnet werden. */
   const ringDefs = el('defs', {}, ringSvg);
   el('circle', { r: R.out, style: 'fill:var(--rx-disk)' }, ringSvg);
+  el('circle', { r: R.hub, style: 'fill:var(--kx-nabe)' }, ringSvg); // Mitte der Radix
   const zodiac = el('g', {}, ringSvg);
   const BAND_MID = (R.out + R.band) / 2;
 

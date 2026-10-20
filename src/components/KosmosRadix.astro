@@ -68,6 +68,7 @@ const { class: className, lang } = Astro.props;
     --rx-dick: 1.6; /* Linienstärke: Faktor gegenüber der dunklen Fassung */
     --rx-schnitt: 500; /* Schriftstärke */
     --rx-disk: #fefcf8; /* helles Creme innerhalb des Rads, hebt die Radix sanft vom Weiß ab */
+    --kx-nabe: #ffffff; /* innerer Kreis der Radix weiß */
     /* Sonnensystem */
     --kx-stern: #b8914a;
     --kx-stern-deckkraft: 0.45;
@@ -92,6 +93,7 @@ const { class: className, lang } = Astro.props;
     --rx-dick: 1;
     --rx-schnitt: 400;
     --rx-disk: rgb(7 16 42 / 0.5);
+    --kx-nabe: transparent;
     --kx-stern: #eee7d7;
     --kx-stern-deckkraft: 1;
     --kx-sterne: inline;
@@ -112,6 +114,8 @@ const { class: className, lang } = Astro.props;
       --rx-dick: 1;
       --rx-schnitt: 400;
       --rx-disk: rgb(7 16 42 / 0.5);
+      --kx-nabe: transparent;
+    --kx-nabe: transparent;
       --kx-stern: #eee7d7;
       --kx-stern-deckkraft: 1;
       --kx-sterne: inline;

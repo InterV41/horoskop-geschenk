@@ -8,19 +8,22 @@ import '@fontsource/noto-sans-symbols-2/400.css';
 
 interface Props {
   class?: string;
+  /* Sprache der Tierkreisnamen, z. B. "en". Ohne Angabe gilt das lang der Seite. */
+  lang?: string;
 }
-const { class: className } = Astro.props;
+const { class: className, lang } = Astro.props;
 ---
 
-<div class:list={['radix', className]} data-kosmos></div>
+<div class:list={['radix', className]} data-kosmos data-sprache={lang}></div>
 
 <script>
   import { baueSzene } from '../scripts/kosmos/szene';
   import { layout, aszendent, ASC0, type Richtungen } from '../scripts/kosmos/layout';
   import { schritt, phase, EINSTIEG, type Uhr } from '../scripts/kosmos/zeitplan';
+  import { sprache } from '../scripts/kosmos/texte';
 
   document.querySelectorAll<HTMLElement>('[data-kosmos]').forEach((host, nr) => {
-    const szene = baueSzene(host, nr);
+    const szene = baueSzene(host, nr, sprache(host.dataset.sprache ?? document.documentElement.lang));
     const setzeStrich = () => szene.setzeStrich(parseFloat(getComputedStyle(host).getPropertyValue('--rx-dick')) || 1);
 
     /* Bei "Bewegung reduzieren" steht die Radix still */

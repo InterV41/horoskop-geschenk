@@ -2,6 +2,7 @@
 // Farben kommen aus CSS-Variablen der Komponente, so folgt alles der Ansicht hell oder dunkel.
 import { R, pt, type Layout } from './layout';
 import { PLANETEN, RADIX_REIHE, type RadixId } from './modell';
+import { texte, type Sprache } from './texte';
 
 const NS = 'http://www.w3.org/2000/svg';
 const XL = 'http://www.w3.org/1999/xlink';
@@ -45,9 +46,10 @@ export interface Szene {
   setzeStrich(faktor: number): void;
 }
 
-export function baueSzene(host: HTMLElement, nr: number): Szene {
+export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'): Szene {
   const id = (s: string) => `kx${nr}-${s}`;
-  const svg = el('svg', { viewBox: '-470 -470 940 940', role: 'img', 'aria-label': 'Animation: Das Sonnensystem verwandelt sich in ein Geburtshoroskop-Rad' }, host);
+  const tx = texte(sprache);
+  const svg = el('svg', { viewBox: '-470 -470 940 940', role: 'img', 'aria-label': tx.beschreibung }, host);
   const defs = el('defs', {}, svg);
   const verlauf = (gid: string, stops: [number, string, string?][], attrs: Attrs = {}) => {
     const g = el('radialGradient', { id: id(gid), ...attrs }, defs);
@@ -105,8 +107,7 @@ export function baueSzene(host: HTMLElement, nr: number): Szene {
     line(zodiac, R.band, k, R.band - (major ? 16 : mid ? 10 : 5), k, major ? 0.7 : 0.45, major ? {} : { opacity: 0.7 });
   }
   for (let i = 0; i < 12; i++) line(zodiac, R.out, i * 30, R.ring, i * 30, 0.9);
-  const NAMEN = ['WIDDER', 'STIER', 'ZWILLINGE', 'KREBS', 'LÖWE', 'JUNGFRAU', 'WAAGE', 'SKORPION', 'SCHÜTZE', 'STEINBOCK', 'WASSERMANN', 'FISCHE'];
-  const namen = NAMEN.map((n, i) => {
+  const namen = tx.tierkreis.map((n, i) => {
     const m = i * 30 + 15, off = 15 * 0.34;
     const rt = BAND_MID - off, rb = BAND_MID + off;
     // oberer Bogen im Uhrzeigersinn, unterer dagegen: so steht die Schrift immer lesbar

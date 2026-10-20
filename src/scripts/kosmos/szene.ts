@@ -241,17 +241,23 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
   const flaeche = (host.closest('section') as HTMLElement | null) ?? host.parentElement ?? host;
   let funkenStand = -1;
   let sperren: Rechteck[] = [];
-  const setzeZiele = () => {
-    const h = host.getBoundingClientRect(), fl = flaeche.getBoundingClientRect();
-    const cx = h.left + h.width / 2, cy = h.top + h.height / 2;
-    const rand: Rechteck = { links: fl.left - cx, oben: fl.top - cy, rechts: fl.right - cx, unten: fl.bottom - cy };
-    const PUFFER = 16;
+  let versatz = 0; // Lage des Rads in seinem Abschnitt beim letzten Messen
+  const PUFFER = 16;
+  /* Textflächen relativ zur Mitte des Rads messen */
+  const messeSperren = (cx: number, cy: number) => {
     // Text und Formularfelder: Eingabefelder haben keinen eigenen Textinhalt, zählen aber immer
     sperren = Array.from(flaeche.querySelectorAll<HTMLElement>('h1, h2, h3, p, a, button, li, label, input, textarea, select'))
       .filter((e) => !host.contains(e) && (e.matches('input, textarea, select') || e.textContent?.trim()))
       .map((e) => e.getBoundingClientRect())
       .filter((r) => r.width > 0 && r.height > 0)
       .map((r) => ({ links: r.left - cx - PUFFER, oben: r.top - cy - PUFFER, rechts: r.right - cx + PUFFER, unten: r.bottom - cy + PUFFER }));
+  };
+  const setzeZiele = () => {
+    const h = host.getBoundingClientRect(), fl = flaeche.getBoundingClientRect();
+    const cx = h.left + h.width / 2, cy = h.top + h.height / 2;
+    const rand: Rechteck = { links: fl.left - cx, oben: fl.top - cy, rechts: fl.right - cx, unten: fl.bottom - cy };
+    versatz = h.top - fl.top;
+    messeSperren(cx, cy);
     const minR = (R.out + 30) * (host.clientWidth / 940 || 1); // erst außerhalb des Rads
     funken.forEach((k) => (k.ziel = strahlZiel(k.f, minR, rand, sperren)));
     funkenStand = -1;
@@ -283,6 +289,26 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
   beobachter.observe(host);
   if (flaeche !== host) beobachter.observe(flaeche);
   setzeZiele();
+  // Schriften und Bilder ändern nach dem ersten Messen noch die Textflächen: dann neu messen
+  document.fonts?.ready.then(setzeEinheit);
+  if (document.readyState !== 'complete') addEventListener('load', setzeEinheit, { once: true });
+  /* Steht das Rad fest, während der Text daneben weiterläuft (position: sticky), verschiebt sich
+     der Text gegenüber den Sternen. Dann beim Scrollen die Textflächen neu messen und Sterne über
+     Text ausblenden. Die Ziele bleiben, damit nichts springt. Ohne Verschiebung passiert nichts. */
+  let scrollGeplant = false;
+  addEventListener('scroll', () => {
+    if (scrollGeplant) return;
+    scrollGeplant = true;
+    requestAnimationFrame(() => {
+      scrollGeplant = false;
+      const h = host.getBoundingClientRect(), fl = flaeche.getBoundingClientRect();
+      if (Math.abs(h.top - fl.top - versatz) < 0.5) return;
+      versatz = h.top - fl.top;
+      messeSperren(h.left + h.width / 2, h.top + h.height / 2);
+      funkenStand = -1;
+      if (letztes) zeichneFunken(letztes.p);
+    });
+  }, { passive: true });
   const stelle = (e: HTMLElement, x: number, y: number, o: number) => {
     if (o <= 0.001) { if (e.style.visibility !== 'hidden') e.style.visibility = 'hidden'; return; }
     if (e.style.visibility) e.style.visibility = '';

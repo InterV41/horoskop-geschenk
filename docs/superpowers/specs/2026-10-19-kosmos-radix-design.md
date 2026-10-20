@@ -83,7 +83,7 @@ Unter allem läuft **ein** Modell. Die Radix wird aus dem Sonnensystem berechnet
 - **Bahnen:** Kreise um die Sonne, gleichförmige Bewegung. Startwinkel fest (erfundene Konstellation).
 - **Zeit:** Das Modell hat eine eigene Zeit `τ` (in Erdumläufen). `τ` läuft immer vorwärts, aber unterschiedlich schnell, siehe „Zeitplan“.
 - **Umlaufzeiten:** Die echten Verhältnisse wären für die äußeren Planeten zu langsam. Daher gilt `Winkelgeschwindigkeit_i = ω_Erde · (P_Erde / P_i)^0,6`. Die Reihenfolge stimmt, und alle bewegen sich sichtbar.
-- **Mond:** kreist um die Erde, 5-mal so schnell wie die Erde um die Sonne (wie das Tempoverhältnis in der bestehenden Radix, nicht astronomisch).
+- **Mond:** kreist um die Erde, 1,6-mal so schnell wie die Erde um die Sonne (nicht astronomisch). In der Radix bleibt er so langsamer als die Drehung des Rads und zieht wie alle anderen im Uhrzeigersinn (Änderung vom 20.10.2026, vorher 5-mal, dadurch lief er gegen die Drehung).
 - **Zwei Arten von Abstand:**
   - *Bildradius:* für das Zeichnen des Sonnensystems, gleichmäßig gestaffelt von Merkur 70 bis Pluto 430 (Einheiten der Zeichenfläche −470…470).
   - *Rechenabstand:* nur für die Blickrichtung von der Erde. Nach dem dritten Keplerschen Gesetz aus den gestauchten Umlaufzeiten: `a_i = (P_i / P_Erde)^(0,6 · 2/3)` in AE. Echte Abstände zusammen mit gestauchten Zeiten würden die Rückläufigkeit verhindern, weil Mars dann schneller wäre als die Erde. Mit Kepler bleibt jeder äußere Planet langsamer, und die Geometrie stimmt.

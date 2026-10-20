@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { layout, mixWinkel, pt, aszendent, SPUR, R } from '../../src/scripts/kosmos/layout';
-import { schritt, phase, EINSTIEG, TEMPO_SONNENSYSTEM } from '../../src/scripts/kosmos/zeitplan';
+import { schritt, phase, EINSTIEG, TEMPO_SONNENSYSTEM, TEMPO_RADIX } from '../../src/scripts/kosmos/zeitplan';
 import { laengen } from '../../src/scripts/kosmos/modell';
 
 const norm = (x: number) => ((x % 360) + 360) % 360;
@@ -54,6 +54,18 @@ describe('layout', () => {
       for (const id of ids) {
         const d = ((winkel(b.koerper[id]) - winkel(a.koerper[id]) + 540) % 360) - 180;
         expect(d, id).toBeGreaterThan(0);
+      }
+    }
+  });
+  it('in der Radix ziehen alle Zeichen mit der Tagesdrehung im Uhrzeigersinn, auch der Mond', () => {
+    const winkel = (k: { x: number; y: number }) => norm((Math.atan2(-k.y, k.x) * 180) / Math.PI);
+    for (const t of [14, 20, 30]) {
+      for (const tau of [0.2, 1.3, 4.1]) {
+        const a = layout(tau, 1, aszendent(t)), b = layout(tau + TEMPO_RADIX, 1, aszendent(t + 1));
+        for (const id of ['sonne', 'mond', 'merkur', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptun', 'pluto'] as const) {
+          const d = ((winkel(b.koerper[id]) - winkel(a.koerper[id]) + 540) % 360) - 180;
+          expect(d, id).toBeLessThan(0);
+        }
       }
     }
   });

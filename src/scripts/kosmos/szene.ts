@@ -60,21 +60,37 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
   /* Scheibe unter der Radix */
   const scheibe = el('circle', { r: R.out, style: 'fill:var(--rx-disk)' }, svg);
 
-  /* Sterne: feste Saat, damit sie bei jedem Besuch gleich liegen */
+  /* Sterne in drei Tiefenebenen: klein und fern, mittel, groß und nah. Die Ebenen treiben
+     unterschiedlich weit (über CSS), das gibt Tiefe. Feste Saat: bei jedem Besuch gleich. */
   let saat = 7;
   const rnd = () => (saat = (saat * 16807) % 2147483647) / 2147483647;
-  const sterne = el('g', { class: 'kx-sterne' }, svg);
-  for (let i = 0; i < 170; i++) {
-    const m = Math.pow(rnd(), 2.4);
-    const o = Math.min(1, 0.25 + 0.6 * m);
-    const s = el('circle', { cx: f2(rnd() * 940 - 470), cy: f2(rnd() * 940 - 470), r: (0.7 + 2 * m).toFixed(2), opacity: o.toFixed(2) }, sterne);
-    if (rnd() < 0.18) { s.setAttribute('class', 'kx-funkeln'); s.setAttribute('style', `--o:${o.toFixed(2)};animation-delay:-${(rnd() * 5).toFixed(2)}s`); }
-  }
+  /* Himmel (Sterne und Nebel) läuft zum Rand weich ins Durchsichtige aus: keine Kante zur Seite */
+  const himmelMaske = el('mask', { id: id('himmel'), maskUnits: 'userSpaceOnUse', x: -470, y: -470, width: 940, height: 940 }, defs);
+  el('rect', { x: -470, y: -470, width: 940, height: 940, fill: verlauf('vig', [[0, '#fff'], [0.3, '#fff'], [0.7, '#5a5a5a'], [1, '#000']], { r: '50%' }) }, himmelMaske);
+  const himmel = el('g', { mask: `url(#${id('himmel')})` }, svg);
+  const sterne = el('g', { class: 'kx-sterne' }, himmel);
+  const EBENEN = [
+    { n: 110, r0: 0.6, r1: 1.2, o0: 0.2, o1: 0.55 },
+    { n: 60, r0: 1.1, r1: 1.9, o0: 0.35, o1: 0.75 },
+    { n: 22, r0: 1.8, r1: 2.8, o0: 0.55, o1: 1 },
+  ];
+  EBENEN.forEach((e, i) => {
+    const g = el('g', { class: `kx-ebene kx-ebene${i + 1}` }, sterne);
+    for (let k = 0; k < e.n; k++) {
+      const o = e.o0 + rnd() * (e.o1 - e.o0);
+      const st = el('circle', { cx: f2(rnd() * 940 - 470), cy: f2(rnd() * 940 - 470), r: (e.r0 + rnd() * (e.r1 - e.r0)).toFixed(2), opacity: o.toFixed(2) }, g);
+      if (rnd() < 0.35) {
+        st.setAttribute('class', 'kx-funkeln');
+        st.setAttribute('style', `--o:${o.toFixed(2)};animation-duration:${(3 + rnd() * 4).toFixed(2)}s;animation-delay:-${(rnd() * 7).toFixed(2)}s`);
+      }
+    }
+  });
 
-  /* Nebel (dunkel) und warmer Schleier (hell), Sichtbarkeit je Ansicht über CSS */
-  const nebel = el('g', {}, svg);
-  el('ellipse', { class: 'kx-nebel', cx: -157, cy: -90, rx: 425, ry: 200, fill: verlauf('n1', [[0, 'var(--kx-nebel1)', '0.45'], [1, 'var(--kx-nebel1)', '0']]) }, nebel);
-  el('ellipse', { class: 'kx-nebel', cx: 200, cy: 135, rx: 380, ry: 180, fill: verlauf('n2', [[0, 'var(--kx-nebel2)', '0.35'], [1, 'var(--kx-nebel2)', '0']]) }, nebel);
+  /* Nebel (dunkel) und warmer Schleier (hell): treiben und atmen langsam, über CSS */
+  const nebel = el('g', {}, himmel);
+  el('ellipse', { class: 'kx-nebel kx-nebel-a', cx: -157, cy: -90, rx: 425, ry: 200, fill: verlauf('n1', [[0, 'var(--kx-nebel1)', '0.5'], [1, 'var(--kx-nebel1)', '0']]) }, nebel);
+  el('ellipse', { class: 'kx-nebel kx-nebel-b', cx: 200, cy: 135, rx: 380, ry: 180, fill: verlauf('n2', [[0, 'var(--kx-nebel2)', '0.4'], [1, 'var(--kx-nebel2)', '0']]) }, nebel);
+  el('ellipse', { class: 'kx-nebel kx-nebel-c', cx: 40, cy: -200, rx: 320, ry: 220, fill: verlauf('n4', [[0, 'var(--kx-nebel3)', '0.45'], [1, 'var(--kx-nebel3)', '0']]) }, nebel);
   el('ellipse', { class: 'kx-schleier', rx: 515, ry: 270, fill: verlauf('n3', [[0, 'var(--kx-schleier)', '0.7'], [1, 'var(--kx-schleier)', '0']]) }, nebel);
 
   /* Bahnen, die zu den Ringen der Radix werden. Tiefe: hinten (oben) zart, vorne kräftig,

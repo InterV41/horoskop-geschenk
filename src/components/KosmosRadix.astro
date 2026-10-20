@@ -72,6 +72,7 @@ const { class: className, lang } = Astro.props;
     --kx-stern: #b8914a;
     --kx-stern-deckkraft: 0.45;
     --kx-sterne: none; /* hell bleibt clean, ohne Sterne */
+    --kx-nebel3: transparent;
     --kx-schatten: #5a4a35;
     --kx-schleier: #f3e6c8;
     --kx-nebel1: transparent;
@@ -98,6 +99,7 @@ const { class: className, lang } = Astro.props;
     --kx-schleier: transparent;
     --kx-nebel1: #4a3560;
     --kx-nebel2: #5a4420;
+    --kx-nebel3: #1d3a6e;
     --kx-hof: #ffe9b0;
     --kx-hof-o: 0.55;
     --kx-hof2: #e0b860;
@@ -117,6 +119,7 @@ const { class: className, lang } = Astro.props;
       --kx-schleier: transparent;
       --kx-nebel1: #4a3560;
       --kx-nebel2: #5a4420;
+      --kx-nebel3: #1d3a6e;
       --kx-hof: #ffe9b0;
       --kx-hof-o: 0.55;
       --kx-hof2: #e0b860;
@@ -139,10 +142,29 @@ const { class: className, lang } = Astro.props;
   }
   @keyframes kx-funkeln {
     0%, 100% { opacity: var(--o); }
-    50% { opacity: calc(var(--o) * 0.3); }
+    50% { opacity: calc(var(--o) * 0.25); }
   }
+  /* Atmender Himmel: Sternebenen treiben verschieden weit, Nebel treiben und atmen */
+  .radix :global(.kx-ebene1) { animation: kx-treiben1 90s ease-in-out infinite alternate; }
+  .radix :global(.kx-ebene2) { animation: kx-treiben2 70s ease-in-out infinite alternate; }
+  .radix :global(.kx-ebene3) { animation: kx-treiben3 55s ease-in-out infinite alternate; }
+  @keyframes kx-treiben1 { from { transform: translate(-6px, 2px); } to { transform: translate(6px, -2px); } }
+  @keyframes kx-treiben2 { from { transform: translate(-12px, 4px); } to { transform: translate(12px, -4px); } }
+  @keyframes kx-treiben3 { from { transform: translate(-20px, 7px); } to { transform: translate(20px, -7px); } }
+  .radix :global(.kx-nebel-a) { animation: kx-nebel-a 47s ease-in-out infinite alternate; }
+  .radix :global(.kx-nebel-b) { animation: kx-nebel-b 61s ease-in-out infinite alternate; }
+  .radix :global(.kx-nebel-c) { animation: kx-nebel-c 53s ease-in-out infinite alternate; }
+  .radix :global(.kx-schleier) { animation: kx-atmen 14s ease-in-out infinite alternate; }
+  @keyframes kx-nebel-a { from { transform: translate(-30px, 10px) rotate(-4deg); opacity: 0.7; } to { transform: translate(40px, -18px) rotate(3deg); opacity: 1; } }
+  @keyframes kx-nebel-b { from { transform: translate(25px, -12px) rotate(3deg); opacity: 1; } to { transform: translate(-35px, 20px) rotate(-3deg); opacity: 0.65; } }
+  @keyframes kx-nebel-c { from { transform: translate(0, 0) scale(0.95); opacity: 0.55; } to { transform: translate(-25px, 15px) scale(1.06); opacity: 1; } }
+  @keyframes kx-atmen { from { opacity: 0.8; } to { opacity: 1; } }
+  .radix :global(.kx-nebel), .radix :global(.kx-schleier) { transform-box: fill-box; transform-origin: center; }
   @media (prefers-reduced-motion: reduce) {
-    .radix :global(.kx-funkeln) {
+    .radix :global(.kx-funkeln),
+    .radix :global(.kx-ebene),
+    .radix :global(.kx-nebel),
+    .radix :global(.kx-schleier) {
       animation: none;
     }
   }

@@ -128,10 +128,11 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
      Ganzes per CSS, ihr Inhalt muss dafür nicht neu gezeichnet werden. */
   const ringDefs = el('defs', {}, ringSvg);
   el('circle', { r: R.out, style: 'fill:var(--rx-disk)' }, ringSvg);
-  /* Ringe im Wechsel, von innen nach außen: weiß, creme, weiß, … (im Dunkeln durchsichtig).
-     Grenzen sind alle Kreise der Radix: Nabe innen, Nabe, Aspektring, Planetenring, Zeichenring, Namensring, Rand. */
+  /* Ringe von innen nach außen, weiß auf Creme (im Dunkeln durchsichtig).
+     Grenzen sind alle Kreise der Radix: Nabe innen, Nabe, Aspektring, Planetenring, Zeichenring, Namensring, Rand.
+     Weiß sind: Mitte (1.), Aspektbereich (3.), Planetenring (4.), Symbolring (5.), Außenrand (7.). */
   const GRENZEN = [0, R.hub - 26, R.hub, R.asp, R.ring, R.band, R.out - 7, R.out];
-  for (let i = 0; i < GRENZEN.length - 1; i += 2) {
+  for (const i of [0, 2, 3, 4, 6]) {
     const innen = GRENZEN[i], aussen = GRENZEN[i + 1];
     if (innen === 0) el('circle', { r: aussen, style: 'fill:var(--kx-nabe)' }, ringSvg);
     else el('circle', { r: (innen + aussen) / 2, fill: 'none', 'stroke-width': aussen - innen, style: 'stroke:var(--kx-nabe)' }, ringSvg);

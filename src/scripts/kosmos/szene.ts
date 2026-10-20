@@ -114,7 +114,7 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
   const baueKugel = (kid: string, farbe: string, ring?: boolean): Kugel => {
     const g = el('g', {}, hinten);
     const fuell = verlauf('p-' + kid, [[0, '#ffffff', '0.9'], [0.18, mischeGold(farbe, 0.35)], [1, 'var(--kx-schatten)']], { cx: '35%', cy: '35%', r: '75%' });
-    const r = ring ? el('ellipse', { fill: 'none', stroke: mischeGold(farbe, 0.35), 'stroke-width': 2.4, opacity: 0.8 }, g) : undefined;
+    const r = ring ? el('ellipse', { fill: 'none', stroke: mischeGold(farbe, 0.35), 'stroke-width': 1.1, opacity: 0.45 }, g) : undefined;
     const kreis = el('circle', { fill: fuell }, g);
     return { g, kreis, ring: r, hinten: true };
   };
@@ -123,7 +123,7 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
 
   /* Sonne: Lichthof und Kern, ohne Strahlen */
   const hof = el('circle', { fill: verlauf('hof', [[0, 'var(--kx-hof)', 'var(--kx-hof-o)'], [0.35, 'var(--kx-hof2)', 'var(--kx-hof2-o)'], [1, 'var(--kx-hof2)', '0']]) }, svg);
-  const kern = el('circle', { fill: verlauf('kern', [[0, '#fffbea'], [0.55, '#f6d27a'], [1, '#d99a3a']]) }, svg);
+  const kern = el('circle', { fill: verlauf('kern', [[0, '#ffe9a8'], [0.45, '#efb648'], [1, '#b8741c']]) }, svg); // satt und kräftig
 
   /* Tierkreis-Ring: eigene Ebene mit Scheibe, Gradskala, Grenzen und Namen. Sie dreht sich als
      Ganzes per CSS, ihr Inhalt muss dafür nicht neu gezeichnet werden. */

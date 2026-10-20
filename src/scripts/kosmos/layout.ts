@@ -22,7 +22,7 @@ const F = {
   radix: [0.6, 1],
   aspekte: [0.85, 1],
 } as const;
-const SONNE_R = 26, SONNENHOF_R = 160;
+const SONNE_R = 30, SONNENHOF_R = 170;
 
 /* Zielringe der Bahnen, in PLANETEN-Reihenfolge: Radius, Strich, Deckkraft */
 const ZIELRINGE: Record<PlanetId, [number, number, number]> = {

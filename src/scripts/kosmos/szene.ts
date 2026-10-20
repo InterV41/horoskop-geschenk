@@ -5,6 +5,7 @@
 import { R, pt, K_SCHRAEG, zerlegeAmKreis, type Layout } from './layout';
 import { PLANETEN, RADIX_REIHE, type RadixId } from './modell';
 import { texte, type Sprache } from './texte';
+import { erzeugeFunken, ausbreitung, anteil, ort } from './funken';
 
 const NS = 'http://www.w3.org/2000/svg';
 const XL = 'http://www.w3.org/1999/xlink';
@@ -218,14 +219,56 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
     punkt: el('circle', { r: 3, fill: C }, oben),
   }));
 
+  /* Sterne, die beim Umschalten zur Radix hinausfliegen und sich über den ersten Bildschirm verteilen.
+     Sie liegen hinter allem (auch hinter dem Text) und werden wie die Zeichen von der Grafikkarte bewegt. */
+  const funkenEbene = document.createElement('div');
+  funkenEbene.className = 'kx-ebene-funken';
+  funkenEbene.setAttribute('aria-hidden', 'true');
+  host.insertBefore(funkenEbene, host.firstChild);
+  const funken = erzeugeFunken(110).map((f) => {
+    const e = document.createElement('span');
+    e.className = 'kx-funke';
+    e.style.width = e.style.height = f.groesse.toFixed(2) + 'px';
+    const licht = document.createElement('span');
+    licht.className = 'kx-funke-licht' + (f.funkelt ? ' kx-funkeln' : '');
+    if (f.funkelt) licht.style.cssText = `--o:var(--kx-funken-deckkraft);animation-duration:${f.takt.toFixed(2)}s;animation-delay:-${f.versatz.toFixed(2)}s`;
+    e.appendChild(licht);
+    funkenEbene.appendChild(e);
+    return { f, e, ziel: [0, 0] as [number, number] };
+  });
+  /* Ziele über die ganze Fläche des ersten Bildschirms, gemessen von der Mitte des Rads */
+  const flaeche = (host.closest('section') as HTMLElement | null) ?? host.parentElement ?? host;
+  let funkenStand = -1;
+  const setzeZiele = () => {
+    const h = host.getBoundingClientRect(), fl = flaeche.getBoundingClientRect();
+    const cx = h.left + h.width / 2, cy = h.top + h.height / 2;
+    funken.forEach((k) => (k.ziel = [fl.left + k.f.u * fl.width - cx, fl.top + k.f.v * fl.height - cy]));
+    funkenStand = -1;
+  };
+  function zeichneFunken(p: number) {
+    const s = ausbreitung(p);
+    if (s === funkenStand) return; // nur während der Verwandlung bewegen
+    funkenStand = s;
+    for (const k of funken) {
+      const a = anteil(k.f, s);
+      const [x, y] = ort(k.f, a, [k.f.heimX * einheit, k.f.heimY * einheit], k.ziel);
+      k.e.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) translate(-50%, -50%)`;
+      k.e.style.opacity = (k.f.bleibt ? 1 : 0.3 + 0.7 * a).toFixed(3);
+    }
+  }
+
   /* Zeichenflächen-Einheit in Pixeln, damit die Zeichen zur Größe des Rads passen */
   let einheit = host.clientWidth / 940 || 1;
   const setzeEinheit = () => {
     einheit = host.clientWidth / 940 || 1;
     host.style.setProperty('--kx-einheit', einheit.toFixed(5) + 'px');
+    setzeZiele();
     if (letztes) zeichne(letztes);
   };
-  new ResizeObserver(setzeEinheit).observe(host);
+  const beobachter = new ResizeObserver(setzeEinheit);
+  beobachter.observe(host);
+  if (flaeche !== host) beobachter.observe(flaeche);
+  setzeZiele();
   const stelle = (e: HTMLElement, x: number, y: number, o: number) => {
     if (o <= 0.001) { if (e.style.visibility !== 'hidden') e.style.visibility = 'hidden'; return; }
     if (e.style.visibility) e.style.visibility = '';
@@ -238,6 +281,7 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
 
   function zeichne(l: Layout) {
     letztes = l;
+    zeichneFunken(l.p);
     const schraeg = (1 - l.K) / (1 - K_SCHRAEG); // 1 im Sonnensystem, 0 in der Radix
     tiefeHinten.setAttribute('stop-opacity', (1 - 0.75 * schraeg).toFixed(3));
 

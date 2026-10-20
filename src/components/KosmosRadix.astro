@@ -73,6 +73,7 @@ const { class: className, lang } = Astro.props;
     --kx-stern: #b8914a;
     --kx-stern-deckkraft: 0.45;
     --kx-sterne: inline; /* hell mit dezenten goldenen Sternen */
+    --kx-funken-deckkraft: 0.75;
     --kx-nebel3: transparent;
     --kx-schatten: #5a4a35;
     --kx-schleier: #f3e6c8;
@@ -97,6 +98,7 @@ const { class: className, lang } = Astro.props;
     --kx-stern: #eee7d7;
     --kx-stern-deckkraft: 1;
     --kx-sterne: inline;
+    --kx-funken-deckkraft: 0.9;
     --kx-schatten: #0a0f22;
     --kx-schleier: transparent;
     --kx-nebel1: #4a3560;
@@ -119,6 +121,7 @@ const { class: className, lang } = Astro.props;
       --kx-stern: #eee7d7;
       --kx-stern-deckkraft: 1;
       --kx-sterne: inline;
+      --kx-funken-deckkraft: 0.9;
       --kx-schatten: #0a0f22;
       --kx-schleier: transparent;
       --kx-nebel1: #4a3560;
@@ -143,6 +146,31 @@ const { class: className, lang } = Astro.props;
   .radix :global(.kx-ebene-ring) {
     transform-origin: 50% 50%;
     will-change: transform, opacity;
+  }
+  /* Hinausfliegende Sterne: hinter allem, auch hinter dem Text, über den ganzen ersten Bildschirm */
+  .radix :global(.kx-ebene-funken) {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+    z-index: -1;
+    pointer-events: none;
+  }
+  .radix :global(.kx-funke) {
+    position: absolute;
+    left: 0;
+    top: 0;
+    will-change: transform, opacity;
+  }
+  .radix :global(.kx-funke-licht) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: var(--kx-stern);
+    opacity: var(--kx-funken-deckkraft);
+    box-shadow: 0 0 3px var(--kx-stern);
   }
   /* Bewegliche Zeichen: eigene Elemente, die Grafikkarte verschiebt sie stufenlos */
   .radix :global(.kx-ebene-zeichen) {

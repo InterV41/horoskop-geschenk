@@ -42,6 +42,7 @@ export interface KoerperLayout { x: number; y: number; kugelR: number; kugelDeck
 export interface RingLayout { rx: number; ry: number; breite: number; deckkraft: number }
 export interface AspektLayout { a: RadixId; b: RadixId; x1: number; y1: number; x2: number; y2: number; breite: number; hart: boolean; deckkraft: number }
 export interface Layout {
+  p: number; // Verwandlungsgrad: 0 Sonnensystem, 1 Radix
   K: number;
   koerper: Record<RadixId | 'erde', KoerperLayout>;
   ringe: RingLayout[];
@@ -186,7 +187,7 @@ export function layout(tau: number, p: number, asc: number, richtungen?: Richtun
   const namenOben = Array.from({ length: 12 }, (_, i) => klemm(0.5 + Math.sin((scr(i * 30 + 15) * Math.PI) / 180) * 14));
 
   return {
-    K, koerper, ringe, aspekte,
+    p, K, koerper, ringe, aspekte,
     radix: fenster(p, F.radix),
     tierkreisDrehung: -rot,
     zeichen, namenOben,

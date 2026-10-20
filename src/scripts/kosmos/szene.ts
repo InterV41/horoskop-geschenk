@@ -246,8 +246,9 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
     const cx = h.left + h.width / 2, cy = h.top + h.height / 2;
     const rand: Rechteck = { links: fl.left - cx, oben: fl.top - cy, rechts: fl.right - cx, unten: fl.bottom - cy };
     const PUFFER = 16;
-    sperren = Array.from(flaeche.querySelectorAll<HTMLElement>('h1, h2, h3, p, a, button, li'))
-      .filter((e) => !host.contains(e) && e.textContent?.trim())
+    // Text und Formularfelder: Eingabefelder haben keinen eigenen Textinhalt, zählen aber immer
+    sperren = Array.from(flaeche.querySelectorAll<HTMLElement>('h1, h2, h3, p, a, button, li, label, input, textarea, select'))
+      .filter((e) => !host.contains(e) && (e.matches('input, textarea, select') || e.textContent?.trim()))
       .map((e) => e.getBoundingClientRect())
       .filter((r) => r.width > 0 && r.height > 0)
       .map((r) => ({ links: r.left - cx - PUFFER, oben: r.top - cy - PUFFER, rechts: r.right - cx + PUFFER, unten: r.bottom - cy + PUFFER }));

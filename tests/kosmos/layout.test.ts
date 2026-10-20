@@ -1,11 +1,25 @@
 import { describe, it, expect } from 'vitest';
-import { layout, mixWinkel, pt, aszendent, SPUR, R } from '../../src/scripts/kosmos/layout';
+import { layout, mixWinkel, pt, aszendent, zerlegeAmKreis, SPUR, R } from '../../src/scripts/kosmos/layout';
 import { schritt, phase, EINSTIEG, TEMPO_SONNENSYSTEM, TEMPO_RADIX } from '../../src/scripts/kosmos/zeitplan';
 import { laengen } from '../../src/scripts/kosmos/modell';
 
 const norm = (x: number) => ((x % 360) + 360) % 360;
 
 describe('layout', () => {
+  it('kürzt eine Aspektlinie durch die Mitte auf zwei Stücke, die am Mittenkreis enden', () => {
+    const st = zerlegeAmKreis(-212, 0, 212, 0, 92);
+    expect(st).toHaveLength(2);
+    expect(st[0][0]).toBeCloseTo(-212); expect(st[0][2]).toBeCloseTo(-92); expect(st[0][3]).toBeCloseTo(0);
+    expect(st[1][0]).toBeCloseTo(92); expect(st[1][2]).toBeCloseTo(212);
+    const schraeg = zerlegeAmKreis(...pt(212, 10), ...pt(212, 170), 92);
+    for (const [x1, y1, x2, y2] of schraeg) {
+      expect(Math.min(Math.hypot(x1, y1), Math.hypot(x2, y2))).toBeGreaterThanOrEqual(92 - 1e-9);
+    }
+  });
+  it('lässt eine Aspektlinie, die die Mitte nicht berührt, ganz', () => {
+    const [a, b] = [pt(212, 0), pt(212, 60)];
+    expect(zerlegeAmKreis(a[0], a[1], b[0], b[1], 92)).toEqual([[a[0], a[1], b[0], b[1]]]);
+  });
   it('mixWinkel nimmt den kurzen Weg über 0°', () => {
     expect(mixWinkel(350, 10, 0.5)).toBeCloseTo(0);
     expect(mixWinkel(10, 350, 0.25)).toBeCloseTo(5);
@@ -68,6 +82,15 @@ describe('layout', () => {
         }
       }
     }
+  });
+  it('der Mond zieht in der Radix spürbar im Uhrzeigersinn und bleibt im Tierkreis schneller als die Sonne', () => {
+    const winkel = (k: { x: number; y: number }) => norm((Math.atan2(-k.y, k.x) * 180) / Math.PI);
+    const a = layout(1, 1, aszendent(20)), b = layout(1 + TEMPO_RADIX, 1, aszendent(21));
+    const d = ((winkel(b.koerper.mond) - winkel(a.koerper.mond) + 540) % 360) - 180;
+    expect(d).toBeLessThan(-0.3);
+    expect(d).toBeGreaterThan(-0.45);
+    const l0 = laengen(1), l1 = laengen(1 + TEMPO_RADIX);
+    expect(norm(l1.mond - l0.mond)).toBeGreaterThan(norm(l1.sonne - l0.sonne));
   });
   it('kein Körper kippt mitten in der Verwandlung auf die andere Seite (30 Durchläufe)', () => {
     // Merkur sprang in der Prüfung um Durchlauf 17 und 27, wenn der kurze Weg die Richtung wechselte

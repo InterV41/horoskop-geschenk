@@ -28,10 +28,10 @@ export const PLANETEN: readonly Planet[] = [
   { id: 'pluto', P: 248, start: 226, bildRadius: 430, groesse: 3.6, farbe: '#a89c8a' },
 ];
 
-/* Mond: 1,6 Umläufe pro Erdumlauf, nicht astronomisch. Er bleibt der schnellste Körper im Tierkreis,
+/* Mond: 1,3 Umläufe pro Erdumlauf, nicht astronomisch. Er bleibt der schnellste Körper im Tierkreis,
    aber langsamer als die Drehung des Rads (1° pro Sekunde): so zieht er wie am echten Himmel
    mit allen anderen im Uhrzeigersinn, statt gegen die Drehung zu laufen. */
-export const MOND = { start: 0, umlaeufe: 1.6, bildRadius: 18, groesse: 2.5 };
+export const MOND = { start: 0, umlaeufe: 1.3, bildRadius: 18, groesse: 2.5 };
 
 const VS = '︎'; // Textdarstellung statt Emoji
 export const RADIX_REIHE: readonly { id: RadixId; glyph: string; gross?: boolean }[] = [

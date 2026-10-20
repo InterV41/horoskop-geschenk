@@ -64,6 +64,20 @@ export function mixWinkel(a: number, b: number, q: number): number {
   return norm(a + d * q);
 }
 
+/* Eine Strecke an einem Kreis um die Mitte kürzen: Was im Kreis liegt, fällt weg.
+   Ersetzt eine Maske, die der Browser sonst bei jedem Bild neu anwenden müsste. */
+export function zerlegeAmKreis(x1: number, y1: number, x2: number, y2: number, r: number): [number, number, number, number][] {
+  const dx = x2 - x1, dy = y2 - y1, len2 = dx * dx + dy * dy;
+  const t0 = len2 > 0 ? -(x1 * dx + y1 * dy) / len2 : 0; // nächster Punkt zur Mitte
+  const nx = x1 + dx * t0, ny = y1 + dy * t0, d2 = nx * nx + ny * ny;
+  if (d2 >= r * r || t0 <= 0 || t0 >= 1) return [[x1, y1, x2, y2]];
+  const h = Math.sqrt((r * r - d2) / len2), ta = t0 - h, tb = t0 + h;
+  return [
+    [x1, y1, x1 + dx * ta, y1 + dy * ta],
+    [x1 + dx * tb, y1 + dy * tb, x2, y2],
+  ];
+}
+
 export function aszendent(t: number): number {
   return ASC0 + ASC_V * (t + EINSTIEG);
 }

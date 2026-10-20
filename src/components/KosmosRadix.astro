@@ -126,11 +126,25 @@ const { class: className, lang } = Astro.props;
       --kx-hof2-o: 0.18;
     }
   }
+  /* Drei Ebenen übereinander: Himmel, Tierkreis-Ring, alles Bewegte */
   .radix :global(svg) {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     display: block;
     overflow: visible;
+  }
+  /* Der Ring dreht sich auf der Grafikkarte, ohne neu gezeichnet zu werden */
+  .radix :global(.kx-ebene-ring) {
+    transform-origin: 50% 50%;
+    will-change: transform, opacity;
+  }
+  /* Der Himmel läuft zum Rand weich ins Durchsichtige aus, keine Kante zur Seite */
+  .radix :global(.kx-ebene-himmel) {
+    will-change: transform;
+    -webkit-mask-image: radial-gradient(circle closest-side, #000 30%, rgb(0 0 0 / 0.35) 70%, transparent 100%);
+    mask-image: radial-gradient(circle closest-side, #000 30%, rgb(0 0 0 / 0.35) 70%, transparent 100%);
   }
   .radix :global(.kx-sterne) {
     display: var(--kx-sterne);

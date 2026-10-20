@@ -1,6 +1,8 @@
-// Szene: baut das SVG einmal auf und überträgt pro Bild ein Layout auf die Elemente.
+// Szene: baut die SVG-Ebenen einmal auf und überträgt pro Bild ein Layout auf die Elemente.
 // Farben kommen aus CSS-Variablen der Komponente, so folgt alles der Ansicht hell oder dunkel.
-import { R, pt, K_SCHRAEG, type Layout } from './layout';
+// Drei übereinanderliegende Ebenen, damit der Browser pro Bild möglichst wenig neu zeichnen muss:
+//   Himmel (Sterne, Nebel)  ·  Tierkreis-Ring (dreht als Ganzes auf der Grafikkarte)  ·  alles Bewegte
+import { R, pt, K_SCHRAEG, zerlegeAmKreis, type Layout } from './layout';
 import { PLANETEN, RADIX_REIHE, type RadixId } from './modell';
 import { texte, type Sprache } from './texte';
 
@@ -27,13 +29,19 @@ function txt(g: Element, cls: string, s: string) {
   t.textContent = s;
   return t;
 }
+/* Attribut nur schreiben, wenn es sich ändert: jeder Schreibzugriff kann Neuzeichnen auslösen */
+function setze(e: Element, name: string, wert: string) {
+  if (e.getAttribute(name) !== wert) e.setAttribute(name, wert);
+}
 /* Deckkraft setzen, bei 0 ganz ausblenden, damit der Browser nichts zeichnet */
 function sicht(e: Element, o: number) {
-  if (o <= 0.001) { e.setAttribute('visibility', 'hidden'); return false; }
-  e.removeAttribute('visibility');
-  e.setAttribute('opacity', o.toFixed(3));
+  if (o <= 0.001) { setze(e, 'visibility', 'hidden'); return false; }
+  if (e.hasAttribute('visibility')) e.removeAttribute('visibility');
+  setze(e, 'opacity', o.toFixed(3));
   return true;
 }
+/* Verschieben per transform: wird nicht auf ganze Pixel gerundet, langsame Bewegung bleibt weich */
+const schiebe = (e: Element, x: number, y: number) => e.setAttribute('transform', `translate(${f2(x)} ${f2(y)})`);
 /* Planetenfarbe Richtung Gold ziehen */
 function mischeGold(farbe: string, t: number) {
   const h = (s: string) => [1, 3, 5].map((i) => parseInt(s.slice(i, i + 2), 16));
@@ -49,26 +57,25 @@ export interface Szene {
 export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'): Szene {
   const id = (s: string) => `kx${nr}-${s}`;
   const tx = texte(sprache);
-  const svg = el('svg', { viewBox: '-470 -470 940 940', role: 'img', 'aria-label': tx.beschreibung }, host);
+  const ebene = (cls: string, attrs: Attrs = { 'aria-hidden': 'true' }) => el('svg', { viewBox: '-470 -470 940 940', class: cls, ...attrs }, host);
+  const himmelSvg = ebene('kx-ebene-himmel');
+  const ringSvg = ebene('kx-ebene-ring');
+  const svg = ebene('kx-ebene-haupt', { role: 'img', 'aria-label': tx.beschreibung });
   const defs = el('defs', {}, svg);
-  const verlauf = (gid: string, stops: [number, string, string?][], attrs: Attrs = {}) => {
-    const g = el('radialGradient', { id: id(gid), ...attrs }, defs);
+  const himmelDefs = el('defs', {}, himmelSvg);
+  const verlauf = (gid: string, stops: [number, string, string?][], attrs: Attrs = {}, ziel: Element = defs) => {
+    const g = el('radialGradient', { id: id(gid), ...attrs }, ziel);
     stops.forEach(([o, farbe, deck]) => el('stop', { offset: o, style: `stop-color:${farbe};stop-opacity:${deck ?? 1}` }, g));
     return `url(#${id(gid)})`;
   };
 
-  /* Scheibe unter der Radix */
-  const scheibe = el('circle', { r: R.out, style: 'fill:var(--rx-disk)' }, svg);
 
   /* Sterne in drei Tiefenebenen: klein und fern, mittel, groß und nah. Die Ebenen treiben
      unterschiedlich weit (über CSS), das gibt Tiefe. Feste Saat: bei jedem Besuch gleich. */
   let saat = 7;
   const rnd = () => (saat = (saat * 16807) % 2147483647) / 2147483647;
-  /* Himmel (Sterne und Nebel) läuft zum Rand weich ins Durchsichtige aus: keine Kante zur Seite */
-  const himmelMaske = el('mask', { id: id('himmel'), maskUnits: 'userSpaceOnUse', x: -470, y: -470, width: 940, height: 940 }, defs);
-  el('rect', { x: -470, y: -470, width: 940, height: 940, fill: verlauf('vig', [[0, '#fff'], [0.3, '#fff'], [0.7, '#5a5a5a'], [1, '#000']], { r: '50%' }) }, himmelMaske);
-  const himmel = el('g', { mask: `url(#${id('himmel')})` }, svg);
-  const sterne = el('g', { class: 'kx-sterne' }, himmel);
+  /* Himmel: eigene Ebene, läuft per CSS-Maske zum Rand weich ins Durchsichtige aus */
+  const sterne = el('g', { class: 'kx-sterne' }, himmelSvg);
   const EBENEN = [
     { n: 110, r0: 0.6, r1: 1.2, o0: 0.2, o1: 0.55 },
     { n: 60, r0: 1.1, r1: 1.9, o0: 0.35, o1: 0.75 },
@@ -87,11 +94,11 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
   });
 
   /* Nebel (dunkel) und warmer Schleier (hell): treiben und atmen langsam, über CSS */
-  const nebel = el('g', {}, himmel);
-  el('ellipse', { class: 'kx-nebel kx-nebel-a', cx: -157, cy: -90, rx: 425, ry: 200, fill: verlauf('n1', [[0, 'var(--kx-nebel1)', '0.5'], [1, 'var(--kx-nebel1)', '0']]) }, nebel);
-  el('ellipse', { class: 'kx-nebel kx-nebel-b', cx: 200, cy: 135, rx: 380, ry: 180, fill: verlauf('n2', [[0, 'var(--kx-nebel2)', '0.4'], [1, 'var(--kx-nebel2)', '0']]) }, nebel);
-  el('ellipse', { class: 'kx-nebel kx-nebel-c', cx: 40, cy: -200, rx: 320, ry: 220, fill: verlauf('n4', [[0, 'var(--kx-nebel3)', '0.45'], [1, 'var(--kx-nebel3)', '0']]) }, nebel);
-  el('ellipse', { class: 'kx-schleier', rx: 515, ry: 270, fill: verlauf('n3', [[0, 'var(--kx-schleier)', '0.7'], [1, 'var(--kx-schleier)', '0']]) }, nebel);
+  const nebel = el('g', {}, himmelSvg);
+  el('ellipse', { class: 'kx-nebel kx-nebel-a', cx: -157, cy: -90, rx: 425, ry: 200, fill: verlauf('n1', [[0, 'var(--kx-nebel1)', '0.5'], [1, 'var(--kx-nebel1)', '0']], {}, himmelDefs) }, nebel);
+  el('ellipse', { class: 'kx-nebel kx-nebel-b', cx: 200, cy: 135, rx: 380, ry: 180, fill: verlauf('n2', [[0, 'var(--kx-nebel2)', '0.4'], [1, 'var(--kx-nebel2)', '0']], {}, himmelDefs) }, nebel);
+  el('ellipse', { class: 'kx-nebel kx-nebel-c', cx: 40, cy: -200, rx: 320, ry: 220, fill: verlauf('n4', [[0, 'var(--kx-nebel3)', '0.45'], [1, 'var(--kx-nebel3)', '0']], {}, himmelDefs) }, nebel);
+  el('ellipse', { class: 'kx-schleier', rx: 515, ry: 270, fill: verlauf('n3', [[0, 'var(--kx-schleier)', '0.7'], [1, 'var(--kx-schleier)', '0']], {}, himmelDefs) }, nebel);
 
   /* Bahnen, die zu den Ringen der Radix werden. Tiefe: hinten (oben) zart, vorne kräftig,
      in der Draufsicht gleichmäßig wie die Ringe der Radix. */
@@ -118,10 +125,15 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
   const hof = el('circle', { fill: verlauf('hof', [[0, 'var(--kx-hof)', 'var(--kx-hof-o)'], [0.35, 'var(--kx-hof2)', 'var(--kx-hof2-o)'], [1, 'var(--kx-hof2)', '0']]) }, svg);
   const kern = el('circle', { fill: verlauf('kern', [[0, '#fffbea'], [0.55, '#f6d27a'], [1, '#d99a3a']]) }, svg);
 
+  /* Tierkreis-Ring: eigene Ebene mit Scheibe, Gradskala, Grenzen und Namen. Sie dreht sich als
+     Ganzes per CSS, ihr Inhalt muss dafür nicht neu gezeichnet werden. */
+  const ringDefs = el('defs', {}, ringSvg);
+  el('circle', { r: R.out, style: 'fill:var(--rx-disk)' }, ringSvg);
+  const zodiac = el('g', {}, ringSvg);
+  const BAND_MID = (R.out + R.band) / 2;
+
   /* Radix: alles, was erst mit der Verwandlung erscheint */
   const radix = el('g', {}, svg);
-  const BAND_MID = (R.out + R.band) / 2;
-  const zodiac = el('g', {}, radix);
   for (let k = 0; k < 360; k++) {
     const major = k % 10 === 0, mid = k % 5 === 0;
     line(zodiac, R.band, k, R.band - (major ? 16 : mid ? 10 : 5), k, major ? 0.7 : 0.45, major ? {} : { opacity: 0.7 });
@@ -131,8 +143,8 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
     const m = i * 30 + 15, off = 15 * 0.34;
     const rt = BAND_MID - off, rb = BAND_MID + off;
     // oberer Bogen im Uhrzeigersinn, unterer dagegen: so steht die Schrift immer lesbar
-    el('path', { id: id('nt' + i), d: 'M' + fp(pt(rt, m + 15)) + ' A' + rt + ' ' + rt + ' 0 0 1 ' + fp(pt(rt, m - 15)) }, defs);
-    el('path', { id: id('nb' + i), d: 'M' + fp(pt(rb, m - 15)) + ' A' + rb + ' ' + rb + ' 0 0 0 ' + fp(pt(rb, m + 15)) }, defs);
+    el('path', { id: id('nt' + i), d: 'M' + fp(pt(rt, m + 15)) + ' A' + rt + ' ' + rt + ' 0 0 1 ' + fp(pt(rt, m - 15)) }, ringDefs);
+    el('path', { id: id('nb' + i), d: 'M' + fp(pt(rb, m - 15)) + ' A' + rb + ' ' + rb + ' 0 0 0 ' + fp(pt(rb, m + 15)) }, ringDefs);
     const mk = (pid: string) => {
       const t = el('text', { class: 'rx-name' }, zodiac);
       const tp = el('textPath', { href: '#' + pid, startOffset: '50%' }, t);
@@ -143,7 +155,7 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
     return { top: mk(id('nt' + i)), bot: mk(id('nb' + i)) };
   });
   const ZEICHEN = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'];
-  const zeichen = ZEICHEN.map((z) => txt(radix, 'rx-glyph rx-zeichen', z + VS));
+  const zeichen = ZEICHEN.map((z) => { const t = txt(radix, 'rx-glyph rx-zeichen', z + VS); t.setAttribute('x', '0'); t.setAttribute('y', '0'); return t; });
 
   /* Häuser: stehen fest, Aszendent links */
   const CUSPS = [0, 31, 60, 88, 119, 151, 180, 211, 240, 268, 299, 331];
@@ -167,13 +179,10 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
     t.setAttribute('y', f2(p[1]));
   });
 
-  /* Aspektlinien enden am Rand der Mitte: Maske statt deckender Fläche, die Mitte bleibt durchsichtig */
-  const maske = el('mask', { id: id('mitte') }, defs);
-  el('rect', { x: -470, y: -470, width: 940, height: 940, fill: '#fff' }, maske);
-  el('circle', { r: R.hub, fill: '#000' }, maske);
-  const aspGroup = el('g', { mask: `url(#${id('mitte')})` }, svg);
-  const aspLinien: Element[] = [];
-  for (let i = 0; i < (RADIX_REIHE.length * (RADIX_REIHE.length - 1)) / 2; i++) aspLinien.push(el('line', { stroke: C }, aspGroup));
+  /* Aspektlinien enden am Rand der Mitte: je Paar zwei Stücke, geometrisch gekürzt, die Mitte bleibt durchsichtig */
+  const aspGroup = el('g', {}, svg);
+  const aspLinien: [Element, Element][] = [];
+  for (let i = 0; i < (RADIX_REIHE.length * (RADIX_REIHE.length - 1)) / 2; i++) aspLinien.push([el('line', { stroke: C }, aspGroup), el('line', { stroke: C }, aspGroup)]);
 
   const vorne = el('g', {}, svg);
   for (const k of Object.values(kugeln)) vorne.appendChild(k.g), (k.hinten = false);
@@ -182,9 +191,10 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
   const oben = el('g', {}, svg);
   const glyphen = RADIX_REIHE.map((r) => ({
     id: r.id,
-    text: txt(oben, 'rx-glyph rx-planet' + (r.gross ? ' gross' : ''), r.glyph),
+    text: el('text', { class: 'rx-glyph rx-planet' + (r.gross ? ' gross' : ''), x: 0, y: 0 }, oben),
     punkt: el('circle', { r: 3, fill: C }, oben),
   }));
+  glyphen.forEach((g, i) => (g.text.textContent = RADIX_REIHE[i].glyph));
 
   let strich = 1;
   let letztes: Layout | null = null;
@@ -221,29 +231,39 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
       kern.setAttribute('cx', f2(so.x)); kern.setAttribute('cy', f2(so.y)); kern.setAttribute('r', f2(so.kugelR));
     }
 
-    if (sicht(radix, l.radix)) {
-      sicht(scheibe, l.radix);
-      zodiac.setAttribute('transform', `rotate(${l.tierkreisDrehung.toFixed(3)})`);
+    /* Tierkreis-Ring: nur die Ebene drehen und überblenden, ihr Inhalt bleibt unberührt */
+    const ringStil = (ringSvg as SVGSVGElement).style;
+    if (l.radix <= 0.001) { if (ringStil.visibility !== 'hidden') ringStil.visibility = 'hidden'; }
+    else {
+      if (ringStil.visibility) ringStil.visibility = '';
+      ringStil.opacity = l.radix.toFixed(3);
+      ringStil.transform = `rotate(${l.tierkreisDrehung.toFixed(3)}deg)`;
       namen.forEach((n, i) => {
-        n.top.setAttribute('opacity', l.namenOben[i].toFixed(3));
-        n.bot.setAttribute('opacity', (1 - l.namenOben[i]).toFixed(3));
+        setze(n.top, 'opacity', l.namenOben[i].toFixed(2));
+        setze(n.bot, 'opacity', (1 - l.namenOben[i]).toFixed(2));
       });
-      zeichen.forEach((z, i) => { z.setAttribute('x', f2(l.zeichen[i].x)); z.setAttribute('y', f2(l.zeichen[i].y)); });
-    } else sicht(scheibe, 0);
+    }
+    if (sicht(radix, l.radix)) zeichen.forEach((z, i) => schiebe(z, l.zeichen[i].x, l.zeichen[i].y));
 
     l.aspekte.forEach((a, i) => {
-      const e = aspLinien[i];
-      if (!sicht(e, a.deckkraft)) return;
-      e.setAttribute('x1', f2(a.x1)); e.setAttribute('y1', f2(a.y1));
-      e.setAttribute('x2', f2(a.x2)); e.setAttribute('y2', f2(a.y2));
-      e.setAttribute('stroke-width', f2(a.breite * strich));
-      if (a.hart) e.setAttribute('stroke-dasharray', '5 3.5');
-      else e.removeAttribute('stroke-dasharray');
+      const [e1, e2] = aspLinien[i];
+      if (!sicht(e1, a.deckkraft)) { sicht(e2, 0); return; }
+      const st = zerlegeAmKreis(a.x1, a.y1, a.x2, a.y2, R.hub);
+      [e1, e2].forEach((e, k) => {
+        const s = st[k];
+        if (!s) { sicht(e, 0); return; }
+        sicht(e, a.deckkraft);
+        e.setAttribute('x1', f2(s[0])); e.setAttribute('y1', f2(s[1]));
+        e.setAttribute('x2', f2(s[2])); e.setAttribute('y2', f2(s[3]));
+        setze(e, 'stroke-width', f2(a.breite * strich));
+        if (a.hart) setze(e, 'stroke-dasharray', '5 3.5');
+        else if (e.hasAttribute('stroke-dasharray')) e.removeAttribute('stroke-dasharray');
+      });
     });
 
     glyphen.forEach((g) => {
       const kl = l.koerper[g.id];
-      if (sicht(g.text, kl.zeichenDeckkraft)) { g.text.setAttribute('x', f2(kl.x)); g.text.setAttribute('y', f2(kl.y)); }
+      if (sicht(g.text, kl.zeichenDeckkraft)) schiebe(g.text, kl.x, kl.y);
       if (sicht(g.punkt, kl.zeichenDeckkraft)) { g.punkt.setAttribute('cx', f2(kl.punktX)); g.punkt.setAttribute('cy', f2(kl.punktY)); }
     });
   }
@@ -251,7 +271,7 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
   /* Linienstärke je Ansicht: Faktor aus --rx-dick */
   function setzeStrich(faktor: number) {
     strich = faktor;
-    svg.querySelectorAll('[data-w]').forEach((e) => e.setAttribute('stroke-width', (Number(e.getAttribute('data-w')) * strich).toFixed(2)));
+    host.querySelectorAll('[data-w]').forEach((e) => e.setAttribute('stroke-width', (Number(e.getAttribute('data-w')) * strich).toFixed(2)));
     if (letztes) zeichne(letztes);
   }
 

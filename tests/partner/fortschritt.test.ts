@@ -3,13 +3,19 @@ import { fortschritt, type Kasten } from '../../src/scripts/partner/fortschritt'
 
 const H = 800;
 const kasten = (top: number, height: number): Kasten => ({ top, bottom: top + height, height });
-/* Paar 300 hoch bei y, Doppelradix 600 hoch 1400 darunter; viel Seite übrig */
-const bei = (y: number, rest = 5000) => fortschritt(kasten(y, 300), kasten(y + 1400, 600), H, rest);
+/* Paar 300 hoch, Doppelradix 600 hoch 1400 darunter; y = Oberkante des Paars im Fenster.
+   Auf der Seite steht das Paar bei 800, gescrollt ist also 800 - y. */
+const bei = (y: number, rest = 5000, oben = 800) => fortschritt(kasten(y, 300), kasten(y + 1400, 600), H, rest, oben - y);
 
 describe('fortschritt', () => {
   it('ist 0, solange das Paar ganz zu sehen ist', () => {
-    expect(bei(100)).toBe(0);
+    expect(bei(500)).toBe(0);
     expect(bei(380)).toBe(0); // Unterkante 680 = 0,85 · 800
+  });
+
+  it('ist ganz oben auf der Seite 0, auch wenn das Paar weit oben steht', () => {
+    expect(bei(100, 5000, 100)).toBe(0);
+    expect(bei(60, 5000, 100)).toBeGreaterThan(0);
   });
 
   it('ist 1, sobald die Mitte der Doppelradix die Fenstermitte erreicht', () => {

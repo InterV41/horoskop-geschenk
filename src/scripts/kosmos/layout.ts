@@ -6,6 +6,8 @@ import { PLANETEN, MOND, RADIX_REIHE, laengen, sonnenWinkel, mondWinkel, aspekte
 /* Maße wie im Radix-Rad der PDFs */
 export const R = { out: 418, band: 370, ring: 332, asp: 212, hub: 92 };
 export const SPUR = 292; // feste Bahn der Planetenzeichen
+/* Häuserspitzen ab dem Aszendenten, Grad. Die Häuser stehen fest, der Tierkreis dreht. */
+export const CUSPS = [0, 31, 60, 88, 119, 151, 180, 211, 240, 268, 299, 331];
 export const ASC0 = 160;
 export const ASC_V = 1; // Grad pro Sekunde
 export const K_SCHRAEG = 0.42; // Neigung der Bahnen im Sonnensystem

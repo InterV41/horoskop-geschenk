@@ -2,7 +2,7 @@
 // Farben kommen aus CSS-Variablen der Komponente, so folgt alles der Ansicht hell oder dunkel.
 // Drei übereinanderliegende Ebenen, damit der Browser pro Bild möglichst wenig neu zeichnen muss:
 //   Himmel (Sterne, Nebel)  ·  Tierkreis-Ring (dreht als Ganzes auf der Grafikkarte)  ·  alles Bewegte
-import { R, pt, K_SCHRAEG, zerlegeAmKreis, type Layout } from './layout';
+import { R, pt, K_SCHRAEG, CUSPS, zerlegeAmKreis, type Layout } from './layout';
 import { PLANETEN, RADIX_REIHE, type RadixId } from './modell';
 import { texte, type Sprache } from './texte';
 import { erzeugeFunken, ausbreitung, anteil, ort, strahlZiel, textFreiheit, sichtbarkeit, type Rechteck } from './funken';
@@ -166,7 +166,6 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
   const ZEICHEN = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'];
 
   /* Häuser: stehen fest, Aszendent links */
-  const CUSPS = [0, 31, 60, 88, 119, 151, 180, 211, 240, 268, 299, 331];
   CUSPS.forEach((o, i) => {
     const axis = i % 3 === 0;
     line(radix, R.ring, 180 + o, R.hub, 180 + o, axis ? 1.1 : 0.6, axis ? {} : { 'stroke-dasharray': '3 4' });

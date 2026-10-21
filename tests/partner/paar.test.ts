@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { synastrie, entzerre, TAU_A, TAU_B } from '../../src/scripts/partner/paar';
+import { synastrie, radialVersatz, TAU_A, TAU_B } from '../../src/scripts/partner/paar';
 import { laengen, RADIX_REIHE, norm, abst, type RadixId } from '../../src/scripts/kosmos/modell';
 
 /* Alle Planeten weit weg von 0°, damit nur die Sonne Aspekte bildet */
@@ -47,17 +47,33 @@ describe('synastrie', () => {
   });
 });
 
-describe('entzerre', () => {
-  it('hält Mindestabstand, verschiebt höchstens 6°, auch über 0° hinweg', () => {
-    const orig = [358, 1, 3, 200, 204];
-    const w = entzerre(orig);
-    for (let i = 0; i < w.length; i++) {
-      expect(abst(w[i], orig[i])).toBeLessThanOrEqual(6.0001);
-      for (let j = i + 1; j < w.length; j++) expect(abst(w[i], w[j])).toBeGreaterThanOrEqual(6.999);
+describe('radialVersatz', () => {
+  const abstand = (w1: number, r1: number, w2: number, r2: number) => {
+    const [x1, y1] = [r1 * Math.cos((w1 * Math.PI) / 180), r1 * Math.sin((w1 * Math.PI) / 180)];
+    const [x2, y2] = [r2 * Math.cos((w2 * Math.PI) / 180), r2 * Math.sin((w2 * Math.PI) / 180)];
+    return Math.hypot(x1 - x2, y1 - y2);
+  };
+
+  it('trennt zwei Zeichen auf gleichem Grad um mindestens die Zeichengröße', () => {
+    const v = radialVersatz([100, 100, 250], 250, 28);
+    expect(abstand(100, 250 + v[0], 100, 250 + v[1])).toBeGreaterThanOrEqual(27.99);
+    expect(v[2]).toBe(0);
+  });
+
+  it('ändert sich stetig, wenn zwei Planeten aneinander vorbeiziehen', () => {
+    let alt = radialVersatz([95, 100], 250, 28);
+    for (let w = 95; w <= 105; w += 0.05) {
+      const v = radialVersatz([w, 100], 250, 28);
+      expect(Math.abs(v[0] - alt[0])).toBeLessThan(1.5);
+      expect(Math.abs(v[1] - alt[1])).toBeLessThan(1.5);
+      expect(abstand(w, 250 + v[0], 100, 250 + v[1])).toBeGreaterThanOrEqual(27.99);
+      alt = v;
     }
   });
 
-  it('lässt weit auseinanderliegende Winkel unverändert', () => {
-    expect(entzerre([10, 100, 250])).toEqual([10, 100, 250]);
+  it('lässt weit auseinanderliegende Zeichen auf ihrer Spur, auch über 0° hinweg', () => {
+    expect(radialVersatz([10, 100, 250], 250, 28)).toEqual([0, 0, 0]);
+    const v = radialVersatz([359, 1], 250, 28);
+    expect(v[0]).not.toBe(0);
   });
 });

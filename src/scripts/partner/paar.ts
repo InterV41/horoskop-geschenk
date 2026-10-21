@@ -1,6 +1,6 @@
 // Paar: zwei erfundene Geburtsbilder A und B und die Aspekte zwischen ihnen (Synastrie).
 // Fasst das DOM nicht an, damit es sich prüfen lässt.
-import { RADIX_REIHE, abst, norm, type RadixId } from '../kosmos/modell';
+import { RADIX_REIHE, abst, type RadixId } from '../kosmos/modell';
 
 /* Modellzeit, bei der A und B beginnen. Erfunden, so gewählt, dass zwischen beiden
    weiche und harte Aspekte deutlich zu sehen sind. */
@@ -44,33 +44,21 @@ export function synastrie(la: Record<RadixId, number>, lb: Record<RadixId, numbe
   return aus;
 }
 
-/* Zeichen im selben Ring auseinanderschieben, damit sie sich nicht überdecken.
-   Nur die Anzeige wandert, höchstens 6° vom echten Grad. */
-const MAX_VERSATZ = 6;
-export function entzerre(winkel: number[], mindest = 7): number[] {
-  const n = winkel.length;
-  if (n < 2) return [...winkel];
-  const reihe = winkel.map((w, i) => ({ i, w: norm(w) })).sort((x, y) => x.w - y.w);
-  // ungewickelt arbeiten: Versätze statt Winkel, so gibt es keinen Sprung bei 0°
-  const versatz = new Array(n).fill(0);
-  for (let runde = 0; runde < 60; runde++) {
-    let bewegt = false;
-    for (let k = 0; k < n; k++) {
-      const j = (k + 1) % n;
-      const wk = reihe[k].w + versatz[k];
-      let wj = reihe[j].w + versatz[j];
-      if (j === 0) wj += 360;
-      const luecke = wj - wk;
-      if (luecke < mindest) {
-        const schub = (mindest - luecke) / 2 + 1e-4;
-        versatz[k] = Math.max(-MAX_VERSATZ, versatz[k] - schub);
-        versatz[j] = Math.min(MAX_VERSATZ, versatz[j] + schub);
-        bewegt = true;
-      }
+/* Zeichen im selben Ring, die sich überdecken würden, nach innen und außen staffeln.
+   Seitliches Schieben springt, sobald zwei Planeten aneinander vorbeiziehen; der Versatz
+   nach innen und außen hängt stetig vom Abstand ab. Der Planet mit der kleineren Nummer geht
+   nach innen. Ergebnis: Radiusversatz je Planet in Radix-Einheiten. */
+export function radialVersatz(winkel: number[], r: number, groesse = 28): number[] {
+  const aus = new Array(winkel.length).fill(0);
+  for (let i = 0; i < winkel.length; i++)
+    for (let j = i + 1; j < winkel.length; j++) {
+      const s = Math.sin((abst(winkel[i], winkel[j]) * Math.PI) / 360);
+      // Abstand der Punkte auf r - o und r + o: 4o² + (r² - o²) · 4s² ≥ groesse²
+      const noetig = groesse * groesse - 4 * r * r * s * s;
+      if (noetig <= 0) continue;
+      const o = Math.sqrt(noetig / (4 * (1 - s * s)));
+      aus[i] -= o;
+      aus[j] += o;
     }
-    if (!bewegt) break;
-  }
-  const aus = new Array(n);
-  reihe.forEach((r, k) => (aus[r.i] = versatz[k] === 0 ? winkel[r.i] : norm(r.w + versatz[k])));
   return aus;
 }

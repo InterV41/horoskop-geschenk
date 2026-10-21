@@ -40,4 +40,19 @@ describe('fortschritt', () => {
   it('erreicht 1 auch, wenn die Seite zu kurz ist', () => {
     expect(bei(-500, 0)).toBe(1);
   });
+  it('ist auf einer Seite ohne Scrollweg sofort 1', () => {
+    expect(fortschritt(kasten(100, 300), kasten(500, 600), H, -5, 0)).toBe(1);
+  });
+
+  it('endet stetig am Seitenende, wenn die Doppelradix die Mitte nie erreicht', () => {
+    // Doppelmitte erreicht die Fenstermitte erst bei scrollY 2500, die Seite endet bei 1000
+    const bei2 = (scrollY: number) => fortschritt(kasten(800 - scrollY, 300), kasten(2200 - scrollY, 600), H, 1000 - scrollY, scrollY);
+    expect(bei2(1000)).toBe(1);
+    expect(bei2(700)).toBeGreaterThan(0.3);
+    expect(bei2(700)).toBeLessThan(1);
+  });
+
+  it('zählt einen Rest unter einem Pixel als Seitenende', () => {
+    expect(bei(-500, 0.3)).toBe(1);
+  });
 });

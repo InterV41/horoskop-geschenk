@@ -4,7 +4,7 @@ import { R, pt, zerlegeAmKreis } from '../kosmos/layout';
 import { RADIX_REIHE, norm, type RadixId } from '../kosmos/modell';
 import { texte, type Sprache } from '../kosmos/texte';
 import { C, VS, ZEICHEN, el, f2, setze, sicht, baueTierkreis, baueHaeuser } from '../kosmos/tierkreis';
-import { synastrie, entzerre } from './paar';
+import { synastrie, radialVersatz } from './paar';
 import { SPUR_INNEN, SPUR_AUSSEN, R_TRENN } from './sand';
 
 export interface Doppel {
@@ -59,6 +59,7 @@ export function baueDoppel(host: HTMLElement, nr: number, sprache: Sprache, besc
     e.style.transform = `translate3d(${(x * einheit).toFixed(3)}px, ${(y * einheit).toFixed(3)}px, 0) translate(-50%, -50%)`;
   };
   let strich = 1;
+  let aspekteSichtbar = true;
   let letztes: Parameters<Doppel['zeichne']> | null = null;
 
   function zeichne(la: Record<RadixId, number>, lb: Record<RadixId, number>, asc: number, aspektAnteil: number) {
@@ -75,15 +76,18 @@ export function baueDoppel(host: HTMLElement, nr: number, sprache: Sprache, besc
     zeichen.forEach((z, i) => stelle(z, ...pt(R.band - 25, scr(i * 30 + 15))));
 
     const wa = RADIX_REIHE.map((r) => scr(la[r.id])), wb = RADIX_REIHE.map((r) => scr(lb[r.id]));
-    const za = entzerre(wa), zb = entzerre(wb);
+    const va = radialVersatz(wa, SPUR_INNEN), vb = radialVersatz(wb, SPUR_AUSSEN);
     RADIX_REIHE.forEach((_, i) => {
-      stelle(glyphA[i], ...pt(SPUR_INNEN, za[i]));
-      stelle(glyphB[i], ...pt(SPUR_AUSSEN, zb[i]));
+      stelle(glyphA[i], ...pt(SPUR_INNEN + va[i], wa[i]));
+      stelle(glyphB[i], ...pt(SPUR_AUSSEN + vb[i], wb[i]));
       const pa = pt(R.asp + 2, wa[i]), pb = pt(R.asp + 2, wb[i]);
       punktA[i].setAttribute('cx', f2(pa[0])); punktA[i].setAttribute('cy', f2(pa[1]));
       punktB[i].setAttribute('cx', f2(pb[0])); punktB[i].setAttribute('cy', f2(pb[1]));
     });
 
+    // vor dem Einblenden nichts rechnen; einmal noch, um ausgeblendete Linien zu verstecken
+    if (aspektAnteil <= 0 && !aspekteSichtbar) return;
+    aspekteSichtbar = aspektAnteil > 0;
     const gefunden = new Map(synastrie(la, lb).map((a) => [a.a + '|' + a.b, a]));
     let n = 0;
     for (let i = 0; i < RADIX_REIHE.length; i++)

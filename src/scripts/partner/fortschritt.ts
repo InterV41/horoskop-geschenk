@@ -10,9 +10,12 @@ export interface Kasten {
    ersten Scrollen. Ende: die Mitte der Doppelradix erreicht die Fenstermitte, oder die Seite ist zu Ende.
    Gerechnet wird in Scrollstrecke, damit das Bild nur von der Position abhängt. */
 export function fortschritt(paar: Kasten, doppel: Kasten, fensterHoehe: number, seitenRest: number, scrollY: number): number {
-  const beginn = Math.max(0, scrollY + paar.bottom - fensterHoehe * 0.85);
-  const ende = scrollY + doppel.top + doppel.height / 2 - fensterHoehe / 2;
+  // Reste unter einem Pixel (hohe Pixeldichte) zählen schon als Seitenende
+  const seitenEnde = scrollY + Math.max(0, seitenRest - 1);
+  const ende = Math.min(scrollY + doppel.top + doppel.height / 2 - fensterHoehe / 2, seitenEnde);
+  let beginn = Math.max(0, scrollY + paar.bottom - fensterHoehe * 0.85);
+  if (ende - beginn < 1) beginn = 0; // Seite zu kurz: über den ganzen Scrollweg verteilen
+  if (scrollY >= ende) return 1;
   if (scrollY <= beginn) return 0;
-  if (seitenRest <= 0 || scrollY >= ende) return 1;
-  return Math.min(1, (scrollY - beginn) / Math.max(1, ende - beginn));
+  return (scrollY - beginn) / (ende - beginn);
 }

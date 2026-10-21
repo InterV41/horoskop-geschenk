@@ -72,10 +72,7 @@ const t = texte(sprache(langFromPath(Astro.url.pathname))).partner;
     const koerner = erzeugeKoerner(innerWidth >= 640 ? 2400 : 1200, 11,
       RADIX_REIHE.map((r) => laengen(TAU_A)[r.id]), RADIX_REIHE.map((r) => laengen(TAU_B)[r.id]));
     const aus = { x: 0, y: 0, o: 0 };
-    const rad = (h: HTMLElement, asc: number): Rad => {
-      const r = h.getBoundingClientRect();
-      return { cx: r.left + r.width / 2, cy: r.top + r.height / 2, massstab: r.width / 940, asc };
-    };
+    const rad = (r: DOMRect, asc: number): Rad => ({ cx: r.left + r.width / 2, cy: r.top + r.height / 2, massstab: r.width / 940, asc });
 
     /* Leinwand in Fenstergröße, höchstens doppelte Pixeldichte */
     let dpr = 1, sandLeer = true;
@@ -83,6 +80,9 @@ const t = texte(sprache(langFromPath(Astro.url.pathname))).partner;
       dpr = Math.min(devicePixelRatio || 1, 2);
       leinwand.width = Math.round(innerWidth * dpr);
       leinwand.height = Math.round(innerHeight * dpr);
+      // in Pixeln wie innerHeight: 100vh ist auf dem Handy höher, solange die Browserleiste steht
+      leinwand.style.width = innerWidth + 'px';
+      leinwand.style.height = innerHeight + 'px';
       sandLeer = true;
     };
 
@@ -114,16 +114,17 @@ const t = texte(sprache(langFromPath(Astro.url.pathname))).partner;
       ctx.globalAlpha = 1;
     }
 
+    let umriss = '';
     function bild() {
+      // erst alles messen, dann schreiben: sonst rechnet der Browser das Layout mehrmals pro Bild
+      const rPaar = paar.getBoundingClientRect(), rA = hostA.getBoundingClientRect(), rB = hostB.getBoundingClientRect(), rD = hostD.getBoundingClientRect();
+      const seitenRest = document.documentElement.scrollHeight - scrollY - innerHeight;
       const ascA = ASC0 + ASC_V * t, ascB = ascA + ASC_VERSATZ_B;
       szA.zeichne(layout(tauA, 1, ascA));
       szB.zeichne(layout(tauB, 1, ascB));
 
       let s = 1;
-      if (!ruhig) {
-        const el = document.documentElement;
-        s = glatt(fortschritt(paar.getBoundingClientRect(), hostD.getBoundingClientRect(), innerHeight, el.scrollHeight - scrollY - innerHeight, scrollY));
-      }
+      if (!ruhig) s = glatt(fortschritt(rPaar, rD, innerHeight, seitenRest, scrollY));
       doppel.zeichne(laengen(tauA), laengen(tauB), ascA, teil(s, 0.9, 1));
       if (ruhig) return;
 
@@ -135,10 +136,10 @@ const t = texte(sprache(langFromPath(Astro.url.pathname))).partner;
       const d = maskeDoppel(s);
       const innen = (1 - d) * 96;
       maske(hostD, d >= 1 ? null : `radial-gradient(circle closest-side, transparent ${(innen - 4).toFixed(1)}%, #000 ${(innen + 4).toFixed(1)}%)`);
-      wurzel.style.setProperty('--partner-umriss', (0.12 * (1 - d)).toFixed(3));
+      const u = (0.08 * (1 - d)).toFixed(3);
+      if (u !== umriss) wurzel.style.setProperty('--partner-umriss', (umriss = u));
 
-      if (s > 0 && s < 1) zeichneSand(s, { a: rad(hostA, ascA), b: rad(hostB, ascB), doppel: rad(hostD, ascA) });
-      else if (!sandLeer) zeichneSand(s, { a: rad(hostA, ascA), b: rad(hostB, ascB), doppel: rad(hostD, ascA) });
+      if ((s > 0 && s < 1) || !sandLeer) zeichneSand(s, { a: rad(rA, ascA), b: rad(rB, ascB), doppel: rad(rD, ascA) });
     }
 
     setzeStrich();
@@ -180,7 +181,7 @@ const t = texte(sprache(langFromPath(Astro.url.pathname))).partner;
 
 <style>
   .partner {
-    --partner-umriss: 0.12;
+    --partner-umriss: 0.08;
     position: relative;
     display: grid;
     justify-items: center;

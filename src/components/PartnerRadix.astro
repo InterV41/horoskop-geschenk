@@ -1,0 +1,335 @@
+---
+// Partnerschaftshoroskop: zwei Radixe nebeneinander zerfallen beim Runterscrollen zu Sand,
+// der darunter die Doppelradix bildet. Zurückscrollen spult zurück. Erfundene Konstellationen.
+// Slot "paar-nach": Inhalt zwischen Paar und Doppelradix; Standard-Slot: nach der Doppelradix.
+import '@fontsource/stix-two-text/400.css';
+import '@fontsource/stix-two-text/500.css';
+import '@fontsource/noto-sans-symbols/400.css';
+import '@fontsource/noto-sans-symbols-2/400.css';
+import { langFromPath } from '../i18n';
+import { texte, sprache } from '../scripts/kosmos/texte';
+
+const t = texte(sprache(langFromPath(Astro.url.pathname))).partner;
+---
+
+<div class="partner" data-partner>
+  <div class="partner__paar" role="img" aria-label={t.paar}>
+    <figure class="partner__person">
+      <div class="radix" data-partner-rad="a"></div>
+      <figcaption aria-hidden="true">{t.a}</figcaption>
+    </figure>
+    <figure class="partner__person">
+      <div class="radix" data-partner-rad="b"></div>
+      <figcaption aria-hidden="true">{t.b}</figcaption>
+    </figure>
+  </div>
+  <div class="partner__text"><slot name="paar-nach" /></div>
+  <div class="partner__doppel">
+    <div class="radix" data-partner-doppel></div>
+  </div>
+  <div class="partner__text"><slot /></div>
+  <canvas class="partner__sand" aria-hidden="true"></canvas>
+</div>
+
+<script>
+  import { baueSzene } from '../scripts/kosmos/szene';
+  import { layout, ASC0, ASC_V } from '../scripts/kosmos/layout';
+  import { TEMPO_RADIX, glatt, teil } from '../scripts/kosmos/zeitplan';
+  import { laengen, RADIX_REIHE } from '../scripts/kosmos/modell';
+  import { sprache, texte } from '../scripts/kosmos/texte';
+  import { TAU_A, TAU_B, ASC_VERSATZ_B } from '../scripts/partner/paar';
+  import { fortschritt } from '../scripts/partner/fortschritt';
+  import { erzeugeKoerner, kornOrt, maskeRad, maskeDoppel, type Geometrie, type Rad } from '../scripts/partner/sand';
+  import { baueDoppel } from '../scripts/partner/doppel';
+
+  document.querySelectorAll<HTMLElement>('[data-partner]').forEach((wurzel) => {
+    const hostA = wurzel.querySelector<HTMLElement>('[data-partner-rad="a"]')!;
+    const hostB = wurzel.querySelector<HTMLElement>('[data-partner-rad="b"]')!;
+    const hostD = wurzel.querySelector<HTMLElement>('[data-partner-doppel]')!;
+    const paar = wurzel.querySelector<HTMLElement>('.partner__paar')!;
+    const leinwand = wurzel.querySelector<HTMLCanvasElement>('.partner__sand')!;
+    const ctx = leinwand.getContext('2d')!;
+    const sp = sprache(document.documentElement.lang);
+
+    const szA = baueSzene(hostA, 101, sp, { nurRadix: true });
+    const szB = baueSzene(hostB, 102, sp, { nurRadix: true });
+    // A und B beschreibt das Paar als Ganzes
+    for (const h of [hostA, hostB]) h.querySelectorAll('svg').forEach((s) => (s.removeAttribute('role'), s.setAttribute('aria-hidden', 'true')));
+    const doppel = baueDoppel(hostD, 103, sp, texte(sp).partner.doppel);
+
+    let farbe = '', schein = false;
+    const setzeStrich = () => {
+      const stil = getComputedStyle(hostD);
+      const f = parseFloat(stil.getPropertyValue('--rx-dick')) || 1;
+      szA.setzeStrich(f); szB.setzeStrich(f); doppel.setzeStrich(f);
+      farbe = stil.color;
+      schein = stil.getPropertyValue('--partner-schein').trim() === '1';
+    };
+
+    const ruhig = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let t = 0, tauA = TAU_A, tauB = TAU_B;
+
+    const koerner = erzeugeKoerner(innerWidth >= 640 ? 2400 : 1200, 11,
+      RADIX_REIHE.map((r) => laengen(TAU_A)[r.id]), RADIX_REIHE.map((r) => laengen(TAU_B)[r.id]));
+    const aus = { x: 0, y: 0, o: 0 };
+    const rad = (h: HTMLElement, asc: number): Rad => {
+      const r = h.getBoundingClientRect();
+      return { cx: r.left + r.width / 2, cy: r.top + r.height / 2, massstab: r.width / 940, asc };
+    };
+
+    /* Leinwand in Fenstergröße, höchstens doppelte Pixeldichte */
+    let dpr = 1, sandLeer = true;
+    const groesse = () => {
+      dpr = Math.min(devicePixelRatio || 1, 2);
+      leinwand.width = Math.round(innerWidth * dpr);
+      leinwand.height = Math.round(innerHeight * dpr);
+      sandLeer = true;
+    };
+
+    const maske = (e: HTMLElement, wert: string | null) => {
+      const v = wert ?? '';
+      if (e.style.maskImage === v) return;
+      e.style.maskImage = v;
+      e.style.webkitMaskImage = v;
+    };
+
+    function zeichneSand(s: number, g: Geometrie) {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, leinwand.width, leinwand.height);
+      sandLeer = true;
+      if (s <= 0 || s >= 1) return;
+      sandLeer = false;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = farbe;
+      for (const k of koerner) {
+        kornOrt(k, s, g, aus);
+        if (aus.o <= 0.01 || aus.y < -20 || aus.y > innerHeight + 20) continue;
+        if (schein) {
+          ctx.globalAlpha = aus.o * 0.22;
+          ctx.beginPath(); ctx.arc(aus.x, aus.y, k.groesse * 2.4, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.globalAlpha = aus.o;
+        ctx.fillRect(aus.x - k.groesse / 2, aus.y - k.groesse / 2, k.groesse, k.groesse);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function bild() {
+      const ascA = ASC0 + ASC_V * t, ascB = ascA + ASC_VERSATZ_B;
+      szA.zeichne(layout(tauA, 1, ascA));
+      szB.zeichne(layout(tauB, 1, ascB));
+
+      let s = 1;
+      if (!ruhig) {
+        const el = document.documentElement;
+        s = glatt(fortschritt(paar.getBoundingClientRect(), hostD.getBoundingClientRect(), innerHeight, el.scrollHeight - scrollY - innerHeight, scrollY));
+      }
+      doppel.zeichne(laengen(tauA), laengen(tauB), ascA, teil(s, 0.9, 1));
+      if (ruhig) return;
+
+      /* Zerfall von oben nach unten, Aufbau von außen nach innen */
+      const m = maskeRad(s);
+      const kante = m * 112 - 6;
+      const oben = m <= 0 ? null : `linear-gradient(to bottom, transparent ${(kante - 6).toFixed(1)}%, #000 ${(kante + 6).toFixed(1)}%)`;
+      maske(hostA, oben); maske(hostB, oben);
+      const d = maskeDoppel(s);
+      const innen = (1 - d) * 96;
+      maske(hostD, d >= 1 ? null : `radial-gradient(circle closest-side, transparent ${(innen - 4).toFixed(1)}%, #000 ${(innen + 4).toFixed(1)}%)`);
+      wurzel.style.setProperty('--partner-umriss', (0.12 * (1 - d)).toFixed(3));
+
+      if (s > 0 && s < 1) zeichneSand(s, { a: rad(hostA, ascA), b: rad(hostB, ascB), doppel: rad(hostD, ascA) });
+      else if (!sandLeer) zeichneSand(s, { a: rad(hostA, ascA), b: rad(hostB, ascB), doppel: rad(hostD, ascA) });
+    }
+
+    setzeStrich();
+    document.addEventListener('themechange', setzeStrich);
+    if (ruhig) { bild(); return; }
+
+    groesse();
+    addEventListener('resize', groesse);
+
+    /* Läuft nur, solange ein Rad sichtbar und der Tab im Vordergrund ist */
+    let last: number | null = null, raf = 0, laeuft = false;
+    const sichtbar = new Set<Element>();
+    const loop = (ts: number) => {
+      if (last !== null) {
+        const dt = Math.min(Math.max((ts - last) / 1000, 0), 0.1);
+        t += dt;
+        tauA += TEMPO_RADIX * dt;
+        tauB += TEMPO_RADIX * dt;
+      }
+      last = ts;
+      bild();
+      raf = requestAnimationFrame(loop);
+    };
+    const pruefe = () => {
+      const soll = sichtbar.size > 0 && document.visibilityState === 'visible';
+      if (soll && !laeuft) { laeuft = true; last = null; raf = requestAnimationFrame(loop); }
+      if (!soll && laeuft) { laeuft = false; cancelAnimationFrame(raf); bild(); }
+    };
+    bild();
+    document.addEventListener('visibilitychange', pruefe);
+    /* Sand liegt zwischen den Rädern: weiterlaufen, solange der Bereich vom Paar bis zur Doppelradix im Bild ist */
+    const io = new IntersectionObserver((es) => {
+      for (const e of es) e.isIntersecting ? sichtbar.add(e.target) : sichtbar.delete(e.target);
+      pruefe();
+    });
+    io.observe(wurzel);
+  });
+</script>
+
+<style>
+  .partner {
+    --partner-umriss: 0.12;
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: var(--s-24);
+    width: 100%;
+    min-width: 0;
+    /* der gedrehte Tierkreisring ragt mit seinen Ecken über den Rand: nicht seitlich scrollen lassen */
+    overflow-x: clip;
+  }
+  .partner__paar {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(16px, 5vw, 64px);
+    width: min(100%, 860px);
+    margin-block: var(--s-16);
+  }
+  .partner__person {
+    margin: 0;
+    min-width: 0;
+    display: grid;
+    gap: var(--s-16);
+    justify-items: center;
+  }
+  .partner__person figcaption {
+    color: var(--rx-text, var(--gold));
+    font-size: var(--t-9);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .partner__text {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    justify-items: center;
+    gap: var(--s-16);
+  }
+  .partner__doppel {
+    position: relative;
+    width: min(100%, 70%, 80vh);
+    margin-block: var(--s-32, 32px);
+  }
+  /* zarter Umriss, solange die Doppelradix noch nicht da ist */
+  .partner__doppel::before {
+    content: '';
+    position: absolute;
+    inset: calc(50% - 44.5%);
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+    opacity: var(--partner-umriss);
+    pointer-events: none;
+  }
+  @media (max-width: 639px) {
+    .partner__paar { gap: 12px; }
+    .partner__doppel { width: 100%; }
+  }
+  /* Sand: über den Rädern, unter dem Text */
+  .partner__sand {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 0;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .partner__sand { display: none; }
+  }
+
+  /* Farben und Aufbau wie die Kosmos-Radix, ohne Himmel */
+  .radix {
+    --rx-gold: #86662a;
+    --rx-text: #5e4413;
+    --rx-dick: 1.6;
+    --rx-schnitt: 500;
+    --rx-disk: #fefcf8;
+    --kx-nabe: #ffffff;
+    --rx-partner: #4f6a86;
+    --partner-schein: 0;
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    color: var(--rx-gold);
+  }
+  :global(:root[data-theme='dark']) .radix {
+    --rx-gold: #e0c27e;
+    --rx-text: #e0c27e;
+    --rx-dick: 1;
+    --rx-schnitt: 400;
+    --rx-disk: rgb(7 16 42 / 0.5);
+    --kx-nabe: transparent;
+    --rx-partner: #9fc3d9;
+    --partner-schein: 1;
+  }
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-theme='light'])) .radix {
+      --rx-gold: #e0c27e;
+      --rx-text: #e0c27e;
+      --rx-dick: 1;
+      --rx-schnitt: 400;
+      --rx-disk: rgb(7 16 42 / 0.5);
+      --kx-nabe: transparent;
+      --rx-partner: #9fc3d9;
+      --partner-schein: 1;
+    }
+  }
+  .radix :global(svg) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    overflow: visible;
+  }
+  .radix :global(.kx-ebene-ring) {
+    transform-origin: 50% 50%;
+    will-change: transform;
+  }
+  .radix :global(.kx-ebene-zeichen) {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .radix :global(.kx-zeichen) {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    line-height: 1;
+    white-space: nowrap;
+    color: var(--rx-text);
+    font-weight: var(--rx-schnitt);
+    font-family: 'Noto Sans Symbols', 'Noto Sans Symbols 2', 'STIX Two Text', 'Segoe UI Symbol', 'Apple Symbols', serif;
+    user-select: none;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+  }
+  .radix :global(.kx-zeichen.rx-zeichen) { font-size: calc(24 * var(--kx-einheit, 1px)); }
+  .radix :global(.kx-zeichen.rx-planet) { font-size: calc(29 * var(--kx-einheit, 1px)); }
+  .radix :global(.kx-zeichen.rx-planet.gross) { font-size: calc(32 * var(--kx-einheit, 1px)); }
+  .radix :global(.kx-zeichen.rx-planet.klein) { font-size: calc(26 * var(--kx-einheit, 1px)); }
+  .radix :global(.kx-zeichen.rx-partner) { color: var(--rx-partner); }
+  .radix :global(text) {
+    fill: var(--rx-text);
+    font-weight: var(--rx-schnitt);
+    text-anchor: middle;
+    dominant-baseline: central;
+    user-select: none;
+    font-family: 'STIX Two Text', 'Noto Sans Symbols', 'Noto Sans Symbols 2', 'Segoe UI Symbol', 'Apple Symbols', serif;
+  }
+  .radix :global(.rx-name) { font-size: 16px; letter-spacing: 4.2px; dominant-baseline: auto; }
+  .radix :global(.rx-achse) { font-size: 13px; letter-spacing: 2.4px; }
+  .radix :global(.rx-haus) { font-size: 17px; }
+</style>

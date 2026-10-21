@@ -16,19 +16,23 @@ export interface SynAspekt {
   hart: boolean;
 }
 
-/* Wie in der Einzelradix, dazu die Konjunktion: zwischen zwei Menschen zählt sie besonders */
+/* Wie in der Einzelradix, dazu die Konjunktion: zwischen zwei Menschen zählt sie besonders.
+   Orbs enger als in der Einzelradix, wie in der Synastrie üblich. */
 const ASPEKTE = [
-  { deg: 0, orb: 8, hart: false },
-  { deg: 60, orb: 5, hart: false },
-  { deg: 90, orb: 8, hart: true },
-  { deg: 120, orb: 8, hart: false },
-  { deg: 180, orb: 8, hart: true },
+  { deg: 0, orb: 6, hart: false },
+  { deg: 60, orb: 4, hart: false },
+  { deg: 90, orb: 5, hart: true },
+  { deg: 120, orb: 5, hart: false },
+  { deg: 180, orb: 6, hart: true },
 ];
+/* Uranus, Neptun und Pluto stehen bei Gleichaltrigen fast gleich: Kontakte untereinander sagen nichts über das Paar */
+const GENERATION = new Set<RadixId>(['uranus', 'neptun', 'pluto']);
 
 export function synastrie(la: Record<RadixId, number>, lb: Record<RadixId, number>): SynAspekt[] {
   const aus: SynAspekt[] = [];
   for (const { id: a } of RADIX_REIHE)
     for (const { id: b } of RADIX_REIHE) {
+      if (GENERATION.has(a) && GENERATION.has(b)) continue;
       const d = abst(la[a], lb[b]);
       let best: (typeof ASPEKTE)[number] | null = null, s = 0;
       for (const as of ASPEKTE) {

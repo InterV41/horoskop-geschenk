@@ -27,8 +27,17 @@ describe('synastrie', () => {
   });
 
   it('beachtet die Orbs', () => {
-    expect(nurSonne(ruhig(10), ruhig(10 + 65.5))).toBeUndefined();
-    expect(nurSonne(ruhig(10), ruhig(10 + 97.9))?.hart).toBe(true);
+    expect(nurSonne(ruhig(10), ruhig(10 + 64.5))).toBeUndefined();
+    expect(nurSonne(ruhig(10), ruhig(10 + 94.9))?.hart).toBe(true);
+    expect(nurSonne(ruhig(10), ruhig(10 + 95.5))).toBeUndefined();
+  });
+
+  it('lässt Kontakte zwischen Uranus, Neptun und Pluto beider Partner weg', () => {
+    const l = ruhig(0); // alle Planeten auf 0°
+    const s = synastrie(l, l);
+    expect(s.some((x) => x.a === 'uranus' && x.b === 'neptun')).toBe(false);
+    expect(s.some((x) => x.a === 'pluto' && x.b === 'pluto')).toBe(false);
+    expect(s.some((x) => x.a === 'sonne' && x.b === 'pluto')).toBe(true);
   });
 
   it('die erfundenen Konstellationen haben weiche und harte Aspekte zwischen A und B', () => {

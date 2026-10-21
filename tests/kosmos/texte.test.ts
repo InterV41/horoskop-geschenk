@@ -20,4 +20,16 @@ describe('texte', () => {
     expect(texte('de').beschreibung).toBe('Animation: Das Sonnensystem verwandelt sich in ein Geburtshoroskop-Rad');
     expect(texte('en').beschreibung).toBe('Animation: the solar system transforms into a birth chart wheel');
   });
+  it('beschriftet die Partner-Radix', () => {
+    expect(texte('de').partner).toEqual({
+      a: 'Partner A', b: 'Partner B',
+      paar: 'Zwei Geburtsbilder nebeneinander, Partner A und Partner B',
+      doppel: 'Zwei Geburtsbilder, die sich zu einer Doppelradix verbinden',
+    });
+    expect(texte('en').partner).toEqual({
+      a: 'Partner A', b: 'Partner B',
+      paar: 'Two birth charts side by side, partner A and partner B',
+      doppel: 'Two birth charts merging into a combined synastry chart',
+    });
+  });
 });

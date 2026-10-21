@@ -66,7 +66,9 @@ const t = texte(sprache(langFromPath(Astro.url.pathname))).partner;
       schein = stil.getPropertyValue('--partner-schein').trim() === '1';
     };
 
-    const ruhig = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    /* Bei "Bewegung reduzieren" stehen alle drei Räder fertig still, ohne Sand. Gilt auch, wenn es umgestellt wird. */
+    const bewegung = matchMedia('(prefers-reduced-motion: reduce)');
+    let ruhig = bewegung.matches;
     let t = 0, tauA = TAU_A, tauB = TAU_B;
 
     const koerner = erzeugeKoerner(innerWidth >= 640 ? 2400 : 1200, 11,
@@ -84,6 +86,25 @@ const t = texte(sprache(langFromPath(Astro.url.pathname))).partner;
       leinwand.style.width = innerWidth + 'px';
       leinwand.style.height = innerHeight + 'px';
       sandLeer = true;
+    };
+
+    /* Zerfallskante: weich und wellig wie Sand. Ein hohes Maskenbild (dreimal so hoch wie das Rad),
+       oben durchsichtig, unten deckend, die Kante mit Rauschen verbogen. Geschoben wird nur die Lage. */
+    const RAND = `url("data:image/svg+xml,${encodeURIComponent(
+      "<svg xmlns='http://www.w3.org/2000/svg' width='200' height='600' viewBox='0 0 200 600' preserveAspectRatio='none'>" +
+      "<filter id='f' x='-0.2' y='-0.1' width='1.4' height='1.2'><feTurbulence type='fractalNoise' baseFrequency='0.04 0.025' numOctaves='2' seed='4'/>" +
+      "<feDisplacementMap in='SourceGraphic' scale='46' xChannelSelector='R' yChannelSelector='G'/></filter>" +
+      "<linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0.47' stop-opacity='0'/><stop offset='0.53'/></linearGradient>" +
+      "<rect x='-40' y='-40' width='280' height='680' fill='url(#g)' filter='url(#f)'/></svg>",
+    )}")`;
+    const zerfall = (e: HTMLElement, m: number) => {
+      if (m <= 0) { maske(e, null); return; }
+      maske(e, RAND);
+      // Kante läuft von 35 % über dem Rad bis 35 % unter das Rad: Lage im Maskenbild 0,925 → 0,075
+      const lage = (92.5 - 85 * m).toFixed(2) + '%';
+      e.style.maskSize = e.style.webkitMaskSize = '100% 300%';
+      e.style.maskRepeat = e.style.webkitMaskRepeat = 'no-repeat';
+      e.style.maskPosition = e.style.webkitMaskPosition = '0 ' + lage;
     };
 
     const maske = (e: HTMLElement, wert: string | null) => {
@@ -126,13 +147,10 @@ const t = texte(sprache(langFromPath(Astro.url.pathname))).partner;
       let s = 1;
       if (!ruhig) s = glatt(fortschritt(rPaar, rD, innerHeight, seitenRest, scrollY));
       doppel.zeichne(laengen(tauA), laengen(tauB), ascA, teil(s, 0.9, 1));
-      if (ruhig) return;
 
       /* Zerfall von oben nach unten, Aufbau von außen nach innen */
-      const m = maskeRad(s);
-      const kante = m * 112 - 6;
-      const oben = m <= 0 ? null : `linear-gradient(to bottom, transparent ${(kante - 6).toFixed(1)}%, #000 ${(kante + 6).toFixed(1)}%)`;
-      maske(hostA, oben); maske(hostB, oben);
+      const m = ruhig ? 0 : maskeRad(s); // ruhig: A und B ganz, Doppelradix fertig
+      zerfall(hostA, m); zerfall(hostB, m);
       const d = maskeDoppel(s);
       const innen = (1 - d) * 96;
       maske(hostD, d >= 1 ? null : `radial-gradient(circle closest-side, transparent ${(innen - 4).toFixed(1)}%, #000 ${(innen + 4).toFixed(1)}%)`);
@@ -144,8 +162,6 @@ const t = texte(sprache(langFromPath(Astro.url.pathname))).partner;
 
     setzeStrich();
     document.addEventListener('themechange', setzeStrich);
-    if (ruhig) { bild(); return; }
-
     groesse();
     addEventListener('resize', groesse);
 
@@ -164,12 +180,13 @@ const t = texte(sprache(langFromPath(Astro.url.pathname))).partner;
       raf = requestAnimationFrame(loop);
     };
     const pruefe = () => {
-      const soll = sichtbar.size > 0 && document.visibilityState === 'visible';
+      const soll = !ruhig && sichtbar.size > 0 && document.visibilityState === 'visible';
       if (soll && !laeuft) { laeuft = true; last = null; raf = requestAnimationFrame(loop); }
       if (!soll && laeuft) { laeuft = false; cancelAnimationFrame(raf); bild(); }
     };
     bild();
     document.addEventListener('visibilitychange', pruefe);
+    bewegung.addEventListener('change', () => { ruhig = bewegung.matches; pruefe(); bild(); });
     /* Sand liegt zwischen den Rädern: weiterlaufen, solange der Bereich vom Paar bis zur Doppelradix im Bild ist */
     const io = new IntersectionObserver((es) => {
       for (const e of es) e.isIntersecting ? sichtbar.add(e.target) : sichtbar.delete(e.target);

@@ -167,6 +167,7 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
       .map((r) => ({ links: r.left - cx - PUFFER, oben: r.top - cy - PUFFER, rechts: r.right - cx + PUFFER, unten: r.bottom - cy + PUFFER }));
   };
   const setzeZiele = () => {
+    if (nurRadix) return; // ohne Funken nichts zu messen
     const h = host.getBoundingClientRect(), fl = flaeche.getBoundingClientRect();
     const cx = h.left + h.width / 2, cy = h.top + h.height / 2;
     const rand: Rechteck = { links: fl.left - cx, oben: fl.top - cy, rechts: fl.right - cx, unten: fl.bottom - cy };

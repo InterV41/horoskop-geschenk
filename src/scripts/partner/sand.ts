@@ -11,10 +11,10 @@ export const R_TRENN = 278;
 
 /* Zeitfenster in s */
 const LOS_ENDE = 0.25; // bis hier hat sich jedes Korn gelöst: früh, solange die Räder noch im Bild sind
-const LAND_BEGINN = LANDEN_AB, LAND_ENDE = 0.88;
-/* Die Doppelradix entsteht aus Sand: gelandete Körner bleiben liegen. Ab ZEICHNUNG blendet die
-   scharfe Zeichnung ein, ab SAND_AUS verblasst der Sand darunter. */
-const ZEICHNUNG = 0.9, ZEICHNUNG_VOLL = 0.98, SAND_AUS = 0.94;
+const LAND_BEGINN = LANDEN_AB, LAND_ENDE = 0.75;
+/* Die Doppelradix entsteht aus Sand: gelandete Körner bleiben liegen. Ab ZEICHNUNG zieht sich die
+   scharfe Zeichnung Ring für Ring nach, ab SAND_AUS verblasst der Sand darunter. */
+const ZEICHNUNG = 0.78, ZEICHNUNG_VOLL = 0.98, SAND_AUS = 0.85;
 const STREU_LOS = 0.05, STREU_LAND = 0.05;
 
 export interface Korn {
@@ -152,7 +152,7 @@ export function maskeRad(s: number): number {
   return Math.min(1, Math.max(0, s / LOS_ENDE));
 }
 
-/* Deckkraft der scharfen Doppelradix: erst wenn aller Sand liegt, löst sie das Sandbild ab */
+/* Wie weit sich die scharfe Doppelradix nachgezogen hat: erst wenn aller Sand liegt */
 export function maskeDoppel(s: number): number {
   return Math.min(1, Math.max(0, (s - ZEICHNUNG) / (ZEICHNUNG_VOLL - ZEICHNUNG)));
 }

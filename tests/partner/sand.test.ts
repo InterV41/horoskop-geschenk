@@ -29,7 +29,7 @@ describe('sand', () => {
       expect(los).toBeGreaterThanOrEqual(0);
       expect(los).toBeLessThanOrEqual(0.25); // zerfallen, solange die Räder noch im Bild sind
       expect(k.an).toBeGreaterThanOrEqual(0.45);
-      expect(k.an).toBeLessThanOrEqual(0.88); // alle gelandet, bevor die Zeichnung übernimmt
+      expect(k.an).toBeLessThanOrEqual(0.75); // alle gelandet, bevor die Zeichnung übernimmt
       expect(los).toBeLessThan(k.an);
     }
   });
@@ -64,10 +64,10 @@ describe('sand', () => {
 
   it('bleibt nach der Landung liegen: die Doppelradix entsteht aus Sand', () => {
     for (const k of koerner.slice(0, 200)) {
-      const o = ort(k, 0.9);
+      const o = ort(k, 0.78);
       expect(o.o).toBeCloseTo(k.deckkraft, 6);
-      const e = ort(k, 0.9);
-      const z = ort(k, 0.92);
+      const e = ort(k, 0.78);
+      const z = ort(k, 0.82);
       expect(Math.hypot(e.x - z.x, e.y - z.y)).toBeLessThan(1e-6); // ruht am Ziel
     }
   });
@@ -80,8 +80,8 @@ describe('sand', () => {
   it('Masken laufen monoton von 0 bis 1', () => {
     expect(maskeRad(0)).toBe(0);
     expect(maskeRad(0.25)).toBe(1);
-    expect(maskeDoppel(0.9)).toBe(0); // vorher nur Sand
-    expect(maskeDoppel(1)).toBe(1);
+    expect(maskeDoppel(0.78)).toBe(0); // vorher nur Sand
+    expect(maskeDoppel(0.98)).toBe(1); // bis hier hat sich die Zeichnung ganz nachgezogen
     for (let s = 0; s < 1; s += 0.01) {
       expect(maskeRad(s + 0.01)).toBeGreaterThanOrEqual(maskeRad(s));
       expect(maskeDoppel(s + 0.01)).toBeGreaterThanOrEqual(maskeDoppel(s));

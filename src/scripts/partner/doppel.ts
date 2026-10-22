@@ -10,6 +10,9 @@ import { SPUR_INNEN, SPUR_AUSSEN, R_TRENN } from './sand';
 export interface Doppel {
   zeichne(la: Record<RadixId, number>, lb: Record<RadixId, number>, asc: number, aspektAnteil: number): void;
   setzeStrich(faktor: number): void;
+  /* Nachzeichnen der scharfen Radix, 0 = nichts, 1 = fertig: erst die Kreise von außen nach innen wie mit
+     der Feder, dann Tierkreis, Häuser und Beschriftung, dann die Planetenzeichen */
+  einzeichnen(q: number): void;
 }
 
 const klemm = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
@@ -56,6 +59,44 @@ export function baueDoppel(host: HTMLElement, nr: number, sprache: Sprache, besc
   const zeichen = ZEICHEN.map((z) => span('rx-zeichen', z + VS));
   const glyphA = RADIX_REIHE.map((r) => span('rx-planet klein', r.glyph));
   const glyphB = RADIX_REIHE.map((r) => span('rx-planet klein rx-partner', r.glyph));
+
+  /* Was beim Nachzeichnen wann erscheint, als Fenster in q. Durchgezogene Striche zeichnen sich
+     per stroke-dashoffset, gestrichelte und Schrift blenden ein. */
+  type Schritt = { e: SVGElement; laenge: number; von: number; bis: number; zeichnen: boolean };
+  const schritte: Schritt[] = [];
+  let kreisNr = 0, linieNr = 0;
+  radix.querySelectorAll<SVGElement>('circle, line, text').forEach((e) => {
+    if (e.tagName === 'text') { schritte.push({ e, laenge: 0, von: 0.4, bis: 0.65, zeichnen: false }); return; }
+    const zeichnen = !e.hasAttribute('stroke-dasharray');
+    if (e.tagName === 'circle') {
+      const von = 0.04 * kreisNr++;
+      schritte.push({ e, laenge: 2 * Math.PI * Number(e.getAttribute('r')), von, bis: von + 0.35, zeichnen });
+    } else {
+      const g = (a: string) => Number(e.getAttribute(a));
+      const von = 0.3 + 0.008 * linieNr++;
+      schritte.push({ e, laenge: Math.hypot(g('x2') - g('x1'), g('y2') - g('y1')), von, bis: von + 0.2, zeichnen });
+    }
+  });
+  let stand = -1;
+  function einzeichnen(q: number) {
+    if (q === stand) return;
+    stand = q;
+    const fertig = q >= 1;
+    for (const st of schritte) {
+      const t = fertig ? 1 : klemm((q - st.von) / (st.bis - st.von));
+      const stil = st.e.style;
+      if (fertig) { stil.strokeDasharray = ''; stil.strokeDashoffset = ''; stil.opacity = ''; continue; }
+      if (st.zeichnen) {
+        stil.strokeDasharray = st.laenge.toFixed(1);
+        stil.strokeDashoffset = (st.laenge * (1 - t)).toFixed(1);
+        stil.opacity = t > 0 ? '' : '0';
+      } else stil.opacity = t.toFixed(3);
+    }
+    (ringSvg as SVGSVGElement).style.opacity = fertig ? '' : klemm((q - 0.15) / 0.35).toFixed(3);
+    const z = fertig ? '' : klemm((q - 0.45) / 0.3).toFixed(3);
+    zeichenEbene.style.opacity = z;
+    (punkte as SVGElement).style.opacity = z;
+  }
 
   let einheit = host.clientWidth / 940 || 1;
   const stelle = (e: HTMLElement, x: number, y: number) => {
@@ -128,5 +169,5 @@ export function baueDoppel(host: HTMLElement, nr: number, sprache: Sprache, besc
     if (letztes) zeichne(...letztes);
   }
 
-  return { zeichne, setzeStrich };
+  return { zeichne, setzeStrich, einzeichnen };
 }

@@ -156,15 +156,14 @@ const t = texte(sprache(langFromPath(Astro.url.pathname))).partner;
       let s = 1;
       // linear: jedes Korn bewegt sich ohnehin weich, so beginnt der Zerfall gleich mit dem Scrollen
       if (!ruhig) s = fortschritt({ paar: rPaar, bahn: rBahn, doppelHoehe: hDoppel, stickyTop, fensterHoehe: innerHeight, seitenRest, scrollY });
-      doppel.zeichne(laengen(tauA), laengen(tauB), ascA, teil(s, 0.9, 1));
+      // die Doppelradix entsteht aus Sand; danach zieht sich die scharfe Zeichnung nach, zuletzt die Aspekte
+      const d = maskeDoppel(s);
+      doppel.zeichne(laengen(tauA), laengen(tauB), ascA, teil(d, 0.75, 1));
+      doppel.einzeichnen(d);
 
       /* Zerfall von oben nach unten */
       const m = ruhig ? 0 : maskeRad(s); // ruhig: A und B ganz, Doppelradix fertig
       zerfall(hostA, m); zerfall(hostB, m);
-      // die Doppelradix entsteht aus Sand; die scharfe Zeichnung löst das Sandbild erst am Ende ab
-      const d = maskeDoppel(s);
-      const deck = d >= 1 ? '' : d.toFixed(3);
-      if (hostD.style.opacity !== deck) hostD.style.opacity = deck;
       const u = (0.08 * (1 - d)).toFixed(3);
       if (u !== umriss) wurzel.style.setProperty('--partner-umriss', (umriss = u));
 
@@ -280,7 +279,7 @@ const t = texte(sprache(langFromPath(Astro.url.pathname))).partner;
   }
   /* so lange bleibt sie stehen, während der Sand landet */
   .partner__halt {
-    height: 100vh;
+    height: 140vh;
   }
   .partner__rad {
     position: relative;

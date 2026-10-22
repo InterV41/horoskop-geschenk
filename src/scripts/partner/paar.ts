@@ -5,7 +5,7 @@ import { RADIX_REIHE, abst, type RadixId } from '../kosmos/modell';
 /* Modellzeit, bei der A und B beginnen. Erfunden, so gewählt, dass zwischen beiden
    weiche und harte Aspekte deutlich zu sehen sind. */
 export const TAU_A = 0.37;
-export const TAU_B = 2.81;
+export const TAU_B = 0.5; // gut ein Jahr nach A: Uranus, Neptun und Pluto fast gleich
 /* Aszendent von B gegenüber A, Grad */
 export const ASC_VERSATZ_B = 95;
 

@@ -2,6 +2,7 @@
 // Rein rechnend, ohne DOM. Jedes Bild hängt nur vom Fortschritt s und der Lage der Räder ab.
 import { R, SPUR, CUSPS, pt } from '../kosmos/layout';
 import { glatt } from '../kosmos/zeitplan';
+import { LANDEN_AB } from './fortschritt';
 
 /* Spuren der Doppelradix: A innen, B außen, dazwischen ein feiner Kreis */
 export const SPUR_INNEN = 250;
@@ -9,9 +10,12 @@ export const SPUR_AUSSEN = 306;
 export const R_TRENN = 278;
 
 /* Zeitfenster in s */
-const LOS_ENDE = 0.45; // bis hier hat sich jedes Korn gelöst
-const LAND_BEGINN = 0.45, LAND_ENDE = 0.95;
-const STREU_LOS = 0.08, STREU_LAND = 0.05;
+const LOS_ENDE = 0.25; // bis hier hat sich jedes Korn gelöst: früh, solange die Räder noch im Bild sind
+const LAND_BEGINN = LANDEN_AB, LAND_ENDE = 0.88;
+/* Die Doppelradix entsteht aus Sand: gelandete Körner bleiben liegen. Ab ZEICHNUNG blendet die
+   scharfe Zeichnung ein, ab SAND_AUS verblasst der Sand darunter. */
+const ZEICHNUNG = 0.9, ZEICHNUNG_VOLL = 0.98, SAND_AUS = 0.94;
+const STREU_LOS = 0.05, STREU_LAND = 0.05;
 
 export interface Korn {
   von: 'A' | 'B';
@@ -101,8 +105,8 @@ export function erzeugeKoerner(n: number, saat: number, planetenA: number[], pla
       streu: z() * 2 - 1,
       an: Math.min(LAND_ENDE, Math.max(LAND_BEGINN + 0.02, an)),
       wind: z() * 2 - 1,
-      groesse: 0.8 + z() * 1,
-      deckkraft: 0.5 + z() * 0.45,
+      groesse: 0.6 + z() * 0.6, // feiner Sand, aber sichtbar
+      deckkraft: 0.6 + z() * 0.4,
       zitter: z() * Math.PI * 2,
     });
   }
@@ -139,7 +143,7 @@ export function kornOrt(k: Korn, s: number, g: Geometrie, aus: { x: number; y: n
   aus.x = u * u * p0.x + 2 * u * q * mx + q * q * p2.x + zitter;
   aus.y = u * u * p0.y + 2 * u * q * my + q * q * p2.y;
   const rein = Math.min(1, Math.max(0, (s - los) / 0.03));
-  const raus = Math.min(1, Math.max(0, (s - k.an) / 0.05));
+  const raus = Math.min(1, Math.max(0, (s - SAND_AUS) / (1 - SAND_AUS)));
   aus.o = k.deckkraft * rein * (1 - raus);
 }
 
@@ -148,7 +152,7 @@ export function maskeRad(s: number): number {
   return Math.min(1, Math.max(0, s / LOS_ENDE));
 }
 
-/* Wie weit die Doppelradix von außen nach innen aufgebaut ist */
+/* Deckkraft der scharfen Doppelradix: erst wenn aller Sand liegt, löst sie das Sandbild ab */
 export function maskeDoppel(s: number): number {
-  return Math.min(1, Math.max(0, (s - LAND_BEGINN) / (LAND_ENDE - LAND_BEGINN)));
+  return Math.min(1, Math.max(0, (s - ZEICHNUNG) / (ZEICHNUNG_VOLL - ZEICHNUNG)));
 }

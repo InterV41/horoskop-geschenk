@@ -24,6 +24,9 @@ export function baueDoppel(host: HTMLElement, nr: number, sprache: Sprache, besc
   const { namen } = baueTierkreis(ringSvg, id, tx);
   const radix = el('g', {}, svg);
   baueHaeuser(radix);
+  /* Kreise der Radix wie in der Kosmos-Radix (dort aus den Planetenbahnen): Radius, Strich */
+  for (const [r, w] of [[R.out, 1.1], [R.out - 7, 0.45], [R.band, 0.85], [R.ring, 0.6], [R.asp, 0.6], [R.hub, 0.9], [R.hub - 26, 0.5]])
+    el('circle', { r, fill: 'none', stroke: C, 'stroke-width': w, 'data-w': w }, radix);
   /* Trennkreis zwischen A innen und B außen */
   el('circle', { r: R_TRENN, fill: 'none', stroke: C, 'stroke-width': 0.5, 'data-w': 0.5, opacity: 0.7 }, radix);
 

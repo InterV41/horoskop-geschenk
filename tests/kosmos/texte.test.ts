@@ -20,16 +20,20 @@ describe('texte', () => {
     expect(texte('de').beschreibung).toBe('Animation: Das Sonnensystem verwandelt sich in ein Geburtshoroskop-Rad');
     expect(texte('en').beschreibung).toBe('Animation: the solar system transforms into a birth chart wheel');
   });
-  it('beschriftet die Partner-Radix', () => {
+  it('beschriftet die Partner-Radix wie das Deckblatt', () => {
     expect(texte('de').partner).toEqual({
-      a: 'Partner A', b: 'Partner B',
-      paar: 'Zwei Geburtsbilder nebeneinander, Partner A und Partner B',
-      doppel: 'Zwei Geburtsbilder, die sich zu einer Doppelradix verbinden',
+      a: { name: 'Clara', datum: '5. November 1989 · 03:35 MEZ', ort: 'Hamburg' },
+      b: { name: 'Jonas', datum: '22. Dezember 1990 · 07:20 MEZ', ort: 'Freiburg' },
+      paarName: 'Clara & Jonas',
+      paar: 'Zwei Geburtsbilder nebeneinander: Clara und Jonas',
+      doppel: 'Die Geburtsbilder von Clara und Jonas verbinden sich zu einer Doppelradix',
     });
     expect(texte('en').partner).toEqual({
-      a: 'Partner A', b: 'Partner B',
-      paar: 'Two birth charts side by side, partner A and partner B',
-      doppel: 'Two birth charts merging into a combined synastry chart',
+      a: { name: 'Clara', datum: '5 November 1989 · 03:35 CET', ort: 'Hamburg' },
+      b: { name: 'Jonas', datum: '22 December 1990 · 07:20 CET', ort: 'Freiburg' },
+      paarName: 'Clara & Jonas',
+      paar: 'Two birth charts side by side: Clara and Jonas',
+      doppel: 'The birth charts of Clara and Jonas merge into a combined synastry chart',
     });
   });
 });

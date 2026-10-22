@@ -16,16 +16,21 @@ const t = texte(sprache(langFromPath(Astro.url.pathname))).partner;
   <div class="partner__paar" role="img" aria-label={t.paar}>
     <figure class="partner__person">
       <div class="radix" data-partner-rad="a"></div>
-      <figcaption aria-hidden="true">{t.a}</figcaption>
+      <figcaption class="partner__karte" aria-hidden="true"><span class="partner__name">{t.a.name}</span><span>{t.a.datum}</span><span>{t.a.ort}</span></figcaption>
     </figure>
     <figure class="partner__person">
       <div class="radix" data-partner-rad="b"></div>
-      <figcaption aria-hidden="true">{t.b}</figcaption>
+      <figcaption class="partner__karte" aria-hidden="true"><span class="partner__name">{t.b.name}</span><span>{t.b.datum}</span><span>{t.b.ort}</span></figcaption>
     </figure>
   </div>
   <div class="partner__text"><slot name="paar-nach" /></div>
-  <div class="partner__doppel">
-    <div class="radix" data-partner-doppel></div>
+  <!-- Bahn: Die Doppelradix bleibt hier beim Scrollen stehen, bis sie aus dem Sand fertig aufgebaut ist -->
+  <div class="partner__bahn">
+    <div class="partner__doppel">
+      <div class="partner__rad"><div class="radix" data-partner-doppel></div></div>
+      <p class="partner__karte partner__karte--paar" aria-hidden="true"><span class="partner__name">{t.paarName}</span></p>
+    </div>
+    <div class="partner__halt" aria-hidden="true"></div>
   </div>
   <div class="partner__text"><slot /></div>
   <canvas class="partner__sand" aria-hidden="true"></canvas>
@@ -34,7 +39,7 @@ const t = texte(sprache(langFromPath(Astro.url.pathname))).partner;
 <script>
   import { baueSzene } from '../scripts/kosmos/szene';
   import { layout, ASC0, ASC_V } from '../scripts/kosmos/layout';
-  import { TEMPO_RADIX, glatt, teil } from '../scripts/kosmos/zeitplan';
+  import { TEMPO_RADIX, teil } from '../scripts/kosmos/zeitplan';
   import { laengen, RADIX_REIHE } from '../scripts/kosmos/modell';
   import { sprache, texte } from '../scripts/kosmos/texte';
   import { TAU_A, TAU_B, ASC_VERSATZ_B } from '../scripts/partner/paar';
@@ -47,6 +52,8 @@ const t = texte(sprache(langFromPath(Astro.url.pathname))).partner;
     const hostB = wurzel.querySelector<HTMLElement>('[data-partner-rad="b"]')!;
     const hostD = wurzel.querySelector<HTMLElement>('[data-partner-doppel]')!;
     const paar = wurzel.querySelector<HTMLElement>('.partner__paar')!;
+    const bahn = wurzel.querySelector<HTMLElement>('.partner__bahn')!;
+    const doppelBox = wurzel.querySelector<HTMLElement>('.partner__doppel')!;
     const leinwand = wurzel.querySelector<HTMLCanvasElement>('.partner__sand')!;
     const ctx = leinwand.getContext('2d')!;
     const sp = sprache(document.documentElement.lang);
@@ -57,28 +64,32 @@ const t = texte(sprache(langFromPath(Astro.url.pathname))).partner;
     for (const h of [hostA, hostB]) h.querySelectorAll('svg').forEach((s) => (s.removeAttribute('role'), s.setAttribute('aria-hidden', 'true')));
     const doppel = baueDoppel(hostD, 103, sp, texte(sp).partner.doppel);
 
-    let farbe = '', schein = false;
+    let farbe = '', korn = 1;
     const setzeStrich = () => {
       const stil = getComputedStyle(hostD);
       const f = parseFloat(stil.getPropertyValue('--rx-dick')) || 1;
       szA.setzeStrich(f); szB.setzeStrich(f); doppel.setzeStrich(f);
-      farbe = stil.color;
-      schein = stil.getPropertyValue('--partner-schein').trim() === '1';
+      // Sand mit eigener Farbe und Korngröße je Ansicht: auf Weiß braucht er mehr Kraft
+      farbe = stil.getPropertyValue('--partner-sand').trim() || stil.color;
+      korn = parseFloat(stil.getPropertyValue('--partner-korn')) || 1;
     };
 
     /* Bei "Bewegung reduzieren" stehen alle drei Räder fertig still, ohne Sand. Gilt auch, wenn es umgestellt wird. */
     const bewegung = matchMedia('(prefers-reduced-motion: reduce)');
     let ruhig = bewegung.matches;
+    const TEMPO = 0.25;
     let t = 0, tauA = TAU_A, tauB = TAU_B;
 
-    const koerner = erzeugeKoerner(innerWidth >= 640 ? 2400 : 1200, 11,
+    const koerner = erzeugeKoerner(innerWidth >= 640 ? 6000 : 3000, 11,
       RADIX_REIHE.map((r) => laengen(TAU_A)[r.id]), RADIX_REIHE.map((r) => laengen(TAU_B)[r.id]));
     const aus = { x: 0, y: 0, o: 0 };
     const rad = (r: DOMRect, asc: number): Rad => ({ cx: r.left + r.width / 2, cy: r.top + r.height / 2, massstab: r.width / 940, asc });
 
     /* Leinwand in Fenstergröße, höchstens doppelte Pixeldichte */
     let dpr = 1, sandLeer = true;
+    let stickyTop = 0;
     const groesse = () => {
+      stickyTop = parseFloat(getComputedStyle(doppelBox).top) || 0;
       dpr = Math.min(devicePixelRatio || 1, 2);
       leinwand.width = Math.round(innerWidth * dpr);
       leinwand.height = Math.round(innerHeight * dpr);
@@ -125,12 +136,9 @@ const t = texte(sprache(langFromPath(Astro.url.pathname))).partner;
       for (const k of koerner) {
         kornOrt(k, s, g, aus);
         if (aus.o <= 0.01 || aus.y < -20 || aus.y > innerHeight + 20) continue;
-        if (schein) {
-          ctx.globalAlpha = aus.o * 0.22;
-          ctx.beginPath(); ctx.arc(aus.x, aus.y, k.groesse * 2.4, 0, Math.PI * 2); ctx.fill();
-        }
         ctx.globalAlpha = aus.o;
-        ctx.fillRect(aus.x - k.groesse / 2, aus.y - k.groesse / 2, k.groesse, k.groesse);
+        const kg = k.groesse * korn;
+        ctx.fillRect(aus.x - kg / 2, aus.y - kg / 2, kg, kg);
       }
       ctx.globalAlpha = 1;
     }
@@ -138,6 +146,7 @@ const t = texte(sprache(langFromPath(Astro.url.pathname))).partner;
     let umriss = '';
     function bild() {
       // erst alles messen, dann schreiben: sonst rechnet der Browser das Layout mehrmals pro Bild
+      const rBahn = bahn.getBoundingClientRect(), hDoppel = doppelBox.offsetHeight;
       const rPaar = paar.getBoundingClientRect(), rA = hostA.getBoundingClientRect(), rB = hostB.getBoundingClientRect(), rD = hostD.getBoundingClientRect();
       const seitenRest = document.documentElement.scrollHeight - scrollY - innerHeight;
       const ascA = ASC0 + ASC_V * t, ascB = ascA + ASC_VERSATZ_B;
@@ -145,15 +154,17 @@ const t = texte(sprache(langFromPath(Astro.url.pathname))).partner;
       szB.zeichne(layout(tauB, 1, ascB));
 
       let s = 1;
-      if (!ruhig) s = glatt(fortschritt(rPaar, rD, innerHeight, seitenRest, scrollY));
+      // linear: jedes Korn bewegt sich ohnehin weich, so beginnt der Zerfall gleich mit dem Scrollen
+      if (!ruhig) s = fortschritt({ paar: rPaar, bahn: rBahn, doppelHoehe: hDoppel, stickyTop, fensterHoehe: innerHeight, seitenRest, scrollY });
       doppel.zeichne(laengen(tauA), laengen(tauB), ascA, teil(s, 0.9, 1));
 
-      /* Zerfall von oben nach unten, Aufbau von außen nach innen */
+      /* Zerfall von oben nach unten */
       const m = ruhig ? 0 : maskeRad(s); // ruhig: A und B ganz, Doppelradix fertig
       zerfall(hostA, m); zerfall(hostB, m);
+      // die Doppelradix entsteht aus Sand; die scharfe Zeichnung löst das Sandbild erst am Ende ab
       const d = maskeDoppel(s);
-      const innen = (1 - d) * 96;
-      maske(hostD, d >= 1 ? null : `radial-gradient(circle closest-side, transparent ${(innen - 4).toFixed(1)}%, #000 ${(innen + 4).toFixed(1)}%)`);
+      const deck = d >= 1 ? '' : d.toFixed(3);
+      if (hostD.style.opacity !== deck) hostD.style.opacity = deck;
       const u = (0.08 * (1 - d)).toFixed(3);
       if (u !== umriss) wurzel.style.setProperty('--partner-umriss', (umriss = u));
 
@@ -171,9 +182,10 @@ const t = texte(sprache(langFromPath(Astro.url.pathname))).partner;
     const loop = (ts: number) => {
       if (last !== null) {
         const dt = Math.min(Math.max((ts - last) / 1000, 0), 0.1);
-        t += dt;
-        tauA += TEMPO_RADIX * dt;
-        tauB += TEMPO_RADIX * dt;
+        // ruhiger als die Kosmos-Radix: ein Viertel ihres Tempos
+        t += dt * TEMPO;
+        tauA += TEMPO_RADIX * dt * TEMPO;
+        tauB += TEMPO_RADIX * dt * TEMPO;
       }
       last = ts;
       bild();
@@ -222,11 +234,29 @@ const t = texte(sprache(langFromPath(Astro.url.pathname))).partner;
     gap: var(--s-16);
     justify-items: center;
   }
-  .partner__person figcaption {
-    color: var(--rx-text, var(--gold));
-    font-size: var(--t-9);
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+  /* Name und Geburtsdaten wie auf dem Deckblatt des PDFs */
+  .partner__karte {
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    margin: 0;
+    color: var(--akzent); /* im hellen Modus 6,2:1 auf Weiß, im dunklen wie bisher Gold */
+    font-family: 'STIX Two Text', serif;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-align: center;
+  }
+  .partner__name {
+    font-size: clamp(24px, 3vw, 34px);
+    letter-spacing: 0.01em;
+    line-height: 1.1;
+    margin-bottom: 4px;
+  }
+  .partner__karte--paar {
+    margin-top: var(--s-24);
+  }
+  @media (max-width: 639px) {
+    .partner__karte { font-size: 11px; letter-spacing: 0.06em; }
   }
   .partner__text {
     position: relative;
@@ -235,13 +265,28 @@ const t = texte(sprache(langFromPath(Astro.url.pathname))).partner;
     justify-items: center;
     gap: var(--s-16);
   }
+  /* Fallstrecke für den Sand, danach die Bahn, in der die Doppelradix stehen bleibt */
+  .partner__bahn {
+    --partner-halt-oben: max(76px, 9vh);
+    width: 100%;
+    margin-top: clamp(100px, 35vh, 420px);
+    margin-bottom: var(--s-32, 32px);
+  }
   .partner__doppel {
+    position: sticky;
+    top: var(--partner-halt-oben);
+    width: min(100%, 70%, calc(100vh - var(--partner-halt-oben) - 96px));
+    margin-inline: auto;
+  }
+  /* so lange bleibt sie stehen, während der Sand landet */
+  .partner__halt {
+    height: 100vh;
+  }
+  .partner__rad {
     position: relative;
-    width: min(100%, 70%, 80vh);
-    margin-block: var(--s-32, 32px);
   }
   /* zarter Umriss, solange die Doppelradix noch nicht da ist */
-  .partner__doppel::before {
+  .partner__rad::before {
     content: '';
     position: absolute;
     inset: calc(50% - 44.5%);
@@ -276,7 +321,8 @@ const t = texte(sprache(langFromPath(Astro.url.pathname))).partner;
     --rx-disk: #fefcf8;
     --kx-nabe: #ffffff;
     --rx-partner: #4f6a86;
-    --partner-schein: 0;
+    --partner-sand: #6e5017;
+    --partner-korn: 1.7;
     position: relative;
     width: 100%;
     aspect-ratio: 1 / 1;
@@ -290,7 +336,8 @@ const t = texte(sprache(langFromPath(Astro.url.pathname))).partner;
     --rx-disk: rgb(7 16 42 / 0.5);
     --kx-nabe: transparent;
     --rx-partner: #9fc3d9;
-    --partner-schein: 1;
+    --partner-sand: #e0c27e;
+    --partner-korn: 1;
   }
   @media (prefers-color-scheme: dark) {
     :global(:root:not([data-theme='light'])) .radix {
@@ -301,8 +348,9 @@ const t = texte(sprache(langFromPath(Astro.url.pathname))).partner;
       --rx-disk: rgb(7 16 42 / 0.5);
       --kx-nabe: transparent;
       --rx-partner: #9fc3d9;
-      --partner-schein: 1;
-    }
+      --partner-sand: #e0c27e;
+      --partner-korn: 1;
+      }
   }
   .radix :global(svg) {
     position: absolute;

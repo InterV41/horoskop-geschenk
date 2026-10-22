@@ -1,0 +1,50 @@
+---
+// Absatz, der beim Scrollen Wort für Wort aufleuchtet (wie bei linear.app).
+// Die Wörter werden schon beim Bauen getrennt; ohne JavaScript und bei "Bewegung reduzieren" ist alles voll sichtbar.
+interface Props {
+  text: string;
+  class?: string;
+}
+const { text, class: className } = Astro.props;
+const woerter = text.split(/\s+/).filter(Boolean);
+---
+
+<p class:list={['aufleuchten', className]} data-aufleuchten>
+  {woerter.map((w, i) => <><span class="aufleuchten__wort">{w}</span>{i < woerter.length - 1 && ' '}</>)}
+</p>
+
+<script>
+  import { lesefortschritt, wortHelligkeit } from '../scripts/aufleuchten';
+
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const absaetze = Array.from(document.querySelectorAll<HTMLElement>('[data-aufleuchten]')).map((e) => ({
+      e,
+      woerter: Array.from(e.querySelectorAll<HTMLElement>('.aufleuchten__wort')),
+      stand: -1,
+    }));
+    const bild = () => {
+      for (const a of absaetze) {
+        const p = lesefortschritt(a.e.getBoundingClientRect(), innerHeight);
+        if (p === a.stand) continue; // nur beim Durchscrollen etwas ändern
+        a.stand = p;
+        const n = a.woerter.length;
+        a.woerter.forEach((w, i) => (w.style.opacity = wortHelligkeit(p, i, n).toFixed(3)));
+      }
+    };
+    let geplant = false;
+    const planen = () => {
+      if (geplant) return;
+      geplant = true;
+      requestAnimationFrame(() => { geplant = false; bild(); });
+    };
+    addEventListener('scroll', planen, { passive: true });
+    addEventListener('resize', planen);
+    bild();
+  }
+</script>
+
+<style>
+  .aufleuchten__wort {
+    transition: opacity 0.25s ease-out;
+  }
+</style>

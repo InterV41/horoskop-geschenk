@@ -118,9 +118,10 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache }) => {
     const st = host.current!.style;
     st.visibility = szeneDa <= 0.001 ? 'hidden' : '';
     st.transform = `scale(${S}) translate(${(-cx * PX).toFixed(3)}px, ${(-cy * PX).toFixed(3)}px)`;
-    w.szene.setzeStrich((fassung === 'hell' ? 1.6 : 1) / Math.max(1, S));
+    w.szene.setzeStrich((fassung === 'hell' ? 1.75 : 1.25) / Math.max(1, S));
     w.szene.zeichne(l);
-    const bahn = szeneDa * (0.16 + 0.84 * rampe(t, VERWANDLUNG_AB - 0.6, VERWANDLUNG_AB + 2));
+    // Umlaufbahnen nur beim Übergang in die Radix, dann deutlich
+    const bahn = rampe(t, VERWANDLUNG_AB - 1.4, VERWANDLUNG_AB + 0.2);
     w.bahnen.forEach((b) => (b.style.opacity = bahn.toFixed(3)));
 
     /* Sonne und Planeten mit echten Oberflächen */
@@ -175,8 +176,9 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache }) => {
         </filter>
       </svg>
       <canvas ref={raum} width={BREITE} height={BREITE} style={{ position: 'absolute', inset: 0 }} />
-      <canvas ref={koerper} width={BREITE} height={BREITE} style={{ position: 'absolute', inset: 0 }} />
+      {/* Planeten über der Radix-Szene: Die Erde verdeckt ihre eigene Bahn; zu Zeichen werden sie ohnehin ausgeblendet */}
       <div ref={host} className="radix flug-szene" style={{ left: MITTE - rad / 2, top: MITTE - rad / 2, width: rad, height: rad }} />
+      <canvas ref={koerper} width={BREITE} height={BREITE} style={{ position: 'absolute', inset: 0 }} />
     </AbsoluteFill>
   );
 };

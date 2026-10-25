@@ -9,8 +9,8 @@
 import * as THREE from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { BREITE, BRENNWEITE, rampe } from './drehbuch';
 import { LJ, RG, SONNE, type Kamera } from './galaxie';
 
@@ -71,7 +71,7 @@ void main() {
     // Stern: scheinbare Helligkeit nimmt mit dem Quadrat des Abstands ab
     float fluss = hell / (d * d);
     float f = fluss * belicht;
-    px = 1.3 + 2.4 * pow(min(f, 40.0), 0.3);
+    px = 1.3 + 3.4 * pow(min(f, 40.0), 0.34);
     licht = min(1.0, pow(f, 0.42) * 3.0);
   }
   float g = max(px, 1.5);
@@ -89,7 +89,8 @@ void main() {
   vec2 p = gl_PointCoord * 2.0 - 1.0;
   float r2 = dot(p, p);
   if (r2 > 1.0) discard;
-  float a = exp(-r2 * 4.0) * vDeck;
+  // weicher Fleck, der am Rand genau auf 0 endet: keine Kanten, keine Kästen
+  float a = (exp(-r2 * 4.0) - 0.0183156) / 0.9816844 * vDeck;
   gl_FragColor = vec4(vFarbe * a, a);
 }`;
 
@@ -114,6 +115,7 @@ void main() {
   float b = asin(clamp(d.z, -1.0, 1.0));
   vec2 uv = vec2(0.5 - l / 6.2831853, 0.5 + b / 3.1415927);
   vec3 c = texture2D(bild, uv).rgb;
+  c = max(c - 0.025, 0.0);
   c = pow(c, vec3(1.15)) * belicht;
   gl_FragColor = vec4(c * deck, 1.0);
 }`;
@@ -220,7 +222,7 @@ export async function baueWeltraum(canvas: HTMLCanvasElement, quelle: (pfad: str
     [0.3, 1.0, 0.9, 0.75],
     [0.4, 1.0, 0.76, 0.55],
   ];
-  const NN = 90000;
+  const NN = 32000;
   const npos = new Float32Array(NN * 3), nfarbe = new Float32Array(NN * 3), nhell = new Float32Array(NN), nfl = new Float32Array(NN);
   for (let i = 0; i < NN; i++) {
     const d = Math.exp(Math.log(0.4) + r() * (Math.log(9000) - Math.log(0.4)));
@@ -289,9 +291,21 @@ export async function baueWeltraum(canvas: HTMLCanvasElement, quelle: (pfad: str
   komp.setPixelRatio(1);
   komp.setSize(BREITE, BREITE);
   komp.addPass(new RenderPass(szene, kam));
-  const leuchten = new UnrealBloomPass(new THREE.Vector2(BREITE, BREITE), 0.55, 0.6, 0.55);
-  komp.addPass(leuchten);
+  // Leuchten aus: Es rechnet auf grob verkleinerten Stufen und macht Lichthöfe eckig
   komp.addPass(new OutputPass());
+  /* Schwarzer Grund muss exakt schwarz sein: Die Seite macht aus jedem Grau Deckkraft, schwaches Grau
+     würde als Schleier oder Kästchen sichtbar. Unter der Schwelle wird alles 0, darüber weich gestreckt. */
+  komp.addPass(new ShaderPass({
+    uniforms: { tDiffuse: { value: null } },
+    vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: `uniform sampler2D tDiffuse; varying vec2 vUv;
+      void main() {
+        vec3 c = texture2D(tDiffuse, vUv).rgb;
+        float m = max(c.r, max(c.g, c.b));
+        float k = smoothstep(${(12 / 255).toFixed(4)}, ${(30 / 255).toFixed(4)}, m);
+        gl_FragColor = vec4(c * k, 1.0);
+      }`,
+  }));
 
   function zeichne(k: Kamera, t: number) {
     const ort = new THREE.Vector3(k.ox / LJ, k.oy / LJ, k.oz / LJ).sub(SONNE_LJ);
@@ -313,9 +327,8 @@ export async function baueWeltraum(canvas: HTMLCanvasElement, quelle: (pfad: str
     himmelMat.uniforms.deck.value = drin;
     himmel.position.copy(ort);
     himmel.scale.setScalar(Math.max(10, d * 100));
-    nachbarMat.uniforms.belicht.value = 0.9 * (1 - rampe(ld, Math.log(0.12), Math.log(0.45)));
+    nachbarMat.uniforms.belicht.value = 0.75 * (1 - rampe(ld, Math.log(0.12), Math.log(0.45)));
     fernMat.uniforms.belicht.value = 0.06;
-    leuchten.strength = 0.5 + 0.25 * bildAnteil;
     komp.render();
     void t;
   }

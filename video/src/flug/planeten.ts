@@ -212,6 +212,10 @@ export function zeichneKugel(ctx: CanvasRenderingContext2D, tex: Texturen, k: Ku
   a.clearRect(0, 0, g, g);
   a.putImageData(bild, 0, 0);
   ctx.save();
+  // rund zuschneiden: außerhalb von Kugel, Saum und Ring bleibt das Bild exakt leer
+  ctx.beginPath();
+  ctx.arc(k.x, k.y, saturn ? k.r * 2.32 : k.r + saum + 1, 0, Math.PI * 2);
+  ctx.clip();
   ctx.globalAlpha = k.deckkraft;
   ctx.drawImage(a.canvas, 0, 0, g, g, k.x - halb, k.y - halb, g, g);
   ctx.restore();

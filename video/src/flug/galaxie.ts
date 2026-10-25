@@ -50,17 +50,18 @@ export interface Himmel {
   // Sterne (Galaxie und Nachbarschaft der Sonne)
   x: Float64Array; y: Float64Array; z: Float64Array;
   art: Uint8Array; farbe: Uint8Array; hell: Float32Array; groesse: Float32Array;
+  vonSonne: Float64Array; // Abstand zur Sonne, für die Nachbarsterne
   // Leuchtende Wolken und Staub
   wolken: { x: number; y: number; z: number; r: number; o: number; farbe: number; staub: boolean }[];
 }
 
-export function erzeugeHimmel(n = 420000, nNah = 42000): Himmel {
+export function erzeugeHimmel(n = 420000, nNah = 75000): Himmel {
   const { r, g } = zufall(20261025);
   const N = n + nNah;
   const h: Himmel = {
     x: new Float64Array(N), y: new Float64Array(N), z: new Float64Array(N),
     art: new Uint8Array(N), farbe: new Uint8Array(N), hell: new Float32Array(N), groesse: new Float32Array(N),
-    wolken: [],
+    vonSonne: new Float64Array(N), wolken: [],
   };
   let i = 0;
   const setze = (x: number, y: number, z: number, art: number, farbe: number, hell: number, groesse: number) => {
@@ -112,12 +113,13 @@ export function erzeugeHimmel(n = 420000, nNah = 42000): Himmel {
   /* Nachbarschaft der Sonne: Abstände logarithmisch gleich verteilt, so ziehen auf jeder Stufe des Zooms
      Sterne vorbei. Weit draußen flacher, wie die Scheibe. */
   for (let k = 0; k < nNah; k++) {
-    const d = Math.exp(Math.log(0.6 * LJ) + r() * (Math.log(7000 * LJ) - Math.log(0.6 * LJ)));
+    const d = Math.exp(Math.log(0.6 * LJ) + r() * (Math.log(14000 * LJ) - Math.log(0.6 * LJ)));
     let ux = g(), uy = g(), uz = g();
     const l = Math.hypot(ux, uy, uz) || 1;
     ux /= l; uy /= l; uz /= l;
-    uz *= Math.min(1, ((400 * LJ) / d) ** 0.8);
+    uz *= Math.min(1, ((600 * LJ) / d) ** 0.85);
     const hell = Math.min(1, 0.08 + 0.5 * r() ** 3 + (r() < 0.03 ? 0.6 : 0));
+    h.vonSonne[i] = d;
     setze(SONNE[0] + ux * d, SONNE[1] + uy * d, SONNE[2] + uz * d, NAH, Math.floor(r() * 5), hell, 0.9 + r() * 1.2);
   }
 
@@ -140,15 +142,15 @@ export function erzeugeHimmel(n = 420000, nNah = 42000): Himmel {
     }
     const arm = armWahl(), rr = armRadius();
     const [x, y] = armPunkt(arm, rr, (0.02 + 0.03 * (rr / RG)) * RG);
-    const rosa = r() < 0.12;
-    h.wolken.push({ x, y, z: g() * 0.004 * RG, r: (rosa ? 0.007 : 0.03 + 0.04 * r()) * RG, o: rosa ? 0.2 + 0.2 * r() : 0.03 + 0.04 * r(), farbe: rosa ? 2 : r() < 0.6 ? 1 : 3, staub: false });
+    const rosa = r() < 0.06;
+    h.wolken.push({ x, y, z: g() * 0.004 * RG, r: (rosa ? 0.007 : 0.03 + 0.04 * r()) * RG, o: rosa ? 0.12 + 0.12 * r() : 0.03 + 0.04 * r(), farbe: rosa ? 2 : r() < 0.6 ? 1 : 3, staub: false });
   }
-  for (let k = 0; k < 7000; k++) {
+  for (let k = 0; k < 11000; k++) {
     const arm = r() < 0.75 ? (r() < 0.5 ? 0 : 1) : r() < 0.5 ? 2 : 3;
     const rr = R0 * 0.8 + Math.min(0.85 * RG, -Math.log(1 - r() * 0.95) * 0.3 * RG);
     const w = armWinkel(arm, rr) - 0.11 + g() * 0.03; // innen am Arm
     const quer = g() * 0.016 * RG;
-    h.wolken.push({ x: Math.cos(w) * rr - Math.sin(w) * quer, y: Math.sin(w) * rr + Math.cos(w) * quer, z: g() * 0.0015 * RG, r: (0.005 + 0.009 * r()) * RG, o: 0.1 + 0.14 * r(), farbe: 0, staub: true });
+    h.wolken.push({ x: Math.cos(w) * rr - Math.sin(w) * quer, y: Math.sin(w) * rr + Math.cos(w) * quer, z: g() * 0.0015 * RG, r: (0.004 + 0.008 * r()) * RG, o: 0.07 + 0.1 * r(), farbe: 0, staub: true });
   }
   return h;
 }
@@ -166,7 +168,7 @@ export function kamera(lnMassstab: number, t: number): Kamera {
   const d = BRENNWEITE / (Math.exp(lnMassstab) * PX);
   const ld = Math.log(d);
   // Ziel: erst die Mitte der Galaxie, ab dem Eintauchen in den Arm die Sonne
-  const w = rampe(ld, Math.log(0.05 * RG), Math.log(1.6 * RG));
+  const w = rampe(ld, Math.log(0.5 * RG), Math.log(2.6 * RG));
   const tx = SONNE[0] * (1 - w), ty = SONNE[1] * (1 - w), tz = 0;
   // Blickrichtung: anfangs schräg von oben, beim Eintauchen flacher, damit das Band der Milchstraße entsteht
   const tief = rampe(ld, Math.log(0.004 * RG), Math.log(1.2 * RG));
@@ -208,8 +210,8 @@ const FARBEN: Record<Fassung, { sterne: string[]; wolken: string[]; staub: strin
     grund: '#07102a',
   },
   hell: {
-    sterne: ['#8a6c2c', '#9a7a33', '#7a5d22', '#a8873f', '#b08d45'],
-    wolken: ['#d9b56a', '#e4cf9c', '#dcb07a', '#cfa860'],
+    sterne: ['#9a7a33', '#a8873f', '#c29a45', '#8a6c2c', '#b08d45'],
+    wolken: ['#e6c47a', '#ead7a8', '#e2bf8c', '#dcb66c'],
     staub: '#ffffff',
     grund: '#ffffff',
   },
@@ -231,7 +233,7 @@ function fleck(farbe: string, weich = 1): HTMLCanvasElement {
 }
 
 export interface Maler {
-  zeichne(ctx: CanvasRenderingContext2D, k: Kamera, vorher: Kamera, deckkraft: number): void;
+  zeichne(ctx: CanvasRenderingContext2D, k: Kamera, vorher: Kamera, deckkraft: number, galaxie: number): void;
   sonne(ctx: CanvasRenderingContext2D, k: Kamera, lnMassstab: number, deckkraft: number): void;
 }
 
@@ -244,13 +246,13 @@ export function baueMaler(h: Himmel, fassung: Fassung): Maler {
   const p = [0, 0, 0], q = [0, 0, 0];
   const N = h.x.length;
 
-  function zeichne(ctx: CanvasRenderingContext2D, k: Kamera, v: Kamera, deckkraft: number) {
+  function zeichne(ctx: CanvasRenderingContext2D, k: Kamera, v: Kamera, deckkraft: number, galaxie: number) {
     ctx.save();
     const ld = Math.log(k.abstand);
     // nahe Sterne erst, wenn wir in der Scheibe sind; vorher gehen sie im Leuchten der Galaxie auf
-    const nahSichtbar = 1 - rampe(ld, Math.log(0.06 * RG), Math.log(0.3 * RG));
+    const nahSichtbar = 1 - rampe(ld, Math.log(0.2 * RG), Math.log(0.9 * RG));
     // die Galaxie wird heller, je näher wir kommen, bis wir in ihr sind
-    const naehe = Math.min(1.5, ((1.6 * RG) / Math.max(k.abstand, 0.2 * RG)) ** 0.35);
+    const naehe = Math.min(1.3, ((1.6 * RG) / Math.max(k.abstand, 0.2 * RG)) ** 0.35);
 
     /* Wolken und Staub: nur solange wir draußen oder im Arm sind; wer durch eine Wolke fliegt, sieht sie nicht mehr */
     ctx.globalCompositeOperation = dunkel ? 'lighter' : 'source-over';
@@ -261,7 +263,7 @@ export function baueMaler(h: Himmel, fassung: Fassung): Maler {
       if (rpx < 1.5 || rpx > 2600) continue;
       if (p[0] < -rpx || p[0] > BREITE + rpx || p[1] < -rpx || p[1] > BREITE + rpx) continue;
       const nah = rampe(p[2], w.r * 1.5, w.r * 6);
-      const o = w.o * nah * deckkraft * (dunkel ? 1 : 0.75) * Math.min(1, rpx / 6) * (1 - rampe(rpx, 90, 420));
+      const o = w.o * nah * galaxie * (dunkel ? 1 : 0.7) * Math.min(1, rpx / 6) * (1 - rampe(rpx, 50, 260)) * 0.75;
       if (o < 0.004) continue;
       ctx.globalAlpha = Math.min(1, o);
       ctx.drawImage(wolkenFlecken[w.farbe], p[0] - rpx, p[1] - rpx, rpx * 2, rpx * 2);
@@ -271,9 +273,9 @@ export function baueMaler(h: Himmel, fassung: Fassung): Maler {
       if (!w.staub) continue;
       if (!bild(k, w.x, w.y, w.z, p)) continue;
       const rpx = (BRENNWEITE * w.r) / p[2];
-      if (rpx < 1.5 || rpx > 2600) continue;
+      if (rpx < 0.8 || rpx > 2600) continue;
       if (p[0] < -rpx || p[0] > BREITE + rpx || p[1] < -rpx || p[1] > BREITE + rpx) continue;
-      const o = w.o * rampe(p[2], w.r * 2, w.r * 8) * deckkraft * (dunkel ? 0.9 : 0.8) * (1 - rampe(rpx, 40, 200));
+      const o = w.o * galaxie * (dunkel ? 0.9 : 0.8) * (1 - rampe(rpx, 12, 60));
       if (o < 0.004) continue;
       ctx.globalAlpha = Math.min(1, o);
       ctx.drawImage(staubFleck, p[0] - rpx, p[1] - rpx, rpx * 2, rpx * 2);
@@ -291,17 +293,18 @@ export function baueMaler(h: Himmel, fassung: Fassung): Maler {
       let o: number, gr: number;
       if (nah) {
         // scheinbare Helligkeit: je näher, desto heller, mit weichem Deckel
-        const b = h.hell[i] * Math.min(3, ((40 * LJ) / p[2]) ** 0.5);
-        o = Math.min(1, 0.12 + b) * nahSichtbar;
-        gr = Math.min(2.6, (0.5 + 0.8 * Math.sqrt(b)) * h.groesse[i]);
+        const b = h.hell[i] * Math.min(1.3, ((40 * LJ) / p[2]) ** 0.5);
+        o = Math.min(1, 0.28 + b) * nahSichtbar * rampe(h.vonSonne[i] / k.abstand, 0.015, 0.07);
+        gr = Math.min(2.1, (0.5 + 0.8 * Math.sqrt(b)) * h.groesse[i]);
         o *= rampe(p[2], k.abstand * 0.004, k.abstand * 0.03); // knapp vor der Linse ausblenden
       } else {
         // ein Galaxie-Teilchen steht für viele Sterne; von nahem löst es sich in die Nachbarsterne auf
         const zu = Math.min(2.4, Math.max(1, ((0.35 * RG) / p[2]) ** 0.55));
-        o = h.hell[i] * 0.26 * naehe * zu * rampe(p[2], 0.003 * RG, 0.02 * RG);
+        o = Math.min(0.38, h.hell[i] * 0.26 * naehe * zu) * rampe(p[2], 0.003 * RG, 0.02 * RG);
         gr = 0.62 * h.groesse[i] * Math.min(1.8, Math.sqrt(zu));
+        o *= galaxie / Math.max(deckkraft, 1e-6);
       }
-      o *= deckkraft * (dunkel ? 1 : 0.9);
+      o *= deckkraft * (dunkel ? 1 : 2.5);
       if (o < 0.01) continue;
       ctx.globalAlpha = Math.min(1, o);
       // Bewegungsspur zum Ort im vorigen Bild
@@ -309,8 +312,8 @@ export function baueMaler(h: Himmel, fassung: Fassung): Maler {
         const dx = x - q[0], dy = y - q[1], len = Math.hypot(dx, dy);
         if (len > 2 && len < 900) {
           ctx.strokeStyle = F.sterne[h.farbe[i]];
-          ctx.lineWidth = Math.max(0.6, gr * 0.9);
-          ctx.globalAlpha = Math.min(1, 0.7 * o * Math.min(1, 6 / len) ** 0.6);
+          ctx.lineWidth = Math.max(0.5, gr * 0.6);
+          ctx.globalAlpha = Math.min(1, (dunkel ? 0.85 : 0.4) * o * Math.min(1, 8 / len) ** 0.5);
           ctx.beginPath();
           ctx.moveTo(q[0], q[1]);
           ctx.lineTo(x, y);
@@ -342,7 +345,7 @@ export function baueMaler(h: Himmel, fassung: Fassung): Maler {
     const gross = rampe(ln, -12, -2.2);
     ctx.save();
     ctx.globalCompositeOperation = dunkel ? 'lighter' : 'source-over';
-    const r1 = 6 + 120 * gross, r2 = 3 + 22 * gross;
+    const r1 = 5 + 95 * gross, r2 = 2 + 9 * gross;
     ctx.globalAlpha = Math.min(1, o * (0.55 + 0.3 * gross));
     ctx.drawImage(hof, p[0] - r1, p[1] - r1, r1 * 2, r1 * 2);
     ctx.globalAlpha = Math.min(1, o);

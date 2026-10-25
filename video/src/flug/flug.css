@@ -26,6 +26,9 @@
   --kx-hof2-o: 0.24;
 }
 .flug-szene {
+  /* Scheibe und Nabe bleiben im Film durchsichtig: Sie blenden bei der Übergabe mit der Live-Radix ein */
+  --rx-disk: transparent !important;
+  --kx-nabe: transparent !important;
   position: absolute;
   transform-origin: 50% 50%;
 }

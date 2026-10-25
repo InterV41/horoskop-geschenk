@@ -22,13 +22,16 @@ function zufall(saat: number) {
 /* Wolken: Felder in Bändern (Tropen, Westwinde), jedes Feld aus mehreren weichen Kreisen */
 const r = zufall(31415);
 const WOLKEN: { lon: number; lat: number; rad: number; o: number }[] = [];
-for (let k = 0; k < 210; k++) {
+for (let k = 0; k < 260; k++) {
   const band = r();
   const lat = band < 0.3 ? (r() - 0.5) * 22 : (band < 0.65 ? 1 : -1) * (40 + r() * 22);
   const lon = r() * 360 - 180;
-  const teile = 3 + Math.floor(r() * 6);
-  for (let j = 0; j < teile; j++)
-    WOLKEN.push({ lon: lon + (r() - 0.5) * 22, lat: Math.max(-80, Math.min(80, lat + (r() - 0.5) * 9)), rad: 1.2 + r() * 4.5, o: 0.1 + r() * 0.16 });
+  // ein Wolkenfeld: Schlieren entlang der Breite, leicht gebogen wie ein Wirbel
+  const teile = 8 + Math.floor(r() * 14), bogen = (r() - 0.5) * 0.6, laenge = 10 + r() * 30;
+  for (let j = 0; j < teile; j++) {
+    const s = (j / teile - 0.5) * laenge;
+    WOLKEN.push({ lon: lon + s + (r() - 0.5) * 3, lat: Math.max(-80, Math.min(80, lat + bogen * s + (r() - 0.5) * 4)), rad: 0.6 + r() * 2.4, o: 0.06 + r() * 0.12 });
+  }
 }
 
 /* Stadtlichter: Punkte auf dem Land, gehäuft in den bewohnten Breiten */
@@ -54,8 +57,8 @@ const MARE: [number, number, number][] = [
 ];
 
 const FARBE = {
-  dunkel: { meer: [24, 52, 104], meerHell: [58, 104, 166], land: [150, 140, 96], landGruen: [92, 112, 70], wolke: [245, 242, 235], nacht: [5, 9, 24], licht: [255, 205, 120], saum: [120, 165, 255] },
-  hell: { meer: [40, 78, 132], meerHell: [84, 128, 184], land: [168, 152, 104], landGruen: [110, 126, 82], wolke: [250, 248, 242], nacht: [58, 46, 32], licht: [255, 196, 96], saum: [150, 185, 230] },
+  dunkel: { meer: [24, 52, 104], meerHell: [58, 104, 166], land: [138, 124, 86], landGruen: [72, 94, 58], wolke: [245, 242, 235], nacht: [5, 9, 24], licht: [255, 205, 120], saum: [120, 165, 255] },
+  hell: { meer: [40, 78, 132], meerHell: [84, 128, 184], land: [150, 134, 94], landGruen: [86, 106, 66], wolke: [250, 248, 242], nacht: [16, 24, 50], licht: [255, 200, 110], saum: [150, 185, 230] },
 };
 
 export interface Licht { x: number; y: number; z: number } // Richtung zur Sonne, im Bild: x rechts, y unten, z zum Betrachter

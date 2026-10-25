@@ -2,6 +2,7 @@
 // Dort setzt die bisherige Verwandlung ein: Die Erde wird zur Mitte, die Planeten wandern in den Tierkreis,
 // die Radix zeichnet sich ein. Das letzte Bild gleicht genau dem Zustand, mit dem die laufende Radix
 // der Seite weitermacht. Jedes Bild hängt nur von der Bildnummer ab.
+// Ebenen von hinten nach vorn: Weltraum (3D) · Sonne und Planeten (echte Oberflächen) · Radix (SVG).
 import '../../node_modules/@fontsource/stix-two-text/400.css';
 import '../../node_modules/@fontsource/stix-two-text/500.css';
 import '../../node_modules/@fontsource/noto-sans-symbols/400.css';
@@ -9,24 +10,30 @@ import '../../node_modules/@fontsource/noto-sans-symbols-2/400.css';
 import './radix.css';
 import './flug/flug.css';
 import { useLayoutEffect, useRef, useState } from 'react';
-import { AbsoluteFill, continueRender, delayRender, useCurrentFrame } from 'remotion';
+import { AbsoluteFill, cancelRender, continueRender, delayRender, staticFile, useCurrentFrame } from 'remotion';
 import { baueSzene, type Szene } from '../../src/scripts/kosmos/szene';
 import { layout, type Richtungen, type Layout } from '../../src/scripts/kosmos/layout';
 import type { Sprache } from '../../src/scripts/kosmos/texte';
 import { BREITE, MITTE, PX, FPS, VERWANDLUNG_AB, SCHWENK_AB, SCHWENK_BIS, lnMassstab, verwandlung, modellzeit, aszendentImFilm, rampe } from './flug/drehbuch';
-import { erzeugeHimmel, baueMaler, kamera, type Fassung, type Himmel, type Maler } from './flug/galaxie';
-import { zeichneErde, zeichneMond, type Licht } from './flug/erde';
+import { kamera, SONNE, type Fassung, type Kamera } from './flug/galaxie';
+import { baueWeltraum, type Weltraum } from './flug/weltraum';
+import { ladeTexturen, zeichneKugel, zeichneSonnenlicht, type Texturen, type Licht, type KoerperId } from './flug/planeten';
 
 export interface KosmosFlugProps {
   fassung: Fassung;
   sprache: Sprache;
 }
 
-const GRUND: Record<Fassung, string> = { dunkel: '#07102a', hell: '#ffffff' };
+/* Reines Schwarz und Weiß: Die Seite rechnet den Grund wieder heraus, dann liegt nur das Licht über ihr */
+const GRUND: Record<Fassung, string> = { dunkel: '#000000', hell: '#ffffff' };
 
-let himmelCache: Himmel | null = null;
+/* Je Körper: Drehung in Grad pro Sekunde, Startlänge, Neigung der Achse zum Betrachter */
+const DREHUNG: Partial<Record<KoerperId, [number, number, number]>> = {
+  erde: [10, 20, 18], mond: [0, 0, 6], merkur: [8, 0, 0], venus: [3, 0, 0], mars: [9, 40, 15],
+  jupiter: [16, 0, 5], saturn: [14, 0, 10], uranus: [6, 0, 50], neptun: [7, 0, 20], pluto: [4, 0, 0], sonne: [2, 0, 6],
+};
 
-/* Zustand der Szene in Sekunde t. Die Drehwege der Verwandlung werden ab ihrem Beginn nachgerechnet,
+/* Zustand der Szene in einem Bild. Die Drehwege der Verwandlung werden ab ihrem Beginn nachgerechnet,
    so ist jedes Bild unabhängig von der Reihenfolge, in der gerendert wird. */
 function szenenStand(bild: number): { l: Layout; l0: Layout } {
   const t = bild / FPS;
@@ -40,31 +47,51 @@ function szenenStand(bild: number): { l: Layout; l0: Layout } {
   return { l: layout(tau, p, asc, wege), l0 };
 }
 
+/* Sonne aufs Bild der 3D-Kamera, für die Zeit, bevor das Sonnensystem steht */
+function sonneImBild(k: Kamera): [number, number] | null {
+  const vx = SONNE[0] - k.ox, vy = SONNE[1] - k.oy, vz = SONNE[2] - k.oz;
+  const tz = vx * k.fx + vy * k.fy + vz * k.fz;
+  if (tz <= 0) return null;
+  const f = BREITE * 1.2;
+  return [MITTE + (f * (vx * k.rx + vy * k.ry + vz * k.rz)) / tz, MITTE - (f * (vx * k.ux + vy * k.uy + vz * k.uz)) / tz];
+}
+
 export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache }) => {
   const frame = useCurrentFrame();
   const host = useRef<HTMLDivElement>(null);
-  const hinten = useRef<HTMLCanvasElement>(null);
-  const vorne = useRef<HTMLCanvasElement>(null);
-  const welt = useRef<{ szene: Szene; maler: Maler } | null>(null);
-  const [warten] = useState(() => delayRender('Szene, Himmel und Schriften'));
+  const raum = useRef<HTMLCanvasElement>(null);
+  const koerper = useRef<HTMLCanvasElement>(null);
+  const welt = useRef<{ szene: Szene; weltraum: Weltraum; tex: Texturen; bahnen: SVGElement[] } | null>(null);
+  const [warten] = useState(() => delayRender('Weltraum, Texturen und Schriften', { timeoutInMilliseconds: 120000 }));
+  const [bereit, setBereit] = useState(false);
 
   useLayoutEffect(() => {
     const szene = baueSzene(host.current!, 301, sprache, { nurRadix: true });
     szene.setzeStrich(fassung === 'hell' ? 1.6 : 1);
-    himmelCache ??= erzeugeHimmel();
-    welt.current = { szene, maler: baueMaler(himmelCache, fassung) };
-    // Schriften der Zeichen ausdrücklich laden, sie sind am Anfang noch unsichtbar
+    // Die gezeichneten Kugeln und die Sonne der Szene ersetzen wir durch echte Oberflächen
+    const h = host.current!;
+    h.querySelectorAll<SVGElement>('circle[fill^="url(#kx301-p-"]').forEach((c) => ((c.parentElement as unknown as SVGElement).style.display = 'none'));
+    h.querySelectorAll<SVGElement>('circle[fill="url(#kx301-hof)"], circle[fill="url(#kx301-kern)"]').forEach((c) => (c.style.display = 'none'));
+    const bahnen = Array.from(h.querySelectorAll<SVGElement>('ellipse[stroke="url(#kx301-bahn)"]'));
     Promise.all([
+      baueWeltraum(raum.current!, staticFile),
+      ladeTexturen(staticFile),
       document.fonts.load('29px "Noto Sans Symbols"', '☉☽☿♀♂♃♄♅♆♇'),
       document.fonts.load('29px "Noto Sans Symbols 2"', '♈♉♊♋♌♍♎♏♐♑♒♓'),
       document.fonts.load('16px "STIX Two Text"', 'WIDDER'),
       document.fonts.load('500 16px "STIX Two Text"', 'WIDDER'),
-    ]).then(() => document.fonts.ready).then(() => continueRender(warten));
+    ])
+      .then(([weltraum, tex]) => {
+        welt.current = { szene, weltraum, tex, bahnen };
+        return document.fonts.ready;
+      })
+      .then(() => setBereit(true))
+      .catch((e) => cancelRender(e));
   }, []);
 
   useLayoutEffect(() => {
     const w = welt.current;
-    if (!w) return;
+    if (!w || !bereit) return;
     const t = frame / FPS;
     const ln = lnMassstab(t), S = Math.exp(ln);
     const { l, l0 } = szenenStand(frame);
@@ -79,44 +106,77 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache }) => {
       cy = E0.y - (E0.y * S0 * (1 - g)) / S;
     }
 
-    /* Szene: Bahnen tauchen auf, sobald das Sonnensystem ein paar Bildpunkte groß ist */
-    const szeneDeckkraft = rampe(ln, -6.2, -3.4);
+    /* Weltraum: verblasst etwas, wenn die Radix steht, damit sie ruhig liest */
+    const k = kamera(ln, t);
+    w.weltraum.zeichne(k, t);
+    raum.current!.style.opacity = (1 - 0.55 * rampe(t, VERWANDLUNG_AB + 1, VERWANDLUNG_AB + 6)).toFixed(3);
+    // Hell: der Weltraum als goldene Zeichnung auf Weiß (Licht wird zu Tinte), Planeten bleiben echt
+    if (fassung === 'hell') raum.current!.style.filter = 'url(#flug-tinte)';
+
+    /* Radix-Szene: Bahnen sind im Sonnensystem nur ein Hauch und werden erst mit der Verwandlung zu Ringen */
+    const szeneDa = rampe(ln, -5.2, -2.6);
     const st = host.current!.style;
-    st.visibility = szeneDeckkraft <= 0.001 ? 'hidden' : '';
-    st.opacity = szeneDeckkraft.toFixed(3);
+    st.visibility = szeneDa <= 0.001 ? 'hidden' : '';
     st.transform = `scale(${S}) translate(${(-cx * PX).toFixed(3)}px, ${(-cy * PX).toFixed(3)}px)`;
+    w.szene.setzeStrich((fassung === 'hell' ? 1.6 : 1) / Math.max(1, S));
     w.szene.zeichne(l);
+    const bahn = szeneDa * (0.16 + 0.84 * rampe(t, VERWANDLUNG_AB - 0.6, VERWANDLUNG_AB + 2));
+    w.bahnen.forEach((b) => (b.style.opacity = bahn.toFixed(3)));
 
-    /* Himmel */
-    const k = kamera(ln, t), kv = kamera(lnMassstab(t - 1 / FPS), t - 1 / FPS);
-    const h = hinten.current!.getContext('2d')!;
-    h.clearRect(0, 0, BREITE, BREITE);
-    w.maler.zeichne(h, k, kv, (1 - 0.45 * rampe(ln, -9, -2)) * (1 - 0.25 * rampe(t, VERWANDLUNG_AB, VERWANDLUNG_AB + 5)));
-
-    /* Vorne: Lichthof der Sonne beim Anflug, Erde und Mond aus der Nähe */
-    const v = vorne.current!.getContext('2d')!;
-    v.clearRect(0, 0, BREITE, BREITE);
-    w.maler.sonne(v, k, ln, 1);
+    /* Sonne und Planeten mit echten Oberflächen */
+    const c = koerper.current!.getContext('2d')!;
+    c.clearRect(0, 0, BREITE, BREITE);
+    // Hell: Licht der Sonne als Goldtinte, wie der Weltraum dahinter
+    const licht = (f: () => void) => { if (fassung === 'hell') { c.save(); c.filter = 'url(#flug-tinte)'; f(); c.restore(); } else f(); };
     const bildpunkt = (x: number, y: number): [number, number] => [MITTE + (x - cx) * S * PX, MITTE + (y - cy) * S * PX];
-    // Licht kommt von der Sonne, bezogen auf den Platz der Erde im Sonnensystem
-    const lx = -E0.x, ly = -E0.y, lh = Math.hypot(lx, ly) || 1;
-    const licht: Licht = { x: lx / lh, y: ly / lh, z: 0.42 };
-    const er = l.koerper.erde, mo = l.koerper.mond;
-    const [ex, ey] = bildpunkt(er.x, er.y), erad = er.kugelR * S * PX;
-    const [mx, my] = bildpunkt(mo.x, mo.y), mrad = mo.kugelR * S * PX;
-    const vorErde = mo.y > er.y; // der Mond vor oder hinter der Erde
-    const mond = () => zeichneMond(v, fassung, mx, my, mrad * 1.02, licht, mo.kugelDeckkraft * rampe(mrad, 2, 6) * szeneDeckkraft);
-    if (!vorErde) mond();
-    zeichneErde(v, fassung, ex, ey, erad * 1.03, 30 + t * 7, licht, er.kugelDeckkraft * rampe(erad, 2.5, 8) * szeneDeckkraft);
-    if (vorErde) mond();
-  }, [frame]);
+
+    // Sonne: aus der Ferne ein Stern mit Reflex, nah eine leuchtende Kugel
+    const so = l.koerper.sonne;
+    const [sx, sy] = bildpunkt(so.x, so.y);
+    const sonnenR = so.kugelR * S * PX;
+    const fern = sonneImBild(k);
+    const stern = rampe(ln, -15, -9);
+    if (fern && szeneDa < 1) licht(() => zeichneSonnenlicht(c, fern[0], fern[1], 0.15 + 0.5 * rampe(ln, -10, -3), stern * (1 - szeneDa), MITTE));
+    if (szeneDa > 0 && so.kugelDeckkraft > 0.003) {
+      zeichneKugel(c, w.tex, { id: 'sonne', x: sx, y: sy, r: sonnenR, drehung: t * DREHUNG.sonne![0], neigung: DREHUNG.sonne![2], deckkraft: szeneDa * so.kugelDeckkraft }, { x: 0, y: 0, z: 1 });
+      // je größer die Erde im Bild, desto mehr tritt das Sonnenlicht zurück
+      const blend = (1 - 0.65 * rampe(ln, 0.5, 2.6)) * (1 - verwandlung(t));
+      licht(() => zeichneSonnenlicht(c, sx, sy, Math.min(1, 0.55 + 0.12 * Math.max(0, ln)), szeneDa * blend * so.kugelDeckkraft, MITTE));
+    }
+
+    // Planeten, Erde und Mond, hinten (oben im Bild) zuerst
+    const ids = (['merkur', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptun', 'pluto', 'erde', 'mond'] as const)
+      .map((id) => ({ id, kl: l.koerper[id] }))
+      .sort((a, b) => a.kl.y - b.kl.y);
+    for (const { id, kl } of ids) {
+      if (kl.kugelDeckkraft <= 0.003) continue;
+      const [x, y] = bildpunkt(kl.x, kl.y);
+      if (x < -400 || x > BREITE + 400 || y < -400 || y > BREITE + 400) continue;
+      // Licht kommt von der Sonne, im Bild von deren Ort aus
+      const lx = sx - x, ly = sy - y, lh = Math.hypot(lx, ly) || 1;
+      const licht: Licht = { x: lx / lh, y: ly / lh, z: 0.35 };
+      const [v, start, nei] = DREHUNG[id]!;
+      const r = kl.kugelR * S * PX * (id === 'erde' || id === 'mond' ? 1.02 : 1);
+      zeichneKugel(c, w.tex, { id, x, y, r, drehung: start + t * v, neigung: nei, deckkraft: kl.kugelDeckkraft * szeneDa }, licht);
+    }
+  }, [frame, bereit]);
+
+  useLayoutEffect(() => {
+    if (bereit) continueRender(warten);
+  }, [bereit]);
 
   const rad = 940 * PX;
   return (
     <AbsoluteFill className={`flug-${fassung}`} style={{ background: GRUND[fassung] }}>
-      <canvas ref={hinten} width={BREITE} height={BREITE} style={{ position: 'absolute', inset: 0 }} />
+      {/* Hell: Helligkeit L wird zu Goldtinte, Farbe = 1 − L · (1 − Gold #9a7a33); Schwarz bleibt reines Weiß */}
+      <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
+        <filter id="flug-tinte" colorInterpolationFilters="sRGB">
+          <feColorMatrix type="matrix" values={[0.4, 0.52, 0.8].map((k) => `${(-k * 0.3 * 0.85).toFixed(4)} ${(-k * 0.59 * 0.85).toFixed(4)} ${(-k * 0.11 * 0.85).toFixed(4)} 0 1`).join(' ') + ' 0 0 0 1 0'} />
+        </filter>
+      </svg>
+      <canvas ref={raum} width={BREITE} height={BREITE} style={{ position: 'absolute', inset: 0 }} />
+      <canvas ref={koerper} width={BREITE} height={BREITE} style={{ position: 'absolute', inset: 0 }} />
       <div ref={host} className="radix flug-szene" style={{ left: MITTE - rad / 2, top: MITTE - rad / 2, width: rad, height: rad }} />
-      <canvas ref={vorne} width={BREITE} height={BREITE} style={{ position: 'absolute', inset: 0 }} />
     </AbsoluteFill>
   );
 };

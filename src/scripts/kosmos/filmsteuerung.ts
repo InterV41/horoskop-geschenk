@@ -20,7 +20,8 @@ const START_FRIST = 2500; // so lange darf das Video brauchen, bis es läuft
 const STOCK_FRIST = 1500; // so lange darf es nach dem Start stehen bleiben
 const LUECKE = 250; // längere Pausen zwischen zwei Schritten: Tab im Hintergrund, zählt nicht mit
 
-export function erzeugeFilmsteuerung() {
+/* laenge und fps: vom gespielten Film, ohne Angabe der Kosmos-Film */
+export function erzeugeFilmsteuerung(laenge: number = filmLaenge(), fps: number = FILM_FPS) {
   let gestartet = false;
   let bild = 0;
   let letzteZeit = 0;
@@ -28,7 +29,7 @@ export function erzeugeFilmsteuerung() {
   let fortschrittAb = 0;
   let letzterSchritt: number | null = null;
 
-  const klemm = (b: number) => Math.min(filmLaenge() - 1, Math.max(0, b));
+  const klemm = (b: number) => Math.min(laenge - 1, Math.max(0, b));
 
   function schritt(e: Beobachtung): Entscheidung {
     // Lücke (keine Bildwechsel, weil die Seite nicht sichtbar war): Fristen um die Lücke verschieben
@@ -49,7 +50,7 @@ export function erzeugeFilmsteuerung() {
         if (e.zeit > 0) gestartet = true;
       }
       letzteZeit = e.zeit;
-      bild = klemm(Math.round(e.zeit * FILM_FPS));
+      bild = klemm(Math.round(e.zeit * fps));
     }
 
     if (!gestartet && e.jetzt - startAb > START_FRIST) return { art: 'live', bild: 0 };

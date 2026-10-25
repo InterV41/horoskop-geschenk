@@ -1,0 +1,26 @@
+import { Composition } from 'remotion';
+import { PartnerVideo, type PartnerVideoProps } from './PartnerVideo';
+
+/* 12 Sekunden bei 30 Bildern: Zerfall, Wirbel, Aufbau, Nachzeichnen */
+const LAENGE = 360;
+const FPS = 30;
+
+/* Je Fassung (hell, dunkel), Format (quer für Computer, hoch für Handy) und Sprache (Tierkreisnamen im Rad) */
+const varianten: { id: string; props: PartnerVideoProps; w: number; h: number }[] = [];
+for (const sprache of ['de', 'en'] as const)
+  for (const fassung of ['dunkel', 'hell'] as const)
+    for (const format of ['quer', 'hoch'] as const)
+      varianten.push({
+        id: `partner-${fassung}-${format}-${sprache}`,
+        props: { fassung, format, sprache, koerner: format === 'quer' ? 120000 : 110000 },
+        w: format === 'quer' ? 1920 : 1080,
+        h: format === 'quer' ? 1080 : 1920,
+      });
+
+export const Root: React.FC = () => (
+  <>
+    {varianten.map((v) => (
+      <Composition key={v.id} id={v.id} component={PartnerVideo} durationInFrames={LAENGE} fps={FPS} width={v.w} height={v.h} defaultProps={v.props} />
+    ))}
+  </>
+);

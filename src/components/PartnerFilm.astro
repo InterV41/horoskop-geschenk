@@ -1,0 +1,207 @@
+---
+// Partnerschaftshoroskop als Film, der beim Scrollen mitläuft: Clara und Jonas zerfallen zu Goldstaub, der
+// Staub formt in einem Wirbel die Doppelradix. Die Videos entstehen mit Remotion im Ordner video/
+// (je hell/dunkel, quer/hoch, de/en). Die Bühne bleibt beim Scrollen stehen, das Video folgt dem Scrollweg.
+// Namen und Geburtsdaten liegen als Text über dem Video und folgen der Lage der Räder.
+import { langFromPath } from '../i18n';
+import { texte, sprache as spracheVon } from '../scripts/kosmos/texte';
+
+const sprache = spracheVon(langFromPath(Astro.url.pathname));
+const t = texte(sprache).partner;
+---
+
+<div class="film" data-film data-sprache={sprache}>
+  <div class="film__buehne">
+    <video class="film__video" muted playsinline preload="auto" disablepictureinpicture aria-hidden="true"></video>
+    <img class="film__standbild" alt={t.doppel} decoding="async" />
+    <div class="film__ebene" role="img" aria-label={t.paar}>
+      <p class="film__karte" data-ort="a"><span class="film__name">{t.a.name}</span><span>{t.a.datum}</span><span>{t.a.ort}</span></p>
+      <p class="film__karte" data-ort="b"><span class="film__name">{t.b.name}</span><span>{t.b.datum}</span><span>{t.b.ort}</span></p>
+      <p class="film__karte film__karte--paar" data-ort="d"><span class="film__name">{t.paarName}</span></p>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* Lage der Räder im Video (Pixel der Vorlage), wie in video/src/PartnerVideo.tsx: Mitte x, y, Durchmesser */
+  const LAGE = {
+    quer: { w: 1920, h: 1080, a: [500, 540, 620], b: [1420, 540, 620], d: [960, 540, 900] },
+    hoch: { w: 1080, h: 1920, a: [540, 520, 640], b: [540, 1400, 640], d: [540, 960, 980] },
+  } as const;
+  type Format = keyof typeof LAGE;
+
+  const klemm = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
+  const fenster = (p: number, von: number, bis: number) => klemm((p - von) / (bis - von));
+
+  document.querySelectorAll<HTMLElement>('[data-film]').forEach((film) => {
+    const video = film.querySelector<HTMLVideoElement>('.film__video')!;
+    const standbild = film.querySelector<HTMLImageElement>('.film__standbild')!;
+    const ebene = film.querySelector<HTMLElement>('.film__ebene')!;
+    const karten = { a: film.querySelector<HTMLElement>('[data-ort="a"]')!, b: film.querySelector<HTMLElement>('[data-ort="b"]')!, d: film.querySelector<HTMLElement>('[data-ort="d"]')! };
+    const sprache = film.dataset.sprache ?? 'de';
+    const ruhig = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const fassung = () => {
+      const t = document.documentElement.dataset.theme;
+      if (t === 'dark' || t === 'light') return t === 'dark' ? 'dunkel' : 'hell';
+      return matchMedia('(prefers-color-scheme: dark)').matches ? 'dunkel' : 'hell';
+    };
+    const format = (): Format => (innerWidth >= innerHeight ? 'quer' : 'hoch');
+    const name = () => `partner-${fassung()}-${format()}-${sprache}`;
+
+    /* Video und Standbild zur Fassung laden; beim Wechsel an derselben Stelle weiter */
+    let geladen = '';
+    const lade = () => {
+      const n = name();
+      if (n === geladen) return;
+      geladen = n;
+      const zeit = video.currentTime || 0;
+      video.poster = `/video/${n}-anfang.jpg`;
+      standbild.src = `/video/${n}-ende.jpg`;
+      if (ruhig) return;
+      video.src = `/video/${n}.mp4`;
+      video.addEventListener('loadedmetadata', () => { video.currentTime = zeit; }, { once: true });
+    };
+    // Kann das Video nicht laden, steht das fertige Bild da
+    video.addEventListener('error', () => film.classList.add('film--standbild'));
+
+    /* Text über dem Video an die Räder setzen. Das Video füllt die Bühne randlos (cover); würden dabei Räder
+       angeschnitten (etwa Tablet quer), zeigt es sich ganz (contain). */
+    const setzeKarten = () => {
+      const l = LAGE[format()];
+      const bw = ebene.clientWidth, bh = ebene.clientHeight;
+      const fuellen = Math.max(bw / l.w, bh / l.h), ganz = Math.min(bw / l.w, bh / l.h);
+      // randlos nur, wenn dabei alle drei Räder samt etwas Luft ganz im Bild bleiben
+      const fx = (bw - l.w * fuellen) / 2, fy = (bh - l.h * fuellen) / 2;
+      const randlos = [l.a, l.b, l.d].every(([x, y, dm]) => {
+        const r = (dm / 2) * 1.06 * fuellen;
+        const cx = fx + x * fuellen, cy = fy + y * fuellen;
+        return cx - r >= 0 && cx + r <= bw && cy - r >= 0 && cy + r <= bh;
+      });
+      film.classList.toggle('film--ganz', !randlos);
+      const m = randlos ? fuellen : ganz;
+      const ox = (bw - l.w * m) / 2, oy = (bh - l.h * m) / 2;
+      const setze = (e: HTMLElement, [x, y, dm]: readonly number[], abstand: number) => {
+        const top = Math.min(bh - e.offsetHeight - 16, oy + (y + dm / 2 + abstand) * m);
+        e.style.transform = `translate(${(ox + x * m).toFixed(1)}px, ${top.toFixed(1)}px) translateX(-50%)`;
+      };
+      setze(karten.a, l.a, 18);
+      setze(karten.b, l.b, 18);
+      setze(karten.d, l.d, 26);
+    };
+
+    /* Scrollweg: 0 oben, 1 wenn die Bühne ihre Haltestrecke verlässt */
+    const fortschritt = () => {
+      const r = film.getBoundingClientRect();
+      return klemm(-r.top / Math.max(1, r.height - innerHeight));
+    };
+
+    let ziel = 0, stand = 0;
+    const bild = () => {
+      const p = ruhig ? 1 : fortschritt();
+      karten.a.style.opacity = karten.b.style.opacity = (1 - fenster(p, 0.02, 0.12)).toFixed(3);
+      karten.d.style.opacity = fenster(p, 0.86, 0.96).toFixed(3);
+      if (ruhig || !video.duration) return;
+      ziel = p * (video.duration - 0.04);
+      // weich nachführen, und nur springen, wenn der Browser mit dem letzten Sprung fertig ist
+      stand += (ziel - stand) * 0.25;
+      if (Math.abs(stand - ziel) < 0.004) stand = ziel;
+      if (!video.seeking && Math.abs(video.currentTime - stand) > 1 / 90) video.currentTime = stand;
+    };
+
+    let raf = 0, sichtbar = false;
+    const schleife = () => { bild(); raf = sichtbar ? requestAnimationFrame(schleife) : 0; };
+    new IntersectionObserver(([e]) => {
+      sichtbar = e.isIntersecting;
+      if (sichtbar && !raf) raf = requestAnimationFrame(schleife);
+    }).observe(film);
+
+    if (ruhig) film.classList.add('film--standbild');
+    lade();
+    setzeKarten();
+    bild();
+    document.fonts?.ready.then(setzeKarten);
+    addEventListener('resize', () => { lade(); setzeKarten(); bild(); });
+    document.addEventListener('themechange', lade);
+  });
+</script>
+
+<style>
+  /* Haltestrecke: so lange bleibt die Bühne stehen, während der Film läuft */
+  .film {
+    position: relative;
+    width: 100%;
+    height: 420svh;
+  }
+  .film__buehne {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    overflow: hidden;
+    background: var(--papier);
+    /* oben und unten weich in die Seite übergehen, keine Kante zum Seitenhimmel */
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 9%, #000 91%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 9%, #000 91%, transparent 100%);
+  }
+  .film__video,
+  .film__standbild {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .film__standbild {
+    display: none;
+  }
+  .film--ganz .film__video,
+  .film--ganz .film__standbild {
+    object-fit: contain;
+  }
+  .film--standbild .film__video {
+    display: none;
+  }
+  .film--standbild .film__standbild {
+    display: block;
+  }
+  .film--standbild {
+    height: 100svh;
+  }
+  .film__ebene {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  /* Name und Geburtsdaten wie auf dem Deckblatt des PDFs */
+  .film__karte {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    margin: 0;
+    color: var(--gold);
+    font-family: 'STIX Two Text', serif;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-align: center;
+    white-space: nowrap;
+    will-change: transform, opacity;
+  }
+  .film__name {
+    font-size: clamp(22px, 2.6vw, 34px);
+    letter-spacing: 0.01em;
+    line-height: 1.1;
+    margin-bottom: 4px;
+  }
+  .film__karte[data-ort='d'] {
+    opacity: 0;
+  }
+  @media (max-width: 639px) {
+    .film__karte {
+      font-size: 11px;
+      letter-spacing: 0.06em;
+    }
+  }
+</style>

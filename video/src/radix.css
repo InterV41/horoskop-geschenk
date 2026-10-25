@@ -1,0 +1,65 @@
+/* Aussehen der Räder wie auf der Partnerseite (PartnerRadix.astro), hier fest je Fassung statt nach Seitenmodus */
+.video-hell .radix {
+  --rx-gold: #9a7a33;
+  --rx-text: #96762f;
+  --rx-dick: 1.6;
+  --rx-schnitt: 500;
+  --rx-disk: #fefcf8;
+  --kx-nabe: #ffffff;
+  --rx-partner: #4f6a86;
+}
+.video-dunkel .radix {
+  --rx-gold: #e0c27e;
+  --rx-text: #e0c27e;
+  --rx-dick: 1;
+  --rx-schnitt: 400;
+  --rx-disk: rgb(7 16 42 / 0.5);
+  --kx-nabe: transparent;
+  --rx-partner: #9fc3d9;
+}
+.radix {
+  position: absolute;
+  aspect-ratio: 1 / 1;
+  color: var(--rx-gold);
+}
+.radix svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+.radix .kx-ebene-ring {
+  transform-origin: 50% 50%;
+}
+.radix .kx-ebene-zeichen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.radix .kx-zeichen {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--rx-text);
+  font-weight: var(--rx-schnitt);
+  font-family: 'Noto Sans Symbols', 'Noto Sans Symbols 2', 'STIX Two Text', serif;
+}
+.radix .kx-zeichen.rx-zeichen { font-size: calc(24 * var(--kx-einheit, 1px)); }
+.radix .kx-zeichen.rx-planet { font-size: calc(29 * var(--kx-einheit, 1px)); }
+.radix .kx-zeichen.rx-planet.gross { font-size: calc(32 * var(--kx-einheit, 1px)); }
+.radix .kx-zeichen.rx-planet.klein { font-size: calc(26 * var(--kx-einheit, 1px)); }
+.radix .kx-zeichen.rx-partner { color: var(--rx-partner); }
+.radix text {
+  fill: var(--rx-text);
+  font-weight: var(--rx-schnitt);
+  text-anchor: middle;
+  dominant-baseline: central;
+  font-family: 'STIX Two Text', 'Noto Sans Symbols', 'Noto Sans Symbols 2', serif;
+}
+.radix .rx-name { font-size: 16px; letter-spacing: 4.2px; dominant-baseline: auto; }
+.radix .rx-achse { font-size: 13px; letter-spacing: 2.4px; }
+.radix .rx-haus { font-size: 17px; }

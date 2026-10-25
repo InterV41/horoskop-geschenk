@@ -14,10 +14,19 @@ for (const sprache of ['de', 'en'] as const)
     for (const format of ['quer', 'hoch'] as const)
       varianten.push({
         id: `partner-${fassung}-${format}-${sprache}`,
-        props: { fassung, format, sprache, koerner: format === 'quer' ? 120000 : 110000 },
+        props: { fassung, format, sprache, koerner: format === 'quer' ? 120000 : 110000, nurSand: false },
         w: format === 'quer' ? 1920 : 1080,
         h: format === 'quer' ? 1080 : 1920,
       });
+/* Für die Webseite: nur der Sand, die Räder zeichnet die Seite scharf selbst (sprachunabhängig) */
+for (const fassung of ['dunkel', 'hell'] as const)
+  for (const format of ['quer', 'hoch'] as const)
+    varianten.push({
+      id: `partner-sand-${fassung}-${format}`,
+      props: { fassung, format, sprache: 'de', koerner: format === 'quer' ? 120000 : 110000, nurSand: true },
+      w: format === 'quer' ? 1920 : 1080,
+      h: format === 'quer' ? 1080 : 1920,
+    });
 
 export const Root: React.FC = () => (
   <>

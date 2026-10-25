@@ -1,137 +1,179 @@
 ---
-// Partnerschaftshoroskop als Film, der beim Scrollen mitläuft: Clara und Jonas zerfallen zu Goldstaub, der
-// Staub formt in einem Wirbel die Doppelradix. Die Videos entstehen mit Remotion im Ordner video/
-// (je hell/dunkel, quer/hoch, de/en). Die Bühne bleibt beim Scrollen stehen, das Video folgt dem Scrollweg.
-// Namen und Geburtsdaten liegen als Text über dem Video und folgen der Lage der Räder.
+// Partnerschaftshoroskop, beim Scrollen: Clara und Jonas zerfallen zu Goldstaub, der Staub formt in einem
+// Wirbel die Doppelradix. Die Räder zeichnet die Seite live als Vektorgrafik (scharf in jeder Größe), den Sand
+// liefert ein Video aus video/ (nur Sand, schwarzer bzw. weißer Grund, per Mischmodus weggeblendet).
+// Beides folgt derselben Bildnummer (scripts/partner/film.ts). Die Bühne bleibt beim Scrollen stehen.
+import '@fontsource/stix-two-text/400.css';
+import '@fontsource/stix-two-text/500.css';
+import '@fontsource/noto-sans-symbols/400.css';
+import '@fontsource/noto-sans-symbols-2/400.css';
 import { langFromPath } from '../i18n';
 import { texte, sprache as spracheVon } from '../scripts/kosmos/texte';
+import { FILM_LAGE } from '../scripts/partner/film';
 
 const sprache = spracheVon(langFromPath(Astro.url.pathname));
 const t = texte(sprache).partner;
+/* Lage in Prozent der Bildfläche, je Format; welches gilt, entscheidet das Script */
+const prozent = (f: 'quer' | 'hoch', [x, y, dm]: readonly [number, number, number]) => {
+  const l = FILM_LAGE[f];
+  return { left: ((x - dm / 2) / l.w) * 100, top: ((y - dm / 2) / l.h) * 100, w: (dm / l.w) * 100, h: (dm / l.h) * 100 };
+};
+const lagen = JSON.stringify({
+  quer: { a: prozent('quer', FILM_LAGE.quer.a), b: prozent('quer', FILM_LAGE.quer.b), d: prozent('quer', FILM_LAGE.quer.d) },
+  hoch: { a: prozent('hoch', FILM_LAGE.hoch.a), b: prozent('hoch', FILM_LAGE.hoch.b), d: prozent('hoch', FILM_LAGE.hoch.d) },
+});
 ---
 
-<div class="film" data-film data-sprache={sprache}>
+<div class="film" data-film data-sprache={sprache} data-lagen={lagen}>
   <div class="film__buehne">
-    <video class="film__video" muted playsinline preload="auto" disablepictureinpicture aria-hidden="true"></video>
-    <img class="film__standbild" alt={t.doppel} decoding="async" />
-    <div class="film__ebene" role="img" aria-label={t.paar}>
-      <p class="film__karte" data-ort="a"><span class="film__name">{t.a.name}</span><span>{t.a.datum}</span><span>{t.a.ort}</span></p>
-      <p class="film__karte" data-ort="b"><span class="film__name">{t.b.name}</span><span>{t.b.datum}</span><span>{t.b.ort}</span></p>
-      <p class="film__karte film__karte--paar" data-ort="d"><span class="film__name">{t.paarName}</span></p>
+    <div class="film__flaeche" role="img" aria-label={t.doppel}>
+      <div class="radix" data-rad="d"></div>
+      <div class="radix" data-rad="a"></div>
+      <div class="radix" data-rad="b"></div>
+      <video class="film__sand" muted playsinline preload="none" disablepictureinpicture aria-hidden="true"></video>
+      <p class="film__karte" data-karte="a" aria-hidden="true"><span class="film__name">{t.a.name}</span><span>{t.a.datum}</span><span>{t.a.ort}</span></p>
+      <p class="film__karte" data-karte="b" aria-hidden="true"><span class="film__name">{t.b.name}</span><span>{t.b.datum}</span><span>{t.b.ort}</span></p>
+      <p class="film__karte film__karte--paar" data-karte="d" aria-hidden="true"><span class="film__name">{t.paarName}</span></p>
     </div>
   </div>
 </div>
 
 <script>
-  /* Lage der Räder im Video (Pixel der Vorlage), wie in video/src/PartnerVideo.tsx: Mitte x, y, Durchmesser */
-  const LAGE = {
-    quer: { w: 1920, h: 1080, a: [500, 540, 620], b: [1420, 540, 620], d: [960, 540, 900] },
-    hoch: { w: 1080, h: 1920, a: [540, 520, 640], b: [540, 1400, 640], d: [540, 960, 980] },
-  } as const;
-  type Format = keyof typeof LAGE;
+  import { baueSzene } from '../scripts/kosmos/szene';
+  import { layout } from '../scripts/kosmos/layout';
+  import { teil } from '../scripts/kosmos/zeitplan';
+  import { laengen } from '../scripts/kosmos/modell';
+  import { sprache as spracheVon } from '../scripts/kosmos/texte';
+  import { maskeRad, maskeDoppel } from '../scripts/partner/sand';
+  import { baueDoppel } from '../scripts/partner/doppel';
+  import { setzeZerfall } from '../scripts/partner/zerfall';
+  import { FILM_LAGE, FILM_FPS, FILM_BILDER, filmFortschritt, filmStand, type FilmFormat } from '../scripts/partner/film';
 
   const klemm = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
   const fenster = (p: number, von: number, bis: number) => klemm((p - von) / (bis - von));
+  type Kasten = { left: number; top: number; w: number; h: number };
 
-  document.querySelectorAll<HTMLElement>('[data-film]').forEach((film) => {
-    const video = film.querySelector<HTMLVideoElement>('.film__video')!;
-    const standbild = film.querySelector<HTMLImageElement>('.film__standbild')!;
-    const ebene = film.querySelector<HTMLElement>('.film__ebene')!;
-    const karten = { a: film.querySelector<HTMLElement>('[data-ort="a"]')!, b: film.querySelector<HTMLElement>('[data-ort="b"]')!, d: film.querySelector<HTMLElement>('[data-ort="d"]')! };
-    const sprache = film.dataset.sprache ?? 'de';
+  document.querySelectorAll<HTMLElement>('[data-film]').forEach((film, nr) => {
+    const buehne = film.querySelector<HTMLElement>('.film__buehne')!;
+    const flaeche = film.querySelector<HTMLElement>('.film__flaeche')!;
+    const video = film.querySelector<HTMLVideoElement>('.film__sand')!;
+    const host = { a: film.querySelector<HTMLElement>('[data-rad="a"]')!, b: film.querySelector<HTMLElement>('[data-rad="b"]')!, d: film.querySelector<HTMLElement>('[data-rad="d"]')! };
+    const karte = { a: film.querySelector<HTMLElement>('[data-karte="a"]')!, b: film.querySelector<HTMLElement>('[data-karte="b"]')!, d: film.querySelector<HTMLElement>('[data-karte="d"]')! };
+    const lagen = JSON.parse(film.dataset.lagen!) as Record<FilmFormat, Record<'a' | 'b' | 'd', Kasten>>;
+    const sp = spracheVon(film.dataset.sprache);
     const ruhig = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+    /* Räder: dieselben Szenen wie auf der übrigen Seite */
+    const szA = baueSzene(host.a, 300 + nr * 3, sp, { nurRadix: true });
+    const szB = baueSzene(host.b, 301 + nr * 3, sp, { nurRadix: true });
+    const doppel = baueDoppel(host.d, 302 + nr * 3, sp, '');
+    for (const h of [host.a, host.b, host.d]) h.querySelectorAll('svg').forEach((s) => (s.removeAttribute('role'), s.setAttribute('aria-hidden', 'true')));
+    const setzeStrich = () => {
+      const f = parseFloat(getComputedStyle(host.d).getPropertyValue('--rx-dick')) || 1;
+      szA.setzeStrich(f); szB.setzeStrich(f); doppel.setzeStrich(f);
+    };
+
     const fassung = () => {
-      const t = document.documentElement.dataset.theme;
-      if (t === 'dark' || t === 'light') return t === 'dark' ? 'dunkel' : 'hell';
+      const th = document.documentElement.dataset.theme;
+      if (th === 'dark' || th === 'light') return th === 'dark' ? 'dunkel' : 'hell';
       return matchMedia('(prefers-color-scheme: dark)').matches ? 'dunkel' : 'hell';
     };
-    const format = (): Format => (innerWidth >= innerHeight ? 'quer' : 'hoch');
-    const name = () => `partner-${fassung()}-${format()}-${sprache}`;
+    const format = (): FilmFormat => (innerWidth >= innerHeight ? 'quer' : 'hoch');
 
-    /* Video und Standbild zur Fassung laden; beim Wechsel an derselben Stelle weiter */
+    /* Bildfläche in der Bühne: randlos (wie cover), solange kein Rad angeschnitten wird, sonst ganz (contain).
+       Räder, Sand und Beschriftung liegen darin in Prozent, also genau übereinander. */
+    let fmt: FilmFormat = format();
+    const ordne = () => {
+      fmt = format();
+      const l = FILM_LAGE[fmt];
+      const bw = buehne.clientWidth, bh = buehne.clientHeight;
+      const fuellen = Math.max(bw / l.w, bh / l.h), ganz = Math.min(bw / l.w, bh / l.h);
+      const passt = (m: number) => [l.a, l.b, l.d].every(([x, y, dm]) => {
+        const r = (dm / 2) * 1.06 * m, cx = (bw - l.w * m) / 2 + x * m, cy = (bh - l.h * m) / 2 + y * m;
+        return cx - r >= 0 && cx + r <= bw && cy - r >= 0 && cy + r <= bh;
+      });
+      const m = passt(fuellen) ? fuellen : ganz;
+      const st = flaeche.style;
+      st.width = `${l.w * m}px`;
+      st.height = `${l.h * m}px`;
+      st.left = `${(bw - l.w * m) / 2}px`;
+      st.top = `${(bh - l.h * m) / 2}px`;
+      for (const k of ['a', 'b', 'd'] as const) {
+        const p = lagen[fmt][k], hs = host[k].style;
+        hs.left = `${p.left}%`; hs.top = `${p.top}%`; hs.width = `${p.w}%`; hs.height = `${p.h}%`;
+        const ks = karte[k].style;
+        ks.left = `${p.left + p.w / 2}%`;
+        ks.top = `calc(${p.top + p.h}% + ${k === 'd' ? 22 : 14}px)`;
+      }
+    };
+
+    /* Sand-Video zur Fassung laden: ganz laden und aus dem Speicher abspielen (der Server kann keine
+       Teilabrufe, ohne die spult Safari nicht) */
     let geladen = '';
     const lade = () => {
-      const n = name();
-      if (n === geladen) return;
+      const n = `partner-sand-${fassung()}-${format()}`;
+      if (ruhig || n === geladen) return;
       geladen = n;
       const zeit = video.currentTime || 0;
-      video.poster = `/video/${n}-anfang.jpg`;
-      standbild.src = `/video/${n}-ende.jpg`;
-      if (ruhig) return;
-      // Ganz laden und aus dem Speicher abspielen: Der Server kann keine Teilabrufe, ohne die spult Safari
-      // nicht. So springt das Video in jedem Browser sofort an jede Stelle.
       fetch(`/video/${n}.mp4`)
         .then((r) => (r.ok ? r.blob() : Promise.reject(r.status)))
         .then((datei) => {
-          if (n !== geladen) return; // inzwischen eine andere Fassung gewählt
+          if (n !== geladen) return;
           if (video.src.startsWith('blob:')) URL.revokeObjectURL(video.src);
           video.src = URL.createObjectURL(datei);
           video.addEventListener('loadedmetadata', () => { video.currentTime = zeit; }, { once: true });
         })
-        .catch(() => film.classList.add('film--standbild'));
-    };
-    // Kann das Video nicht laden, steht das fertige Bild da
-    video.addEventListener('error', () => film.classList.add('film--standbild'));
-
-    /* Text über dem Video an die Räder setzen. Das Video füllt die Bühne randlos (cover); würden dabei Räder
-       angeschnitten (etwa Tablet quer), zeigt es sich ganz (contain). */
-    const setzeKarten = () => {
-      const l = LAGE[format()];
-      const bw = ebene.clientWidth, bh = ebene.clientHeight;
-      const fuellen = Math.max(bw / l.w, bh / l.h), ganz = Math.min(bw / l.w, bh / l.h);
-      // randlos nur, wenn dabei alle drei Räder samt etwas Luft ganz im Bild bleiben
-      const fx = (bw - l.w * fuellen) / 2, fy = (bh - l.h * fuellen) / 2;
-      const randlos = [l.a, l.b, l.d].every(([x, y, dm]) => {
-        const r = (dm / 2) * 1.06 * fuellen;
-        const cx = fx + x * fuellen, cy = fy + y * fuellen;
-        return cx - r >= 0 && cx + r <= bw && cy - r >= 0 && cy + r <= bh;
-      });
-      film.classList.toggle('film--ganz', !randlos);
-      const m = randlos ? fuellen : ganz;
-      const ox = (bw - l.w * m) / 2, oy = (bh - l.h * m) / 2;
-      const setze = (e: HTMLElement, [x, y, dm]: readonly number[], abstand: number) => {
-        const top = Math.min(bh - e.offsetHeight - 16, oy + (y + dm / 2 + abstand) * m);
-        e.style.transform = `translate(${(ox + x * m).toFixed(1)}px, ${top.toFixed(1)}px) translateX(-50%)`;
-      };
-      setze(karten.a, l.a, 18);
-      setze(karten.b, l.b, 18);
-      setze(karten.d, l.d, 26);
+        .catch(() => { /* ohne Sand laufen die Räder trotzdem mit */ });
     };
 
-    /* Scrollweg: 0 oben, 1 wenn die Bühne ihre Haltestrecke verlässt */
     const fortschritt = () => {
       const r = film.getBoundingClientRect();
       return klemm(-r.top / Math.max(1, r.height - innerHeight));
     };
 
-    let ziel = 0, stand = 0;
+    /* Ein Bild: Ziel aus dem Scrollweg, weich nachgeführt; die Räder zeichnen im Takt des Videos */
+    const dauer = FILM_BILDER / FILM_FPS;
+    let stand = 0, zuletzt = -1;
     const bild = () => {
       const p = ruhig ? 1 : fortschritt();
-      karten.a.style.opacity = karten.b.style.opacity = (1 - fenster(p, 0.02, 0.12)).toFixed(3);
-      karten.d.style.opacity = fenster(p, 0.86, 0.96).toFixed(3);
-      if (ruhig || !video.duration) return;
-      ziel = p * (video.duration - 0.04);
-      // weich nachführen, und nur springen, wenn der Browser mit dem letzten Sprung fertig ist
+      const ziel = p * (dauer - 0.04);
       stand += (ziel - stand) * 0.25;
       if (Math.abs(stand - ziel) < 0.004) stand = ziel;
-      if (!video.seeking && Math.abs(video.currentTime - stand) > 1 / 90) video.currentTime = stand;
+      if (video.readyState >= 1 && !video.seeking && Math.abs(video.currentTime - stand) > 1 / 90) video.currentTime = stand;
+      // solange das Video springt, die Räder nach dem Ziel zeichnen, sonst genau nach dem Videobild
+      const zeit = video.readyState >= 2 && !video.seeking ? video.currentTime : stand;
+      const nrBild = Math.min(FILM_BILDER - 1, zeit * FILM_FPS);
+      karte.a.style.opacity = karte.b.style.opacity = (1 - fenster(p, 0.02, 0.12)).toFixed(3);
+      karte.d.style.opacity = fenster(p, 0.86, 0.96).toFixed(3);
+      if (Math.abs(nrBild - zuletzt) < 0.05) return;
+      zuletzt = nrBild;
+      const { tauA, tauB, ascA, ascB } = filmStand(nrBild);
+      const s = filmFortschritt(nrBild);
+      szA.zeichne(layout(tauA, 1, ascA));
+      szB.zeichne(layout(tauB, 1, ascB));
+      const m = maskeRad(s);
+      setzeZerfall(host.a, m);
+      setzeZerfall(host.b, m);
+      host.a.style.visibility = host.b.style.visibility = m >= 1 ? 'hidden' : '';
+      const d = maskeDoppel(s);
+      doppel.zeichne(laengen(tauA), laengen(tauB), ascA, teil(d, 0.75, 1));
+      doppel.einzeichnen(d);
     };
 
     let raf = 0, sichtbar = false;
     const schleife = () => { bild(); raf = sichtbar ? requestAnimationFrame(schleife) : 0; };
     new IntersectionObserver(([e]) => {
       sichtbar = e.isIntersecting;
-      if (sichtbar && !raf) raf = requestAnimationFrame(schleife);
-    }).observe(film);
+      if (sichtbar) { lade(); if (!raf) raf = requestAnimationFrame(schleife); }
+    }, { rootMargin: '50% 0px' }).observe(film);
 
-    if (ruhig) film.classList.add('film--standbild');
-    lade();
-    setzeKarten();
+    if (ruhig) film.classList.add('film--ruhig');
+    setzeStrich();
+    ordne();
     bild();
-    document.fonts?.ready.then(setzeKarten);
-    addEventListener('resize', () => { lade(); setzeKarten(); bild(); });
-    document.addEventListener('themechange', lade);
+    document.fonts?.ready.then(() => { ordne(); zuletzt = -1; bild(); });
+    addEventListener('resize', () => { const vorher = fmt; ordne(); if (fmt !== vorher && sichtbar) lade(); zuletzt = -1; bild(); });
+    document.addEventListener('themechange', () => { setzeStrich(); if (sichtbar) lade(); zuletzt = -1; bild(); });
   });
 </script>
 
@@ -142,61 +184,72 @@ const t = texte(sprache).partner;
     width: 100%;
     height: 420svh;
   }
+  .film--ruhig {
+    height: 100svh;
+  }
+  /* Die Bühne trägt denselben Himmel wie die Seite: Der Sand braucht einen Hintergrund, mit dem er sich
+     mischen kann. Oben und unten geht sie weich in die Seite über. */
   .film__buehne {
     position: sticky;
     top: 0;
     height: 100svh;
     overflow: hidden;
-    background: var(--papier);
-    /* oben und unten weich in die Seite übergehen, keine Kante zum Seitenhimmel */
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 9%, #000 91%, transparent 100%);
-    mask-image: linear-gradient(to bottom, transparent 0, #000 9%, #000 91%, transparent 100%);
+    background-color: var(--papier);
+    background-image: var(--sterne-nah, none), var(--sterne-fern, none), var(--himmel, none);
+    background-size: 1200px 1200px, 1200px 1200px, auto;
+    background-position: 380px 520px, 0 0, 0 0;
+    background-attachment: fixed;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 8%, #000 92%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 8%, #000 92%, transparent 100%);
   }
-  .film__video,
-  .film__standbild {
+  .film__flaeche {
+    position: absolute;
+  }
+  /* Sand über den Rädern: dunkel hellt er auf (Schwarz verschwindet), hell dunkelt er ab (Weiß verschwindet) */
+  .film__sand {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
-  }
-  .film__standbild {
-    display: none;
-  }
-  .film--ganz .film__video,
-  .film--ganz .film__standbild {
-    object-fit: contain;
-  }
-  .film--standbild .film__video {
-    display: none;
-  }
-  .film--standbild .film__standbild {
-    display: block;
-  }
-  .film--standbild {
-    height: 100svh;
-  }
-  .film__ebene {
-    position: absolute;
-    inset: 0;
+    object-fit: fill;
+    mix-blend-mode: multiply;
+    /* Kompression macht Schwarz und Weiß nicht ganz rein: etwas Kontrast, dann verschwindet der Grund ohne Kasten */
+    filter: contrast(1.14);
+    /* Der Wirbel reicht über die Bildfläche hinaus: zu allen Seiten weich auslaufen lassen, keine harte Kante.
+       Die Maske sitzt am Video selbst, eine Maske auf der Fläche würde das Mischen mit dem Himmel abschneiden. */
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 7%, #000 93%, transparent), linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
+    -webkit-mask-composite: source-in;
+    mask-image: linear-gradient(to bottom, transparent, #000 7%, #000 93%, transparent), linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
+    mask-composite: intersect;
     pointer-events: none;
   }
+  :global(:root[data-theme='dark']) .film__sand {
+    mix-blend-mode: screen;
+  }
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-theme='light'])) .film__sand {
+      mix-blend-mode: screen;
+    }
+  }
+  .film--ruhig .film__sand {
+    display: none;
+  }
+
   /* Name und Geburtsdaten wie auf dem Deckblatt des PDFs */
   .film__karte {
     position: absolute;
-    left: 0;
-    top: 0;
     display: grid;
     justify-items: center;
     gap: 6px;
     margin: 0;
+    transform: translateX(-50%);
     color: var(--gold);
     font-family: 'STIX Two Text', serif;
     font-size: 13px;
     letter-spacing: 0.1em;
     text-align: center;
     white-space: nowrap;
-    will-change: transform, opacity;
+    pointer-events: none;
   }
   .film__name {
     font-size: clamp(22px, 2.6vw, 34px);
@@ -204,7 +257,7 @@ const t = texte(sprache).partner;
     line-height: 1.1;
     margin-bottom: 4px;
   }
-  .film__karte[data-ort='d'] {
+  .film__karte[data-karte='d'] {
     opacity: 0;
   }
   @media (max-width: 639px) {
@@ -213,4 +266,83 @@ const t = texte(sprache).partner;
       letter-spacing: 0.06em;
     }
   }
+
+  /* Räder: Farben und Aufbau wie die Kosmos-Radix, ohne Himmel */
+  .radix {
+    --rx-gold: #9a7a33;
+    --rx-text: #96762f;
+    --rx-dick: 1.6;
+    --rx-schnitt: 500;
+    --rx-disk: #fefcf8;
+    --kx-nabe: #ffffff;
+    --rx-partner: #4f6a86;
+    position: absolute;
+    color: var(--rx-gold);
+  }
+  :global(:root[data-theme='dark']) .radix {
+    --rx-gold: #e0c27e;
+    --rx-text: #e0c27e;
+    --rx-dick: 1;
+    --rx-schnitt: 400;
+    --rx-disk: rgb(7 16 42 / 0.5);
+    --kx-nabe: transparent;
+    --rx-partner: #9fc3d9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-theme='light'])) .radix {
+      --rx-gold: #e0c27e;
+      --rx-text: #e0c27e;
+      --rx-dick: 1;
+      --rx-schnitt: 400;
+      --rx-disk: rgb(7 16 42 / 0.5);
+      --kx-nabe: transparent;
+      --rx-partner: #9fc3d9;
+    }
+  }
+  .radix :global(svg) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    overflow: visible;
+  }
+  .radix :global(.kx-ebene-ring) {
+    transform-origin: 50% 50%;
+    will-change: transform;
+  }
+  .radix :global(.kx-ebene-zeichen) {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .radix :global(.kx-zeichen) {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    line-height: 1;
+    white-space: nowrap;
+    color: var(--rx-text);
+    font-weight: var(--rx-schnitt);
+    font-family: 'Noto Sans Symbols', 'Noto Sans Symbols 2', 'STIX Two Text', 'Segoe UI Symbol', 'Apple Symbols', serif;
+    user-select: none;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+  }
+  .radix :global(.kx-zeichen.rx-zeichen) { font-size: calc(24 * var(--kx-einheit, 1px)); }
+  .radix :global(.kx-zeichen.rx-planet) { font-size: calc(29 * var(--kx-einheit, 1px)); }
+  .radix :global(.kx-zeichen.rx-planet.gross) { font-size: calc(32 * var(--kx-einheit, 1px)); }
+  .radix :global(.kx-zeichen.rx-planet.klein) { font-size: calc(26 * var(--kx-einheit, 1px)); }
+  .radix :global(.kx-zeichen.rx-partner) { color: var(--rx-partner); }
+  .radix :global(text) {
+    fill: var(--rx-text);
+    font-weight: var(--rx-schnitt);
+    text-anchor: middle;
+    dominant-baseline: central;
+    user-select: none;
+    font-family: 'STIX Two Text', 'Noto Sans Symbols', 'Noto Sans Symbols 2', 'Segoe UI Symbol', 'Apple Symbols', serif;
+  }
+  .radix :global(.rx-name) { font-size: 16px; letter-spacing: 4.2px; dominant-baseline: auto; }
+  .radix :global(.rx-achse) { font-size: 13px; letter-spacing: 2.4px; }
+  .radix :global(.rx-haus) { font-size: 17px; }
 </style>

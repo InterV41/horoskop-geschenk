@@ -135,16 +135,17 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache }) => {
     // Sonne: aus der Ferne ein Stern mit Reflex, nah eine leuchtende Kugel
     const so = l.koerper.sonne;
     const [sx, sy] = bildpunkt(so.x, so.y);
-    const sonnenR = so.kugelR * S * PX;
+    // im Sonnensystem kleiner, damit sie die Planeten nicht erdrückt; nah an der Erde wieder in voller Größe
+    const sonnenR = so.kugelR * S * PX * (0.5 + 0.5 * rampe(ln, 0.6, 2.4));
     const fern = sonneImBild(k);
     const stern = rampe(ln, -15, -9);
-    if (fern && szeneDa < 1) licht(() => zeichneSonnenlicht(c, fern[0], fern[1], 0.15 + 0.5 * rampe(ln, -10, -3), stern * (1 - szeneDa), MITTE));
+    if (fern && szeneDa < 1) licht(() => zeichneSonnenlicht(c, fern[0], fern[1], 0.1 + 0.25 * rampe(ln, -10, -5) * (1 - rampe(ln, -5, -2.6)), stern * (1 - szeneDa), MITTE));
     if (szeneDa > 0 && so.kugelDeckkraft > 0.003) {
       zeichneKugel(c, w.tex, { id: 'sonne', x: sx, y: sy, r: sonnenR, drehung: t * DREHUNG.sonne![0], neigung: DREHUNG.sonne![2], deckkraft: szeneDa * so.kugelDeckkraft }, { x: 0, y: 0, z: 1 });
       // je größer die Erde im Bild, desto mehr tritt das Sonnenlicht zurück
       const blend = (1 - 0.65 * rampe(ln, 0.5, 2.6)) * (1 - verwandlung(t));
       // Sonne ruhiger, damit die Planeten daneben nicht untergehen
-      licht(() => zeichneSonnenlicht(c, sx, sy, Math.min(1, 0.3 + 0.12 * Math.max(0, ln)), 0.6 * szeneDa * blend * so.kugelDeckkraft, MITTE));
+      licht(() => zeichneSonnenlicht(c, sx, sy, Math.min(1, 0.08 + 0.12 * Math.max(0, ln)), 0.45 * szeneDa * blend * so.kugelDeckkraft, MITTE));
     }
 
     // Planeten, Erde und Mond, hinten (oben im Bild) zuerst
@@ -161,7 +162,15 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache }) => {
       const [v, start, nei] = DREHUNG[id]!;
       // Im Sonnensystem sind die Planeten maßstäblich nur wenige Bildpunkte groß: dort deutlich größer zeigen,
       // beim Heranfliegen an die Erde gleitet das auf die wahre Größe zurück
-      const r = kl.kugelR * S * PX * (id === 'erde' || id === 'mond' ? 1.02 : 1) * (1 + 1.5 * (1 - rampe(ln, 0.4, 2.6)));
+      const wahr = kl.kugelR * S * PX * (id === 'erde' || id === 'mond' ? 1.02 : 1);
+      // Mindestgröße in Bildpunkten, damit man die Planeten erkennt, sobald das Sonnensystem in Sicht ist.
+      // Nach oben begrenzt durch den Abstand der Bahnen (45 Einheiten, in der Schrägsicht gestaucht):
+      // so bleibt jeder Planet auf seiner Bahn, nichts schiebt sich ineinander.
+      const mindest = (1.6 + 12 * rampe(ln, -4.2, -0.6)) * (0.7 + 0.3 * Math.min(1.6, kl.kugelR / 8)) * (1 - rampe(ln, 0.6, 2.4));
+      // Bahnabstand in Richtung des Planeten: quer zur Blickrichtung voll, in die Tiefe um K gestaucht
+      const richtung = Math.atan2(kl.y / Math.max(l.K, 1e-3), kl.x);
+      const deckel = Math.max(0.9, 0.45 * 45 * S * PX * Math.hypot(Math.cos(richtung), l.K * Math.sin(richtung)));
+      const r = Math.max(wahr, Math.min(mindest, deckel));
       zeichneKugel(c, w.tex, { id, x, y, r, drehung: start + t * v, neigung: nei, deckkraft: kl.kugelDeckkraft * szeneDa }, licht);
     }
   }, [frame, bereit]);

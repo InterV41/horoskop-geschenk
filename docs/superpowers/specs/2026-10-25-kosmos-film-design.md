@@ -48,10 +48,10 @@ Der Film zeichnet Bild `n` aus `layout(filmUhr(n).tau, filmPhase(n), aszendent(f
 
 Alle Effekte hängen nur von der Bildnummer ab (Regel aus dem Skill: keine CSS-Animationen oder Timer im Film).
 
-- **Echte Tiefe:** Jede Planetenkugel bekommt eine Unschärfe aus ihrer Tiefe: hintere Bahnhälfte bis 3 px, vordere 0 px (bei 1440 px Bildbreite). Nebel 6 px, ferne Sternebene 1 px. Die Unschärfe wird mit dem Aufrichten (`teil(p, 0, 0.6)`) zu null, die Radix ist also scharf.
+- **Echte Tiefe:** Jede Planetenkugel bekommt eine Unschärfe aus ihrer Tiefe: hintere Bahnhälfte bis 3 px, vordere 0 px (bei 1440 px Bildbreite). Die Unschärfe wird mit dem Aufrichten (`teil(p, 0, 0.6)`) zu null, die Radix ist also scharf. Sterne und Nebel sind nicht im Film: Sie bleiben die Live-Ebene der Seite (mit CSS-Animationen, die Remotion nicht bildgenau rendern kann) und scheinen durch den durchsichtigen Film.
 - **Leuchten:** Sonne, Goldlinien, Tierkreis und Planetenzeichen bekommen einen weichen Lichthof (zweite, weichgezeichnete Kopie in der Goldfarbe, darüber das Original). Stärke: im Sonnensystem 0,6, bei der Verwandlung bis 1,0, in der Sekunde Ruhe am Ende auf 0. Hell als zarter warmer Schimmer mit halber Stärke.
 - **Lichtfäden:** Zwischen `p = 0.15` und `p = 0.85` laufen feine Linien von der Erde zu jedem der zehn Körper. Deckkraft `sin(π · q)` über dieses Fenster, dazu ein leichtes Flackern je Faden (feste Saat, aus der Bildnummer). Strich 1 px, Farbe hell `#9a7a33`, dunkel `#fff1c8`.
-- Was der Film **nicht** zeigt: die fliegenden Sterne (die liegen live darüber) und den Sternenhimmel der Seite (der scheint durch, siehe unten).
+- Was der Film **nicht** zeigt: die fliegenden Sterne (live darüber), Sterne und Nebel der Animation sowie den Sternenhimmel der Seite (alles live, scheint durch). Gerendert wird mit `baueSzene(…, { nurRadix: true })` wie bei der Partnerradix.
 
 ### Fassungen und Formate
 

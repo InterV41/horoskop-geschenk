@@ -31,14 +31,14 @@ const filmArt = film === 'flug' ? 'flug' : film ? 'kosmos' : undefined;
   import { schritt, phase, glatt, tempo, EINSTIEG, TEMPO_SEITE, type Uhr } from '../scripts/kosmos/zeitplan';
   import { sprache } from '../scripts/kosmos/texte';
   import { FILM_FPS, filmLaenge, filmUhren, filmLayout, filmPhase } from '../scripts/kosmos/film';
-  import { FLUG_FPS, FLUG_BILDER, flugLayout, flugUhr, flugPhase } from '../scripts/kosmos/flug';
+  import { FLUG_FPS, flugSeite } from '../scripts/kosmos/flug';
   import type { Layout } from '../scripts/kosmos/layout';
 
   /* Die beiden Filme: was die Seite über jeden wissen muss, um ihn zu spielen und danach live weiterzumachen */
   interface Film { quelle: string; laenge: number; fps: number; layout(b: number): Layout; uhr(b: number): Uhr; phase(b: number): number; art: string }
   const FILME: Record<string, Film> = {
     kosmos: { art: 'kosmos', quelle: 'kosmos', laenge: filmLaenge(), fps: FILM_FPS, layout: filmLayout, uhr: (b) => ({ ...filmUhren()[b] }), phase: filmPhase },
-    flug: { art: 'flug', quelle: 'kosmos-flug', laenge: FLUG_BILDER, fps: FLUG_FPS, layout: flugLayout, uhr: flugUhr, phase: flugPhase },
+    flug: { art: 'flug', quelle: 'kosmos-flug', fps: FLUG_FPS, ...flugSeite }, // ab 6 s, wo die Sterne heranrasen
   };
   import { erzeugeFilmsteuerung } from '../scripts/kosmos/filmsteuerung';
   import { erzeugeDurchsicht, type Grund } from '../scripts/kosmos/durchsicht';

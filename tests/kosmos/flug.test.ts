@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { FLUG_BILDER, FLUG_FPS, SEITENTEMPO, VERWANDLUNG_AB, VERWANDLUNG_BIS, modellzeit, verwandlung, aszendentImFilm, flugLayout, flugUhrAmEnde } from '../../src/scripts/kosmos/flug';
+import { FLUG_BILDER, FLUG_FPS, SEITENTEMPO, VERWANDLUNG_AB, VERWANDLUNG_BIS, modellzeit, verwandlung, aszendentImFilm, flugLayout, flugUhrAmEnde, FLUG_EINSTIEG_BILD, flugSeite } from '../../src/scripts/kosmos/flug';
 import { layout, aszendent } from '../../src/scripts/kosmos/layout';
 import { tempo, phase, EINSTIEG } from '../../src/scripts/kosmos/zeitplan';
 
@@ -53,5 +53,18 @@ describe('Kosmos-Flug auf der Seite', () => {
     s.schritt({ jetzt: 0, zeit: 0.1, bereit: true, ende: false, fehler: false });
     const d = s.schritt({ jetzt: 16, zeit: 99, bereit: true, ende: false, fehler: false });
     expect(d).toEqual({ art: 'zeichnen', bild: FLUG_BILDER - 1 });
+  });
+});
+
+describe('Kosmos-Flug gekürzt für die Seite', () => {
+  it('beginnt bei 6 s, wo die Sterne heranrasen, und endet am selben letzten Bild wie der volle Flug', () => {
+    expect(FLUG_EINSTIEG_BILD).toBe(6 * FLUG_FPS);
+    expect(flugSeite.laenge).toBe(FLUG_BILDER - FLUG_EINSTIEG_BILD);
+    expect(flugSeite.layout(0)).toEqual(flugLayout(FLUG_EINSTIEG_BILD));
+    const letztes = flugSeite.laenge - 1;
+    expect(flugSeite.layout(letztes)).toEqual(flugLayout(FLUG_BILDER - 1));
+    expect(flugSeite.uhr(letztes)).toEqual(flugUhr(FLUG_BILDER - 1));
+    expect(flugSeite.phase(letztes)).toBe(flugPhase(FLUG_BILDER - 1));
+    expect(flugSeite.phase(0)).toBe(0); // am Einstieg noch Flug, keine Verwandlung
   });
 });

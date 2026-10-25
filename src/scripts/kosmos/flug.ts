@@ -76,3 +76,13 @@ export function flugUhr(bild: number): Uhr {
 
 /* Tempo der Radix-Phase, nur zur Prüfung: am Ende läuft die Sonne wie auf der Seite */
 export const SONNENTEMPO_AM_ENDE = TEMPO_RADIX * SEITENTEMPO;
+
+/* Auf der Seite beginnt der Flug erst, wo die Sterne heranrasen (6 s, Wunsch von Valentin): Die Videos für
+   die Seite sind ab hier zugeschnitten. Bild 0 der Seite ist Bild FLUG_EINSTIEG_BILD des vollen Flugs. */
+export const FLUG_EINSTIEG_BILD = 6 * FLUG_FPS;
+export const flugSeite = {
+  laenge: FLUG_BILDER - FLUG_EINSTIEG_BILD,
+  layout: (bild: number) => flugLayout(bild + FLUG_EINSTIEG_BILD),
+  uhr: (bild: number) => flugUhr(bild + FLUG_EINSTIEG_BILD),
+  phase: (bild: number) => flugPhase(bild + FLUG_EINSTIEG_BILD),
+};

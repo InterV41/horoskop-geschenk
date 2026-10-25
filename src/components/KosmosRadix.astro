@@ -24,11 +24,9 @@ const { class: className, lang, scroll = false, scrollStart } = Astro.props;
 <script>
   import { baueSzene } from '../scripts/kosmos/szene';
   import { layout, aszendent, ASC0, type Richtungen } from '../scripts/kosmos/layout';
-  import { schritt, phase, glatt, tempo, EINSTIEG, type Uhr } from '../scripts/kosmos/zeitplan';
+  import { schritt, phase, glatt, tempo, EINSTIEG, TEMPO_SEITE, type Uhr } from '../scripts/kosmos/zeitplan';
   import { sprache } from '../scripts/kosmos/texte';
 
-  /* Gesamttempo der Animation: 1 = ursprünglich, 0,55 = gut halb so schnell */
-  const TEMPO = 0.55;
 
   document.querySelectorAll<HTMLElement>('[data-kosmos]').forEach((host, nr) => {
     const szene = baueSzene(host, nr, sprache(host.dataset.sprache ?? document.documentElement.lang));
@@ -65,7 +63,7 @@ const { class: className, lang, scroll = false, scrollStart } = Astro.props;
     const loop = (ts: number) => {
       if (last !== null) {
         // ruhiges Tempo, passend zu den langsam aufglimmenden Überschriften
-        const dt = ((ts - last) / 1000) * TEMPO;
+        const dt = ((ts - last) / 1000) * TEMPO_SEITE;
         if (bereich) {
           // Planeten laufen weiter, im Tempo passend zum Verwandlungsgrad
           const d = Math.min(Math.max(dt, 0), 0.1);

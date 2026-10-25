@@ -10,6 +10,9 @@ export const EINSTIEG = 3.5;
 export const TEMPO_RADIX = 0.5 / 360;
 export const TEMPO_SONNENSYSTEM = 6 * TEMPO_RADIX;
 
+/* Gesamttempo auf der Seite: 1 = ursprünglich, 0,55 = gut halb so schnell. Film und Seite nutzen denselben Wert. */
+export const TEMPO_SEITE = 0.55;
+
 /* Abschnitte in Sekunden: kurzes Sonnensystem, rauf von 4 bis 8, lange Radix, runter von 36 bis 40 */
 const RAUF = 4, RADIX = 8, RUNTER = 36, DAUER = 4;
 

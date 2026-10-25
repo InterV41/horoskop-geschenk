@@ -3,7 +3,8 @@
 // Milchstraße → Orion-Arm → Sterne ziehen vorbei → Sonne → Sonnensystem → Erde.
 // Auf der Erde setzt die bisherige Verwandlung ein: Die Erde wird zur Mitte, die Radix entsteht.
 import { glatt, teil } from '../../../src/scripts/kosmos/zeitplan';
-import { FLUG_FPS, FLUG_SEKUNDEN, FLUG_BILDER, RAD_ANTEIL, VERWANDLUNG_AB, verwandlung } from '../../../src/scripts/kosmos/flug';
+import { FLUG_FPS, FLUG_SEKUNDEN, FLUG_BILDER, FLUG_TEMPO, RAD_ANTEIL, VERWANDLUNG_AB, verwandlung } from '../../../src/scripts/kosmos/flug';
+export { FLUG_TEMPO };
 export { SEITENTEMPO, VERWANDLUNG_AB, VERWANDLUNG_BIS, verwandlung, modellzeit, aszendentImFilm } from '../../../src/scripts/kosmos/flug';
 
 export const FPS = FLUG_FPS;
@@ -21,17 +22,17 @@ export const BRENNWEITE = BREITE * 1.2; // Kamera: Bildpunkte bei Abstand 1
 const LN_ERDE = Math.log(40);
 const MARKEN: [number, number][] = [
   [0, -18.15], // ganze Milchstraße
-  [2.6, -17.25], // langsames Heranschweben
-  [5.4, -14.6], // in den Orion-Arm
-  [7.6, -9.4], // Sterne ziehen vorbei
-  [9.7, -3.4], // ein Stern wird zur Sonne
-  [11.5, 0], // das Sonnensystem steht
-  [12.4, 0.06],
-  [15.1, LN_ERDE], // nah an der Erde
-  [16.3, LN_ERDE + 0.08],
+  [2.6 * FLUG_TEMPO, -17.25], // langsames Heranschweben
+  [5.4 * FLUG_TEMPO, -14.6], // in den Orion-Arm
+  [7.6 * FLUG_TEMPO, -9.4], // Sterne ziehen vorbei
+  [9.7 * FLUG_TEMPO, -3.4], // ein Stern wird zur Sonne
+  [11.5 * FLUG_TEMPO, 0], // das Sonnensystem steht
+  [12.4 * FLUG_TEMPO, 0.06],
+  [15.1 * FLUG_TEMPO, LN_ERDE], // nah an der Erde
+  [16.3 * FLUG_TEMPO, LN_ERDE + 0.08],
 ];
-export const SCHWENK_AB = 12.4; // Kamera löst sich von der Sonne und sucht die Erde
-export const SCHWENK_BIS = 15.1;
+export const SCHWENK_AB = 12.4 * FLUG_TEMPO; // Kamera löst sich von der Sonne und sucht die Erde
+export const SCHWENK_BIS = 15.1 * FLUG_TEMPO;
 
 /* Monotone kubische Kurve durch die Wegmarken (Fritsch-Carlson): kein Überschwingen, kein Knick */
 const steig = (() => {

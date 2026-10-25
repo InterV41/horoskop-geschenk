@@ -58,7 +58,7 @@ describe('Kosmos-Flug auf der Seite', () => {
 
 describe('Kosmos-Flug gekürzt für die Seite', () => {
   it('beginnt bei 6 s, wo die Sterne heranrasen, und endet am selben letzten Bild wie der volle Flug', () => {
-    expect(FLUG_EINSTIEG_BILD).toBe(6 * FLUG_FPS);
+    expect(FLUG_EINSTIEG_BILD).toBe(8 * FLUG_FPS);
     expect(flugSeite.laenge).toBe(FLUG_BILDER - FLUG_EINSTIEG_BILD);
     expect(flugSeite.layout(0)).toEqual(flugLayout(FLUG_EINSTIEG_BILD));
     const letztes = flugSeite.laenge - 1;

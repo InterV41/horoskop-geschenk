@@ -6,7 +6,9 @@ import { EINSTIEG, TEMPO_RADIX, TEMPO_SEITE, glatt, tempo, type Uhr } from './ze
 import { layout, ASC0, ASC_V, type Layout } from './layout';
 
 export const FLUG_FPS = 30;
-export const FLUG_SEKUNDEN = 24;
+/* Gesamttempo des Flugs: 4/3 = ein Drittel langsamer als der erste Schnitt (Wunsch von Valentin) */
+export const FLUG_TEMPO = 4 / 3;
+export const FLUG_SEKUNDEN = 24 * FLUG_TEMPO;
 export const FLUG_BILDER = FLUG_FPS * FLUG_SEKUNDEN;
 
 /* Der Film läuft im selben Tempo wie die Radix auf der Seite */
@@ -17,8 +19,8 @@ export const SEITENTEMPO = TEMPO_SEITE;
 export const RAD_ANTEIL = 0.8;
 
 /* Die Verwandlung Erde → Radix im Film, in Sekunden ab Filmbeginn */
-export const VERWANDLUNG_AB = 16.3;
-export const VERWANDLUNG_BIS = 21.8;
+export const VERWANDLUNG_AB = 16.3 * FLUG_TEMPO;
+export const VERWANDLUNG_BIS = 21.8 * FLUG_TEMPO;
 
 /* Sekunde im Zyklus der Endlosschleife, mit der die Seite nach dem Film weitermacht:
    kurz nach der fertigen Verwandlung, die Radix steht */
@@ -77,9 +79,9 @@ export function flugUhr(bild: number): Uhr {
 /* Tempo der Radix-Phase, nur zur Prüfung: am Ende läuft die Sonne wie auf der Seite */
 export const SONNENTEMPO_AM_ENDE = TEMPO_RADIX * SEITENTEMPO;
 
-/* Auf der Seite beginnt der Flug erst, wo die Sterne heranrasen (6 s, Wunsch von Valentin): Die Videos für
+/* Auf der Seite beginnt der Flug erst, wo die Sterne heranrasen (6 s im ersten Schnitt, Wunsch von Valentin): Die Videos für
    die Seite sind ab hier zugeschnitten. Bild 0 der Seite ist Bild FLUG_EINSTIEG_BILD des vollen Flugs. */
-export const FLUG_EINSTIEG_BILD = 6 * FLUG_FPS;
+export const FLUG_EINSTIEG_BILD = Math.round(6 * FLUG_TEMPO * FLUG_FPS);
 export const flugSeite = {
   laenge: FLUG_BILDER - FLUG_EINSTIEG_BILD,
   layout: (bild: number) => flugLayout(bild + FLUG_EINSTIEG_BILD),

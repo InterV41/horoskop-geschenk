@@ -6,7 +6,7 @@
 # Aufruf im Ordner video/:  bash flug-fuers-netz.sh
 set -euo pipefail
 ziel=../public/video
-EINSTIEG=6
+EINSTIEG=8
 mkdir -p "$ziel"
 for voll in out/voll/kosmos-flug-*.mp4; do
   n=$(basename "$voll" .mp4)

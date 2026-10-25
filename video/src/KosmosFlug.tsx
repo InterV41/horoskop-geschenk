@@ -14,7 +14,7 @@ import { AbsoluteFill, cancelRender, continueRender, delayRender, staticFile, us
 import { baueSzene, type Szene } from '../../src/scripts/kosmos/szene';
 import { layout, type Richtungen, type Layout } from '../../src/scripts/kosmos/layout';
 import type { Sprache } from '../../src/scripts/kosmos/texte';
-import { BREITE, MITTE, PX, FPS, VERWANDLUNG_AB, SCHWENK_AB, SCHWENK_BIS, lnMassstab, verwandlung, modellzeit, aszendentImFilm, rampe } from './flug/drehbuch';
+import { BREITE, MITTE, PX, FPS, FLUG_TEMPO, VERWANDLUNG_AB, SCHWENK_AB, SCHWENK_BIS, lnMassstab, verwandlung, modellzeit, aszendentImFilm, rampe } from './flug/drehbuch';
 import { kamera, SONNE, type Fassung, type Kamera } from './flug/galaxie';
 import { baueWeltraum, type Weltraum } from './flug/weltraum';
 import { ladeTexturen, zeichneKugel, zeichneSonnenlicht, type Texturen, type Licht, type KoerperId } from './flug/planeten';
@@ -107,8 +107,9 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache }) => {
     }
 
     /* Weltraum: verblasst etwas, wenn die Radix steht, damit sie ruhig liest */
-    const k = kamera(ln, t);
-    w.weltraum.zeichne(k, t);
+    // Kamera und Himmel rechnen in der Zeit des ersten Schnitts, der Film ist um FLUG_TEMPO gedehnt
+    const k = kamera(ln, t / FLUG_TEMPO);
+    w.weltraum.zeichne(k, t / FLUG_TEMPO);
     raum.current!.style.opacity = (1 - 0.55 * rampe(t, VERWANDLUNG_AB + 1, VERWANDLUNG_AB + 6)).toFixed(3);
     // Hell: der Weltraum als goldene Zeichnung auf Weiß (Licht wird zu Tinte), Planeten bleiben echt
     if (fassung === 'hell') raum.current!.style.filter = 'url(#flug-tinte)';
@@ -142,7 +143,8 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache }) => {
       zeichneKugel(c, w.tex, { id: 'sonne', x: sx, y: sy, r: sonnenR, drehung: t * DREHUNG.sonne![0], neigung: DREHUNG.sonne![2], deckkraft: szeneDa * so.kugelDeckkraft }, { x: 0, y: 0, z: 1 });
       // je größer die Erde im Bild, desto mehr tritt das Sonnenlicht zurück
       const blend = (1 - 0.65 * rampe(ln, 0.5, 2.6)) * (1 - verwandlung(t));
-      licht(() => zeichneSonnenlicht(c, sx, sy, Math.min(1, 0.55 + 0.12 * Math.max(0, ln)), szeneDa * blend * so.kugelDeckkraft, MITTE));
+      // Sonne ruhiger, damit die Planeten daneben nicht untergehen
+      licht(() => zeichneSonnenlicht(c, sx, sy, Math.min(1, 0.3 + 0.12 * Math.max(0, ln)), 0.6 * szeneDa * blend * so.kugelDeckkraft, MITTE));
     }
 
     // Planeten, Erde und Mond, hinten (oben im Bild) zuerst
@@ -157,7 +159,9 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache }) => {
       const lx = sx - x, ly = sy - y, lh = Math.hypot(lx, ly) || 1;
       const licht: Licht = { x: lx / lh, y: ly / lh, z: 0.35 };
       const [v, start, nei] = DREHUNG[id]!;
-      const r = kl.kugelR * S * PX * (id === 'erde' || id === 'mond' ? 1.02 : 1);
+      // Im Sonnensystem sind die Planeten maßstäblich nur wenige Bildpunkte groß: dort deutlich größer zeigen,
+      // beim Heranfliegen an die Erde gleitet das auf die wahre Größe zurück
+      const r = kl.kugelR * S * PX * (id === 'erde' || id === 'mond' ? 1.02 : 1) * (1 + 1.5 * (1 - rampe(ln, 0.4, 2.6)));
       zeichneKugel(c, w.tex, { id, x, y, r, drehung: start + t * v, neigung: nei, deckkraft: kl.kugelDeckkraft * szeneDa }, licht);
     }
   }, [frame, bereit]);

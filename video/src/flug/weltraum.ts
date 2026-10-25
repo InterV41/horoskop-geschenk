@@ -63,7 +63,11 @@ void main() {
   gl_Position = projectionMatrix * mv;
   float px;
   float licht;
-  if (flaeche > 0.0) {
+  if (flaeche < 0.0) {
+    // Hintergrundstern mit fester scheinbarer Helligkeit
+    px = 1.4 + 2.2 * hell;
+    licht = min(1.0, hell * belicht * 2.4);
+  } else if (flaeche > 0.0) {
     // Fleck der Galaxie: Licht verteilt sich auf seine Fläche im Bild
     px = flaeche * brenn / d;
     licht = hell * belicht;
@@ -222,21 +226,24 @@ export async function baueWeltraum(canvas: HTMLCanvasElement, quelle: (pfad: str
     [0.3, 1.0, 0.9, 0.75],
     [0.4, 1.0, 0.76, 0.55],
   ];
-  const NN = 32000;
+  const NN = 22000;
   const npos = new Float32Array(NN * 3), nfarbe = new Float32Array(NN * 3), nhell = new Float32Array(NN), nfl = new Float32Array(NN);
   for (let i = 0; i < NN; i++) {
-    const d = Math.exp(Math.log(0.4) + r() * (Math.log(9000) - Math.log(0.4)));
+    // halb nah um die Sonne gestaffelt (für den Anflug), halb gleichmäßig im Raum (sonst sähe man von fern einen Haufen)
+    // gleichmäßig im Raum: kein Haufen um die Sonne, der beim Heranzoomen als helle Ellipse in der Mitte stünde
+    const d = 60000 * Math.cbrt(r());
     let ux = g(), uy = g(), uz = g();
     const l = Math.hypot(ux, uy, uz) || 1;
     ux /= l; uy /= l; uz /= l;
-    uz *= Math.min(1, (700 / d) ** 0.85);
+    // in alle Richtungen, ohne Scheibe: so entsteht beim Heranfliegen kein Band
     npos[i * 3] = ux * d; npos[i * 3 + 1] = uy * d; npos[i * 3 + 2] = uz * d;
     let s = r(), k = 0;
     while (k < KLASSEN.length - 1 && s > KLASSEN[k][0]) { s -= KLASSEN[k][0]; k++; }
     nfarbe[i * 3] = KLASSEN[k][1]; nfarbe[i * 3 + 1] = KLASSEN[k][2]; nfarbe[i * 3 + 2] = KLASSEN[k][3];
     // Leuchtkraft (Sonne = 1), heiße Sterne heller; je weiter, desto mehr helle (sonst sähe man sie nicht)
-    nhell[i] = Math.pow(r(), 6) * (k < 2 ? 900 : k < 3 ? 40 : 6) + 0.05 + 0.002 * d;
-    nfl[i] = 0;
+    // scheinbare Helligkeit: wenige helle, viele schwache
+    nhell[i] = 0.18 + 0.82 * Math.pow(r(), 3.5);
+    nfl[i] = -1;
   }
   const nachbarn = new THREE.BufferGeometry();
   nachbarn.setAttribute('position', new THREE.BufferAttribute(npos, 3));
@@ -320,17 +327,18 @@ export async function baueWeltraum(canvas: HTMLCanvasElement, quelle: (pfad: str
     const ld = Math.log(d / RG_LJ);
     // Bild aus der Ferne, Sternwolke aus mittlerer Nähe, Panorama in der Scheibe
     const bildAnteil = rampe(ld, Math.log(0.16), Math.log(0.5));
-    ebeneMat.opacity = 0.95 * bildAnteil;
+    // Ab dem Einstieg auf der Seite (Filmzeit 6 s) ist die Milchstraße weg: nur noch einzelne Sterne
+    const band = 1 - rampe(t, 4.6, 5.8);
+    ebeneMat.opacity = 0.95 * bildAnteil * band;
     ebene.visible = bildAnteil > 0.002;
-    wolkeMat.uniforms.belicht.value = (0.35 + 1.1 * (1 - bildAnteil)) * rampe(ld, Math.log(0.0035), Math.log(0.03));
-    const drin = 1 - rampe(ld, Math.log(0.006), Math.log(0.06));
-    himmelMat.uniforms.deck.value = drin;
+    wolkeMat.uniforms.belicht.value = (0.35 + 1.1 * (1 - bildAnteil)) * rampe(ld, Math.log(0.0035), Math.log(0.03)) * band;
+        himmelMat.uniforms.deck.value = 0; // Panorama trägt das Milchstraßenband, deshalb aus
     himmel.position.copy(ort);
     himmel.scale.setScalar(Math.max(10, d * 100));
-    nachbarMat.uniforms.belicht.value = 0.75 * (1 - rampe(ld, Math.log(0.12), Math.log(0.45)));
+    // Nachbarsterne tragen jetzt allein den Durchflug: aus der Ferne heller, damit sie sichtbar heranrasen
+    nachbarMat.uniforms.belicht.value = 0.9 * Math.max(1 - rampe(ld, Math.log(0.12), Math.log(0.45)), 1 - band);
     fernMat.uniforms.belicht.value = 0.06;
     komp.render();
-    void t;
   }
 
   return { zeichne };

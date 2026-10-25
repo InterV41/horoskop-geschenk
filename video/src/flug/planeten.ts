@@ -239,17 +239,7 @@ export function zeichneSonnenlicht(ctx: CanvasRenderingContext2D, x: number, y: 
   fleck(14 + 220 * groesse, 'rgba(255,214,160,A)', 0.45 * o);
   fleck(5 + 60 * groesse, 'rgba(255,246,228,A)', 0.9 * o);
   fleck(2.5 + 14 * groesse, 'rgba(255,255,255,A)', 1 * o);
-  // Reflex: lang und dünn, außen bläulich
-  const breit = 120 + 520 * groesse, hoch = 1.4 + 3 * groesse;
-  const lg = ctx.createLinearGradient(x - breit, 0, x + breit, 0);
-  lg.addColorStop(0, 'rgba(90,140,255,0)');
-  lg.addColorStop(0.35, `rgba(150,190,255,${0.35 * o})`);
-  lg.addColorStop(0.5, `rgba(255,250,240,${0.95 * o})`);
-  lg.addColorStop(0.65, `rgba(150,190,255,${0.35 * o})`);
-  lg.addColorStop(1, 'rgba(90,140,255,0)');
-  ctx.fillStyle = lg;
-  ctx.fillRect(x - breit, y - hoch * 2, breit * 2, hoch * 4);
-  ctx.fillRect(x - breit * 0.5, y - hoch / 2, breit, hoch);
+  // kein waagrechter Reflex mehr: Von fern las er sich als Ellipse in der Mitte
   // feine Strahlen
   ctx.translate(x, y);
   for (let i = 0; i < 6; i++) {

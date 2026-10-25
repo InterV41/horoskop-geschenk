@@ -15,21 +15,26 @@ interface Props {
   scroll?: boolean;
   /* Ab welcher Überschrift die Verwandlung beginnt (CSS-Selektor im Abschnitt), sonst ab Abschnittsbeginn */
   scrollStart?: string;
+  /* Beim Öffnen läuft vorneweg der Kosmos-Film (Remotion), danach bleibt die Live-Radix stehen und dreht sich */
+  film?: boolean;
 }
-const { class: className, lang, scroll = false, scrollStart } = Astro.props;
+const { class: className, lang, scroll = false, scrollStart, film = false } = Astro.props;
 ---
 
-<div class:list={['radix', className]} data-kosmos data-sprache={lang} data-scroll={scroll ? '' : undefined} data-scroll-start={scrollStart}></div>
+<div class:list={['radix', className]} data-kosmos data-sprache={lang} data-scroll={scroll ? '' : undefined} data-scroll-start={scrollStart} data-film={film ? '' : undefined}></div>
 
 <script>
   import { baueSzene } from '../scripts/kosmos/szene';
   import { layout, aszendent, ASC0, type Richtungen } from '../scripts/kosmos/layout';
   import { schritt, phase, glatt, tempo, EINSTIEG, TEMPO_SEITE, type Uhr } from '../scripts/kosmos/zeitplan';
   import { sprache } from '../scripts/kosmos/texte';
+  import { FILM_FPS, filmLaenge, filmUhren, filmLayout } from '../scripts/kosmos/film';
+  import { erzeugeDurchsicht, type Grund } from '../scripts/kosmos/durchsicht';
 
 
   document.querySelectorAll<HTMLElement>('[data-kosmos]').forEach((host, nr) => {
-    const szene = baueSzene(host, nr, sprache(host.dataset.sprache ?? document.documentElement.lang));
+    const spr = sprache(host.dataset.sprache ?? document.documentElement.lang);
+    const szene = baueSzene(host, nr, spr);
     const setzeStrich = () => szene.setzeStrich(parseFloat(getComputedStyle(host).getPropertyValue('--rx-dick')) || 1);
 
     /* Bei "Bewegung reduzieren" steht die Radix still */
@@ -55,8 +60,89 @@ const { class: className, lang, scroll = false, scrollStart } = Astro.props;
       const s = Math.min(1, Math.max(0, (innerHeight * 0.6 - oben) / weg));
       return 1 - glatt(s);
     };
-    const aktuellePhase = () => (bereich ? scrollPhase() : phase(uhr.t + EINSTIEG));
-    const bild = () => szene.zeichne(layout(uhr.tau, aktuellePhase(), aszendent(uhr.t), richtungen));
+    /* Mit Film: Nach dem Film (oder seinem Ersatz, der Live-Verwandlung) bleibt die Radix stehen */
+    const mitFilm = host.dataset.film !== undefined && !bereich;
+    let radixFest = false;
+    const aktuellePhase = () => (bereich ? scrollPhase() : radixFest ? 1 : phase(uhr.t + EINSTIEG));
+
+    /* Kosmos-Film: Video auf Schwarz bzw. Weiß, per WebGL durchsichtig gerechnet. Währenddessen sind die
+       Ebenen der Live-Radix verborgen, rechnen aber im Takt der Videozeit mit (fliegende Sterne). */
+    let film: { video: HTMLVideoElement; canvas: HTMLCanvasElement; durchsicht: NonNullable<ReturnType<typeof erzeugeDurchsicht>>; gestartet: boolean } | null = null;
+    const fassung = () => {
+      const t = document.documentElement.dataset.theme;
+      if (t === 'dark' || t === 'light') return t === 'dark' ? 'dunkel' : 'hell';
+      return matchMedia('(prefers-color-scheme: dark)').matches ? 'dunkel' : 'hell';
+    };
+    const grund = (): Grund => (fassung() === 'dunkel' ? 'schwarz' : 'weiss');
+    const quelle = () => `/video/kosmos-${fassung()}-${spr}`;
+    const beendeFilm = (uebergabe: boolean) => {
+      if (!film) return;
+      const { video, canvas, durchsicht } = film;
+      film = null;
+      host.classList.remove('kx-im-film');
+      if (uebergabe) {
+        // Die Live-Radix übernimmt genau den Stand des letzten Filmbilds
+        uhr = { ...filmUhren()[filmLaenge() - 1] };
+        radixFest = true;
+        canvas.style.opacity = '0';
+        setTimeout(() => { canvas.remove(); durchsicht.frei(); }, 600);
+      } else {
+        // Ersatz: die Live-Verwandlung von vorn
+        uhr = { t: 0, tau: 0 };
+        canvas.remove();
+        durchsicht.frei();
+      }
+      video.pause();
+      video.removeAttribute('src');
+      video.load();
+      video.remove();
+    };
+    const starteFilm = () => {
+      const canvas = document.createElement('canvas');
+      canvas.className = 'kx-film';
+      canvas.setAttribute('aria-hidden', 'true');
+      const durchsicht = erzeugeDurchsicht(canvas, grund());
+      if (!durchsicht) return; // ohne WebGL: Live-Verwandlung
+      const video = document.createElement('video');
+      video.muted = true;
+      video.defaultMuted = true;
+      video.playsInline = true;
+      video.preload = 'auto';
+      video.setAttribute('muted', '');
+      video.setAttribute('playsinline', '');
+      video.setAttribute('aria-hidden', 'true');
+      video.className = 'kx-film-quelle';
+      video.src = `${quelle()}.mp4`;
+      host.insertBefore(canvas, host.querySelector('.kx-ebene-zeichen'));
+      host.appendChild(video);
+      host.classList.add('kx-im-film');
+      film = { video, canvas, durchsicht, gestartet: false };
+      const f = film;
+      // Bis das Video läuft, steht sein erstes Bild da
+      const vorschau = new Image();
+      vorschau.onload = () => { if (film === f && !f.gestartet) durchsicht.zeichne(vorschau); };
+      vorschau.src = `${quelle()}-anfang.jpg`;
+      // Gestartet ist der Film, sobald seine Zeit voranschreitet ("playing" kommt nicht in jedem Browser zuverlässig)
+      video.addEventListener('timeupdate', () => { if (video.currentTime > 0) f.gestartet = true; });
+      video.addEventListener('ended', () => { if (film === f) beendeFilm(true); });
+      video.addEventListener('error', () => { if (film === f) beendeFilm(false); });
+      // Kommt das Video nicht rechtzeitig in Gang, übernimmt die Live-Verwandlung
+      setTimeout(() => { if (film === f && !f.gestartet) beendeFilm(false); }, 2500);
+      video.play().catch(() => { if (film === f) beendeFilm(false); });
+    };
+    const filmBild = () => {
+      if (!film) return false;
+      const b = Math.min(filmLaenge() - 1, Math.round(film.video.currentTime * FILM_FPS));
+      szene.zeichne(filmLayout(b));
+      if (!film.gestartet && film.video.currentTime > 0) film.gestartet = true;
+      if (film.gestartet && film.video.readyState >= 2) film.durchsicht.zeichne(film.video);
+      return true;
+    };
+
+    const bild = () => {
+      if (filmBild()) return;
+      szene.zeichne(layout(uhr.tau, aktuellePhase(), aszendent(uhr.t), richtungen));
+    };
 
     /* Läuft nur, solange das Rad sichtbar und der Tab im Vordergrund ist */
     let last: number | null = null, raf = 0, laeuft = false, imBild = false;
@@ -64,11 +150,15 @@ const { class: className, lang, scroll = false, scrollStart } = Astro.props;
       if (last !== null) {
         // ruhiges Tempo, passend zu den langsam aufglimmenden Überschriften
         const dt = ((ts - last) / 1000) * TEMPO_SEITE;
-        if (bereich) {
+        if (bereich || radixFest) {
           // Planeten laufen weiter, im Tempo passend zum Verwandlungsgrad
           const d = Math.min(Math.max(dt, 0), 0.1);
           uhr = { t: uhr.t + d, tau: uhr.tau + tempo(aktuellePhase()) * d };
-        } else uhr = schritt(uhr, dt);
+        } else if (!film) {
+          uhr = schritt(uhr, dt);
+          // Live-Verwandlung als Ersatz für den Film: angekommen in der Radix, bleibt sie
+          if (mitFilm && phase(uhr.t + EINSTIEG) === 1) radixFest = true;
+        }
       }
       last = ts;
       bild();
@@ -76,13 +166,26 @@ const { class: className, lang, scroll = false, scrollStart } = Astro.props;
     };
     const pruefe = () => {
       const soll = imBild && document.visibilityState === 'visible';
-      if (soll && !laeuft) { laeuft = true; last = null; raf = requestAnimationFrame(loop); }
-      if (!soll && laeuft) { laeuft = false; cancelAnimationFrame(raf); }
+      if (soll && !laeuft) { laeuft = true; last = null; raf = requestAnimationFrame(loop); film?.video.play().catch(() => {}); }
+      if (!soll && laeuft) { laeuft = false; cancelAnimationFrame(raf); film?.video.pause(); }
     };
+
+    /* Hell/dunkel mitten im Film: die andere Fassung an derselben Stelle weiter */
+    const wechsleFassung = () => {
+      if (!film) return;
+      const { video, durchsicht } = film;
+      const zeit = video.currentTime;
+      durchsicht.setzeGrund(grund());
+      video.src = `${quelle()}.mp4`;
+      video.addEventListener('loadedmetadata', () => { video.currentTime = zeit; video.play().catch(() => {}); }, { once: true });
+    };
+
+    const sparen = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true;
+    if (mitFilm && !sparen) starteFilm();
 
     setzeStrich();
     bild();
-    document.addEventListener('themechange', setzeStrich);
+    document.addEventListener('themechange', () => { setzeStrich(); wechsleFassung(); });
     document.addEventListener('visibilitychange', pruefe);
     new IntersectionObserver((e) => { imBild = e[0].isIntersecting; pruefe(); }).observe(host);
   });
@@ -160,6 +263,33 @@ const { class: className, lang, scroll = false, scrollStart } = Astro.props;
       --kx-hof2: #e0a240;
       --kx-hof2-o: 0.24;
     }
+  }
+  /* Kosmos-Film: liegt über der Radix, bis die Live-Radix übernimmt. Die Ebenen der Live-Radix sind solange
+     verborgen (filter statt opacity, weil der Ring seine Deckkraft selbst setzt); Himmel und Sterne bleiben. */
+  .radix :global(.kx-film) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+  }
+  .radix :global(.kx-film-quelle) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .radix :global(.kx-ebene-ring),
+  .radix :global(.kx-ebene-haupt),
+  .radix :global(.kx-ebene-zeichen) {
+    transition: filter 0.5s ease;
+  }
+  .radix:global(.kx-im-film) :global(.kx-ebene-ring),
+  .radix:global(.kx-im-film) :global(.kx-ebene-haupt),
+  .radix:global(.kx-im-film) :global(.kx-ebene-zeichen) {
+    filter: opacity(0);
   }
   /* Drei Ebenen übereinander: Himmel, Tierkreis-Ring, alles Bewegte */
   .radix :global(svg) {

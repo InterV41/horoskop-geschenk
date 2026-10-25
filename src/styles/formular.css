@@ -1,0 +1,340 @@
+/* Formulare für Bestellung und Warenkorb. Global, weil die Felder auch in Komponenten und
+   nachträglich eingefügten Personenblöcken stecken. */
+.formular {
+  background: var(--karte);
+  box-shadow: var(--karte-licht);
+  backdrop-filter: var(--karte-blur);
+  -webkit-backdrop-filter: var(--karte-blur);
+  border: 1px solid var(--karte-rand);
+  border-radius: var(--rahmen-radius);
+  padding: var(--s-32);
+  display: grid;
+  gap: var(--s-32);
+}
+.formular fieldset {
+  min-width: 0; /* Browser geben fieldset sonst eine Mindestbreite, das sprengt schmale Handys */
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s-16);
+}
+.formular legend {
+  max-width: 100%;
+  white-space: normal;
+  font-family: var(--font-titel);
+  font-size: var(--t-17);
+  margin-bottom: var(--s-16);
+  padding: 0;
+}
+.formular .feldgruppe {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-16);
+}
+.formular .feld {
+  display: grid;
+  gap: var(--s-4);
+  min-width: 0;
+}
+.formular .feld label {
+  font-size: var(--t-9);
+}
+.formular .feld input {
+  width: 100%;
+  min-width: 0;
+  font: inherit;
+  min-height: 48px;
+  padding: var(--s-8) var(--s-12);
+  background: var(--papier);
+  color: var(--tinte);
+  border: 1px solid var(--feldrand);
+  border-radius: var(--feld-radius);
+}
+/* Fokus und Fehler ändern nur Farbe und Schein, nie die Größe des Feldes */
+.formular .feld input {
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.formular .feld input:focus,
+.formular .feld input:focus-visible {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold) inset, 0 0 18px color-mix(in srgb, var(--gold) 22%, transparent);
+}
+.formular .feld input:disabled {
+  opacity: 0.5;
+}
+.formular .feld input[aria-invalid='true'] {
+  border-color: #a3392b;
+  box-shadow: 0 0 0 1px #a3392b inset;
+}
+:root[data-theme='dark'] .formular .feld input[aria-invalid='true'] {
+  border-color: #e58a7a;
+  box-shadow: 0 0 0 1px #e58a7a inset;
+}
+.formular .feld__fehler {
+  font-size: var(--t-9);
+  color: #a3392b;
+}
+:root[data-theme='dark'] .formular .feld__fehler {
+  color: #f0a596;
+}
+.formular .haken {
+  display: flex;
+  gap: var(--s-12);
+  align-items: flex-start;
+  min-height: 44px;
+  padding-top: var(--s-8);
+  cursor: pointer;
+  accent-color: var(--auswahl);
+}
+.formular .haken input {
+  width: 20px;
+  height: 20px;
+  margin: 2px 0 0;
+  flex: none;
+}
+.formular .hinweis {
+  border-left: 2px solid var(--gold);
+  padding: var(--s-8) var(--s-16);
+  font-size: var(--t-9);
+  color: var(--tinte2);
+}
+
+.formular .ort {
+  position: relative;
+}
+.formular .ort__liste {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  list-style: none;
+  margin: 0;
+  padding: var(--s-4) 0;
+  background: var(--papier);
+  border: 1px solid var(--feldrand);
+  border-radius: var(--feld-radius);
+  margin-top: 4px;
+  overflow: hidden;
+}
+.formular .ort__liste li {
+  padding: var(--s-12);
+  cursor: pointer;
+}
+.formular .ort__liste li[aria-selected='true'],
+.formular .ort__liste li:hover {
+  background: var(--flaeche);
+}
+
+/* Jede Person ein eigener Block; weitere Blöcke mit Goldlinie abgesetzt */
+.formular .person + .person {
+  margin-top: var(--s-32);
+  padding-top: var(--s-32);
+  border-top: 1px solid var(--gold);
+}
+.formular .person__kopf {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-16);
+}
+.formular .person__weg {
+  border: 0;
+  background: none;
+  padding: var(--s-8) 0;
+  min-height: 44px;
+  font: inherit;
+  font-size: var(--t-9);
+  color: var(--akzent);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.formular .person__fassung {
+  margin-top: var(--s-24);
+}
+.formular .person__fassung legend {
+  font-size: var(--t-13);
+}
+.formular .weitere {
+  width: 100%;
+}
+/* Welches Horoskop: drei Karten, die gewählte leuchtet golden, noch nicht verfügbare sind blass */
+.formular .produkte {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s-12);
+}
+.formular .produkt {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: var(--s-4);
+  min-height: 96px;
+  padding: var(--s-16);
+  border: 1px solid var(--feldrand);
+  border-radius: 20px;
+  background: rgb(255 255 255 / 0.04);
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+.formular .produkt input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.formular .produkt__name {
+  font-family: var(--font-titel);
+  font-size: var(--t-11);
+  hyphens: auto; /* lange Namen wie „Partnerschaftshoroskop“ trennen statt überlaufen */
+  overflow-wrap: break-word;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--tinte);
+}
+.formular .produkt__text {
+  font-size: var(--t-9);
+  color: var(--tinte);
+}
+.formular .produkt:has(input:checked) {
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
+  box-shadow: 0 0 0 1px var(--gold), 0 0 28px color-mix(in srgb, var(--gold) 35%, transparent);
+}
+.formular .produkt:has(input:checked) .produkt__name {
+  color: var(--akzent);
+}
+.formular .produkt:has(input:focus-visible) {
+  outline: 2px solid var(--akzent);
+  outline-offset: 3px;
+}
+.formular .produkt--bald {
+  cursor: default;
+}
+/* Nur der Name tritt zurück; der Hinweis „Demnächst“ bleibt voll lesbar (6,2:1 hell, 6,4:1 dunkel) */
+.formular .produkt--bald .produkt__name {
+  opacity: 0.55;
+}
+.formular .produkt--bald .produkt__text {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  color: var(--akzent);
+}
+@media (max-width: 640px) {
+  .formular .produkte {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .formular .produkt {
+    min-height: 0;
+  }
+  .formular .produkt__name {
+    font-size: var(--t-13);
+  }
+}
+
+.formular .fassungen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-16);
+}
+.formular .fassung {
+  flex: 1 1 120px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--s-12);
+  min-height: 56px;
+  padding: var(--s-8) var(--s-16);
+  border: 1px solid var(--feldrand);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.04);
+  cursor: pointer;
+  font-family: var(--font-titel);
+  font-size: var(--t-13);
+  accent-color: var(--auswahl);
+  transition: color 0.2s, border-color 0.2s;
+}
+/* Gewählte Fassung wie in der Menüleiste: keine Füllung, nur Goldschrift und goldener Rand */
+.formular .fassung:has(input:checked) {
+  border-color: var(--auswahl);
+  color: var(--akzent);
+}
+.formular .fassung__muster {
+  flex: none; /* nie stauchen, auch wenn das Feld schmal wird */
+  width: 28px;
+  height: 36px;
+  border: 1px solid var(--gold);
+}
+.formular .fassung__muster--hell {
+  background: #ffffff;
+}
+.formular .fassung__muster--dunkel {
+  background: #07102a;
+}
+.formular .fassung__muster--beide {
+  background: linear-gradient(90deg, #ffffff 50%, #07102a 50%);
+}
+.formular .fassung__aufpreis {
+  font-size: var(--t-9);
+  color: var(--akzent);
+  white-space: nowrap;
+}
+
+.formular .gutschein {
+  border-top: 1px solid var(--linie);
+  padding-top: var(--s-16);
+}
+.formular .gutschein summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--akzent);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.formular .gutschein[open] summary {
+  margin-bottom: var(--s-12);
+}
+.formular .gutschein__zeile {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--s-12);
+  align-items: end;
+}
+.formular .gutschein input {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.formular .gutschein__knopf {
+  min-height: 48px;
+  padding-inline: var(--s-24);
+}
+.gutschein .hinweis,
+.formular .gutschein .feld__fehler {
+  margin-top: var(--s-12);
+}
+
+.formular .abschluss {
+  display: grid;
+  gap: var(--s-16);
+  border-top: 1px solid var(--linie);
+  padding-top: var(--s-24);
+}
+.formular .knopf--voll {
+  width: 100%;
+}
+
+
+@media (max-width: 520px) {
+  .formular {
+    padding: var(--s-16);
+    border-radius: 22px;
+  }
+  .formular .feldgruppe {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -1,0 +1,73 @@
+---
+// Abbildung mit Bildunterschrift. Liegt die Datei in src/assets/geschichte/, wird sie als WebP eingebunden,
+// sonst erscheint ein markierter Platzhalter mit Dateiname, damit nichts ohne geprüfte Lizenz live geht.
+import { Image } from 'astro:assets';
+
+interface Props {
+  datei: string; // Dateiname ohne Endung, z. B. "tierkreis-von-dendera-louvre"
+  alt: string;
+  unterschrift: string;
+  zuerst?: boolean; // erstes Bild der Seite: nicht verzögert laden
+  ausschnitt?: string; // welcher Teil im quadratischen Rahmen sichtbar bleibt, z. B. "50% 20%"
+}
+const { datei, alt, unterschrift, zuerst = false, ausschnitt = '50% 50%' } = Astro.props;
+const bilder = import.meta.glob<{ default: ImageMetadata }>('../assets/geschichte/*.{jpg,jpeg,png,webp}', { eager: true });
+const treffer = Object.entries(bilder).find(([pfad]) => pfad.split('/').pop()!.replace(/\.[^.]+$/, '') === datei);
+---
+
+<figure class="abbildung">
+  {treffer ? (
+    <Image
+      src={treffer[1].default}
+      alt={alt}
+      widths={[700, 1300]}
+      sizes="(max-width: 1000px) 100vw, 40em"
+      format="webp"
+      quality={72}
+      loading={zuerst ? 'eager' : 'lazy'}
+      style={`object-position: ${ausschnitt}`}
+    />
+  ) : (
+    <div class="abbildung__platzhalter platzhalter" role="img" aria-label={alt}>
+      Bild folgt: {datei}.webp<br />
+      <span>{alt}</span>
+    </div>
+  )}
+  <figcaption>{unterschrift}</figcaption>
+</figure>
+
+<style>
+  .abbildung {
+    margin: var(--s-48) 0;
+  }
+  /* feiner Goldrahmen wie bei der Leseprobe auf der Startseite */
+  /* Alle Bilder im gleichen Format: quadratisch und bündig mit dem Text, damit die Seite ruhig wirkt */
+  .abbildung :global(img) {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+    height: auto;
+    object-fit: cover;
+    margin-inline: auto;
+    border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+    border-radius: 20px;
+  }
+  .abbildung__platzhalter {
+    aspect-ratio: 1;
+    display: grid;
+    place-content: center;
+    text-align: center;
+    gap: var(--s-8);
+  }
+  .abbildung__platzhalter span {
+    font-style: italic;
+  }
+  figcaption {
+    margin-top: var(--s-12);
+    font-family: var(--font-titel);
+    font-style: italic;
+    font-size: var(--t-11);
+    line-height: 1.4;
+    color: var(--tinte2);
+  }
+</style>

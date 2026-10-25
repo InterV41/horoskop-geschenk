@@ -1,0 +1,106 @@
+---
+import Rechtstext from '../layouts/Rechtstext.astro';
+import Anbieter from '../components/recht/Anbieter.astro';
+import WiderrufFunktion from '../components/recht/WiderrufFunktion.astro';
+import { anbieter } from '../site';
+---
+
+<Rechtstext titel="Widerrufsrecht für Verbraucher" pfad="/widerruf" beschreibung="Widerrufsbelehrung, vorzeitiges Erlöschen des Widerrufsrechts bei digitalen Inhalten, Muster-Widerrufsformular und Widerrufsfunktion.">
+  <p class="nebentext">Stand: {anbieter.stand.de}</p>
+  <p>
+    Verbrauchern steht ein Widerrufsrecht nach folgender Maßgabe zu. Verbraucher ist jede natürliche Person, die ein
+    Rechtsgeschäft zu Zwecken abschließt, die überwiegend weder ihrer gewerblichen noch ihrer selbständigen
+    beruflichen Tätigkeit zugerechnet werden können.
+  </p>
+
+  <h2>Widerrufsbelehrung</h2>
+  <h3>Widerrufsrecht</h3>
+  <p>Du hast das Recht, binnen vierzehn Tagen ohne Angabe von Gründen diesen Vertrag zu widerrufen.</p>
+  <p>Die Widerrufsfrist beträgt vierzehn Tage ab dem Tag des Vertragsabschlusses.</p>
+  <p>Um dein Widerrufsrecht auszuüben, musst du uns</p>
+  <Anbieter lang="de" mitTelefon />
+  <p>
+    mittels einer eindeutigen Erklärung (zum Beispiel einer E-Mail) über deinen Entschluss, diesen Vertrag zu
+    widerrufen, informieren. Du kannst dafür das unten stehende Muster-Widerrufsformular verwenden, das jedoch nicht
+    vorgeschrieben ist.
+  </p>
+  <p>
+    Du kannst den Vertrag auch über die Schaltfläche <a href="#vertrag-widerrufen">„Vertrag widerrufen“</a>
+    widerrufen, die du am Ende dieser Seite findest. Die Seite erreichst du über den Link „Widerruf“ in der Fußzeile
+    jeder Seite unseres Shops. Wenn du von dieser Möglichkeit Gebrauch
+    machst, schicken wir dir unverzüglich eine Bestätigung über den Eingang deines Widerrufs per E-Mail.
+  </p>
+  <p>
+    Zur Wahrung der Widerrufsfrist reicht es aus, dass du die Mitteilung über die Ausübung des Widerrufsrechts vor
+    Ablauf der Widerrufsfrist absendest.
+  </p>
+  <h3>Folgen des Widerrufs</h3>
+  <p>
+    Wenn du diesen Vertrag widerrufst, haben wir dir alle Zahlungen, die wir von dir erhalten haben, unverzüglich und
+    spätestens binnen vierzehn Tagen ab dem Tag zurückzuzahlen, an dem die Mitteilung über deinen Widerruf dieses
+    Vertrags bei uns eingegangen ist. Für diese Rückzahlung verwenden wir dasselbe Zahlungsmittel, das du bei der
+    ursprünglichen Transaktion eingesetzt hast, es sei denn, mit dir wurde ausdrücklich etwas anderes vereinbart; in
+    keinem Fall werden dir wegen dieser Rückzahlung Entgelte berechnet.
+  </p>
+  <p class="ende">Ende der Widerrufsbelehrung</p>
+
+  <h2>Vorzeitiges Erlöschen des Widerrufsrechts</h2>
+  <p>
+    Das Widerrufsrecht erlischt bei einem Vertrag über die Bereitstellung von nicht auf einem körperlichen
+    Datenträger befindlichen digitalen Inhalten, wenn wir mit der Ausführung des Vertrags begonnen haben, nachdem du
+  </p>
+  <ol>
+    <li>ausdrücklich zugestimmt hast, dass wir mit der Ausführung des Vertrags vor Ablauf der Widerrufsfrist beginnen,</li>
+    <li>deine Kenntnis davon bestätigt hast, dass du durch deine Zustimmung mit Beginn der Ausführung des Vertrags dein Widerrufsrecht verlierst, und</li>
+    <li>wir dir eine Bestätigung des Vertrags auf einem dauerhaften Datenträger (in der Regel per E-Mail) zur Verfügung gestellt haben, in der deine Zustimmung und Bestätigung festgehalten sind (§ 356 Abs. 5 BGB).</li>
+  </ol>
+
+  <h2>Hinweis zum Ablauf deiner Bestellung</h2>
+  <p>
+    Das Horoskop ist ein digitaler Inhalt, der dir als PDF-Datei geliefert wird. Deine Zustimmung und Bestätigung nach
+    Nr. 1 und 2 gibst du bei der Bestellung im Warenkorb über ein eigenes Häkchen, das nicht vorausgewählt ist. Wir
+    beginnen mit der Erstellung deines Horoskops direkt nach Zahlungseingang und nachdem wir dir die
+    Bestellbestätigung per E-Mail geschickt haben. Dein Widerrufsrecht erlischt deshalb in der Regel wenige Minuten
+    nach der Bestellung.
+  </p>
+
+  <h2>Muster-Widerrufsformular</h2>
+  <p>(Wenn du den Vertrag widerrufen willst, dann fülle bitte dieses Formular aus und sende es zurück.)</p>
+  <div class="formularmuster">
+    <p>An</p>
+    <Anbieter lang="de" />
+    <p>
+      Hiermit widerrufe(n) ich/wir (*) den von mir/uns (*) abgeschlossenen Vertrag über die Bereitstellung der
+      folgenden digitalen Inhalte (*):
+    </p>
+    <p>Bestellt am (*) / erhalten am (*):</p>
+    <p>Name des/der Verbraucher(s):</p>
+    <p>Anschrift des/der Verbraucher(s):</p>
+    <p>Unterschrift des/der Verbraucher(s) (nur bei Mitteilung auf Papier):</p>
+    <p>Datum:</p>
+    <p class="nebentext klein">(*) Unzutreffendes streichen.</p>
+  </div>
+
+  <WiderrufFunktion lang="de" />
+</Rechtstext>
+
+<style>
+  .ende {
+    font-family: var(--font-titel);
+    font-style: italic;
+    color: var(--akzent);
+  }
+  .formularmuster {
+    padding: var(--s-24);
+    border: 1px solid var(--karte-rand);
+    border-left: 2px solid var(--gold);
+    border-radius: 20px;
+    background: var(--karte);
+    box-shadow: var(--karte-licht);
+    backdrop-filter: var(--karte-blur);
+    -webkit-backdrop-filter: var(--karte-blur);
+  }
+  .formularmuster p + p {
+    margin-top: var(--s-8);
+  }
+</style>

@@ -1,0 +1,85 @@
+---
+// Ein Horoskop im Bestellformular: Angaben zur Person und Wahl der Fassung.
+// n macht IDs und Namen eindeutig; im <template> steht "__N__" und wird beim Hinzufügen ersetzt.
+import { site } from '../site';
+import { routes, type Lang } from '../i18n';
+
+interface Props {
+  n: number | string;
+  lang: Lang;
+  t: Record<string, string>;
+  erste?: boolean;
+}
+const { n, lang, t, erste = false } = Astro.props;
+const id = (name: string) => `${name}-${n}`;
+---
+
+<fieldset class="person" data-person={n}>
+  <div class="person__kopf">
+    <legend>{erste ? t.fuerWen : t.weiteres}</legend>
+    {!erste && <button class="person__weg" type="button" data-entfernen>{t.entfernen}</button>}
+  </div>
+  <div class="feld">
+    <label for={id('f-vorname')}>{t.vorname}</label>
+    <input id={id('f-vorname')} data-feld="vorname" required autocomplete="off" maxlength="40" />
+    <p class="feld__fehler" id={id('e-vorname')} hidden>{t.eVorname}</p>
+  </div>
+  <div class="feldgruppe">
+    <div class="feld">
+      <label for={id('f-datum')}>{t.datum}</label>
+      <input id={id('f-datum')} data-feld="datum" type="date" required min="1900-01-01" />
+      <p class="feld__fehler" id={id('e-datum')} hidden>{t.eDatum}</p>
+    </div>
+    <div class="feld">
+      <label for={id('f-zeit')}>{t.zeit} <span class="nebentext">{t.ortszeit}</span></label>
+      <input id={id('f-zeit')} data-feld="zeit" type="time" required />
+      <p class="feld__fehler" id={id('e-zeit')} hidden>{t.eZeit}</p>
+    </div>
+  </div>
+  <label class="haken">
+    <input type="checkbox" data-feld="zeit-unbekannt" />
+    <span>{t.zeitUnbekannt}</span>
+  </label>
+  <p class="hinweis" data-hinweis-zeit hidden>{t.zeitHinweis}</p>
+  <div class="feld ort">
+    <label for={id('f-ort')}>{t.ort}</label>
+    <input
+      id={id('f-ort')}
+      data-feld="ort"
+      required
+      autocomplete="off"
+      role="combobox"
+      aria-autocomplete="list"
+      aria-expanded="false"
+      aria-controls={id('ort-liste')}
+      placeholder={t.ortBeispiel}
+    />
+    <ul class="ort__liste" id={id('ort-liste')} role="listbox" hidden></ul>
+    <input type="hidden" data-feld="lat" />
+    <input type="hidden" data-feld="lon" />
+    <input type="hidden" data-feld="zeitzone" />
+    <p class="feld__fehler" id={id('e-ort')} hidden>{t.eOrt}</p>
+  </div>
+
+  <fieldset class="person__fassung">
+    <legend>{t.fassung}</legend>
+    <div class="fassungen">
+      <label class="fassung">
+        <input type="radio" name={id('fassung')} value="hell" checked />
+        <span class="fassung__muster fassung__muster--hell" aria-hidden="true"></span>
+        <span>{t.hell}</span>
+      </label>
+      <label class="fassung">
+        <input type="radio" name={id('fassung')} value="dunkel" />
+        <span class="fassung__muster fassung__muster--dunkel" aria-hidden="true"></span>
+        <span>{t.dunkel}</span>
+      </label>
+      <label class="fassung">
+        <input type="radio" name={id('fassung')} value="beide" />
+        <span class="fassung__muster fassung__muster--beide" aria-hidden="true"></span>
+        <span>{t.beide} <span class="fassung__aufpreis">{site.bothSurchargeLabel[lang]}</span></span>
+      </label>
+    </div>
+    {erste && <p class="nebentext klein"><a class="textlink" href={`${routes.produkt[lang]}#fassungen`}>{t.welche}</a></p>}
+  </fieldset>
+</fieldset>

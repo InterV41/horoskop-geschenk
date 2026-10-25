@@ -1,0 +1,93 @@
+---
+// Sprachumschalter: "DE / EN" mit hervorgehobener aktueller Sprache, oder als Schalter nur die andere Sprache
+// (auf deutschen Seiten "EN", auf englischen "DE"), ein Klick führt zur selben Seite in dieser Sprache
+import { langFromPath, normPath, type Lang } from '../i18n';
+
+interface Props {
+  andereSprache: string; // Adresse dieser Seite in der anderen Sprache
+  imMenue?: boolean; // als Zeile im Ausklappmenü auf Handy und Tablet
+  schalter?: boolean; // nur die andere Sprache zeigen
+}
+const { andereSprache, imMenue = false, schalter = false } = Astro.props;
+const lang = langFromPath(Astro.url.pathname);
+const pfad = normPath(Astro.url.pathname);
+const sprachen: { lang: Lang; kurz: string; name: string; href: string }[] = [
+  { lang: 'de', kurz: 'DE', name: 'Deutsch', href: lang === 'de' ? pfad : andereSprache },
+  { lang: 'en', kurz: 'EN', name: 'English', href: lang === 'en' ? pfad : andereSprache },
+];
+const ziel = sprachen.find((s) => s.lang !== lang)!;
+---
+
+{schalter ? (
+  <a class="sprache sprache--schalter" href={ziel.href} hreflang={ziel.lang} lang={ziel.lang} title={ziel.name} aria-label={ziel.name}>{ziel.kurz}</a>
+) : (
+<nav class:list={['sprache', { 'sprache--menue': imMenue }]} aria-label={lang === 'de' ? 'Sprache' : 'Language'}>
+  {sprachen.map((s, i) => (
+    <>
+      {i > 0 && <span class="sprache__trenner" aria-hidden="true">/</span>}
+      {s.lang === lang ? (
+        <span class="sprache__aktuell" aria-current="true" title={s.name}>{s.kurz}</span>
+      ) : (
+        <a href={s.href} hreflang={s.lang} lang={s.lang} title={s.name} aria-label={s.name}>{s.kurz}</a>
+      )}
+    </>
+  ))}
+</nav>
+)}
+
+<style>
+  .sprache {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-4);
+    font-size: var(--t-9);
+    letter-spacing: 0.04em;
+  }
+  .sprache a,
+  .sprache__aktuell {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    min-height: 44px;
+  }
+  .sprache a {
+    color: var(--tinte2);
+    text-decoration: none;
+  }
+  .sprache a:hover {
+    color: var(--tinte);
+    text-decoration: underline;
+    text-decoration-color: var(--gold);
+  }
+  .sprache__aktuell {
+    color: var(--akzent);
+  }
+  .sprache__trenner {
+    color: var(--tinte2);
+    opacity: 0.6;
+  }
+  /* Schalter: ein Kürzel in Schriftfarbe, 44 px Klickfläche */
+  .sprache--schalter {
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    color: var(--tinte);
+    font-size: var(--t-11);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .sprache--schalter:hover {
+    color: var(--akzent);
+  }
+  .sprache--menue {
+    gap: var(--s-8);
+    font-size: var(--t-11);
+  }
+  .sprache--menue a,
+  .sprache--menue .sprache__aktuell {
+    min-width: 0;
+    min-height: 48px;
+    padding-inline: var(--s-4);
+  }
+</style>

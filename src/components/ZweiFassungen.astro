@@ -1,0 +1,541 @@
+---
+import '@fontsource/cormorant-garamond/700-italic.css';
+import { Image, getImage } from 'astro:assets';
+import hellDeck from '../assets/leseprobe/hell/01.png';
+import dunkelDeck from '../assets/leseprobe/dunkel/01.png';
+import hellInhalt from '../assets/leseprobe/hell/02.png';
+import dunkelInhalt from '../assets/leseprobe/dunkel/02.png';
+import { langFromPath, routes } from '../i18n';
+import { seitenTitel, titelVon } from '../data/leseprobe';
+
+// Die zwei Fassungen im Vergleich: Deckblatt und Inhalt, Merkmale.
+// Ein Klick auf eine Seite öffnet die ganze Leseprobe dieser Fassung groß zum Blättern.
+// kompakt: ohne Merkmal-Zeilen, dafür ein Link zum ganzen Vergleich (für die Startseite)
+const { kompakt = false } = Astro.props as { kompakt?: boolean };
+const lang = langFromPath(Astro.url.pathname);
+const T = {
+  de: {
+    hell: 'Hell', dunkel: 'Dunkel',
+    titel: 'Wie Tag und Nacht',
+    intro: 'Beide Fassungen enthalten denselben Text und kosten gleich viel. Sie unterscheiden sich nur in der Gestaltung. Klick auf eine Seite, um durch die ganze Leseprobe zu blättern.',
+    umschalter: { hell: 'Light Mode', dunkel: 'Dark Mode', wechseln: 'Zu {ziel} wechseln' },
+    oeffnen: 'Leseprobe der {f} Fassung öffnen', hellAdj: 'hellen', dunkelAdj: 'dunklen',
+    seite: 'Seite', von: 'von', zurueck: 'Vorherige Seite', vor: 'Nächste Seite', schliessen: 'Schließen',
+    fuss: 'Beispielfassung mit erfundener Person.',
+    alle: 'Alle Unterschiede im Vergleich →',
+    deckHell: 'Deckblatt der hellen Fassung', inhaltHell: 'Inhaltsverzeichnis der hellen Fassung',
+    deckDunkel: 'Deckblatt der dunklen Fassung', inhaltDunkel: 'Inhaltsverzeichnis der dunklen Fassung',
+    hellText: 'Warmes Papierweiß, dunkle Tinte, goldene Akzente.',
+    dunkelText: 'Tiefes Nachtblau, helle Schrift, goldene Akzente.',
+    zeilen: [
+      { punkt: 'Wirkung', hell: 'Klar und hell wie ein gedrucktes Blatt', dunkel: 'Ruhig und tief wie ein Nachthimmel' },
+      { punkt: 'Am Bildschirm', hell: 'Gut lesbar, auch bei Tageslicht', dunkel: 'Angenehm am Abend und auf dem Tablet' },
+      { punkt: 'Zum Ausdrucken', hell: 'Sehr gut geeignet', dunkel: 'Braucht viel Druckfarbe, besser digital' },
+      { punkt: 'Inhalt und Preis', hell: 'Identisch', dunkel: 'Identisch' },
+    ],
+  },
+  en: {
+    hell: 'Light', dunkel: 'Dark',
+    titel: 'Like day and night',
+    intro: 'Both editions contain the same text and cost the same. They differ only in design. Click a page to leaf through the whole sample.',
+    umschalter: { hell: 'Light Mode', dunkel: 'Dark Mode', wechseln: 'Switch to {ziel}' },
+    oeffnen: 'Open the sample of the {f} edition', hellAdj: 'light', dunkelAdj: 'dark',
+    seite: 'Page', von: 'of', zurueck: 'Previous page', vor: 'Next page', schliessen: 'Close',
+    fuss: 'Sample edition for a fictitious person.',
+    alle: 'Compare all the differences →',
+    deckHell: 'Cover of the light edition', inhaltHell: 'Contents page of the light edition',
+    deckDunkel: 'Cover of the dark edition', inhaltDunkel: 'Contents page of the dark edition',
+    hellText: 'Warm paper white, dark ink, gold accents.',
+    dunkelText: 'Deep night blue, light type, gold accents.',
+    zeilen: [
+      { punkt: 'Effect', hell: 'Clear and bright like a printed page', dunkel: 'Calm and deep like a night sky' },
+      { punkt: 'On screen', hell: 'Easy to read, even in daylight', dunkel: 'Pleasant in the evening and on a tablet' },
+      { punkt: 'For printing', hell: 'Very well suited', dunkel: 'Uses a lot of ink, better digital' },
+      { punkt: 'Content and price', hell: 'Identical', dunkel: 'Identical' },
+    ],
+  },
+};
+const t = T[lang];
+const bild = { widths: [320, 520], sizes: '(max-width: 640px) 42vw, 260px', format: 'webp' as const, quality: 78 };
+
+// Alle Seiten beider Fassungen in Großansicht, für den Betrachter
+const glob = {
+  hell: import.meta.glob<{ default: ImageMetadata }>('../assets/leseprobe/hell/*.png', { eager: true }),
+  dunkel: import.meta.glob<{ default: ImageMetadata }>('../assets/leseprobe/dunkel/*.png', { eager: true }),
+};
+const titel = seitenTitel(lang);
+const seitenVon = async (f: 'hell' | 'dunkel') =>
+  Promise.all(
+    Object.keys(glob[f])
+      .sort()
+      .map(async (pfad) => {
+        const nr = Number(pfad.match(/(\d+)\.png$/)![1]);
+        const gross = await getImage({ src: glob[f][pfad].default, width: 1100, format: 'webp', quality: 80 });
+        return { src: gross.src, titel: `${t.seite} ${nr} · ${titelVon(nr, titel)}` };
+      }),
+  );
+const seiten = { hell: await seitenVon('hell'), dunkel: await seitenVon('dunkel') };
+const betrachterT = { seite: t.seite, von: t.von };
+---
+
+<section class="abschnitt fassungen" id="fassungen" aria-labelledby="h-fassungen" data-sterne-ende>
+  <div class="wrap">
+    <h2 id="h-fassungen">{t.titel}</h2>
+    <p class="lesetext nebentext abstand-16">{t.intro}</p>
+  </div>
+  {/* Große Sonne und großer Mond, jeweils mittig über ihrer Fassung: ein Klick wechselt die ganze Seite */}
+  <button class="wrap tagnacht" type="button" data-theme-toggle data-t={JSON.stringify(t.umschalter)}>
+    <svg class="tagnacht__sonne" viewBox="0 0 24 24" aria-hidden="true">
+      <g class="tagnacht__strahlen">
+        <circle cx="12" cy="12" r="3.6" />
+        <path d="M17.8 12h4M12 17.8v4M6.2 12h-4M12 6.2v-4M16.1 16.1l2.83 2.83M7.9 16.1l-2.83 2.83M7.9 7.9 5.07 5.07M16.1 7.9l2.83-2.83M17.73 14.37l1.48.61M14.37 17.73l.61 1.48M9.63 17.73l-.61 1.48M6.27 14.37l-1.48.61M6.27 9.63l-1.48-.61M9.63 6.27l-.61-1.48M14.37 6.27l.61-1.48M17.73 9.63l1.48-.61" />
+      </g>
+    </svg>
+    <span class="tagnacht__linie" aria-hidden="true"></span>
+    <svg class="tagnacht__mond" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M20 14.6A8.2 8.2 0 1 1 9.4 4a8.6 8.6 0 0 0 10.6 10.6z" />
+    </svg>
+  </button>
+  {/* id „leseprobe“ bleibt als Sprungziel für ältere Links (/vorschau) */}
+  <div class:list={['wrap paar abstand-32', { 'paar--kompakt': kompakt }]} id="leseprobe">
+    {(['hell', 'dunkel'] as const).map((f) => (
+      <figure data-fassung={f}>
+        <div class="blaetter">
+          <button class="blatt" type="button" data-oeffnen={f} data-seite="0" aria-label={`${t.oeffnen.replace('{f}', f === 'hell' ? t.hellAdj : t.dunkelAdj)}: ${seiten[f][0].titel}`}>
+            <Image src={f === 'hell' ? hellDeck : dunkelDeck} alt={f === 'hell' ? t.deckHell : t.deckDunkel} {...bild} />
+          </button>
+          <button class="blatt" type="button" data-oeffnen={f} data-seite="1" aria-label={`${t.oeffnen.replace('{f}', f === 'hell' ? t.hellAdj : t.dunkelAdj)}: ${seiten[f][1].titel}`}>
+            <Image src={f === 'hell' ? hellInhalt : dunkelInhalt} alt={f === 'hell' ? t.inhaltHell : t.inhaltDunkel} {...bild} loading="lazy" />
+          </button>
+        </div>
+        <figcaption><h3>{f === 'hell' ? t.hell : t.dunkel}</h3><p class="nebentext">{f === 'hell' ? t.hellText : t.dunkelText}</p></figcaption>
+        {!kompakt && (
+          <div class="merkmale">
+            {t.zeilen.map((z) => (
+              <div class="merkmal"><span class="merkmal__punkt">{z.punkt}</span><span>{f === 'hell' ? z.hell : z.dunkel}</span></div>
+            ))}
+          </div>
+        )}
+      </figure>
+    ))}
+  </div>
+  {kompakt && (
+    <p class="wrap alle"><a class="textlink" href={`${routes.produkt[lang]}#fassungen`}>{t.alle}</a></p>
+  )}
+</section>
+
+{/* Großansicht: eine Seite der gewählten Fassung, mit Blättern per Pfeil, Tastatur oder Wischen */}
+<dialog class="betrachter" data-betrachter data-seiten={JSON.stringify(seiten)} data-t={JSON.stringify(betrachterT)} aria-label={t.titel}>
+  <button class="betrachter__zu" type="button" data-zu aria-label={t.schliessen} title={t.schliessen}>×</button>
+  <button class="betrachter__pfeil betrachter__pfeil--zurueck" type="button" data-dir="-1" aria-label={t.zurueck}>‹</button>
+  <figure class="betrachter__blatt">
+    <img data-bild alt="" />
+    <figcaption>
+      <span data-titel></span>
+      <span class="nebentext klein" data-zaehler aria-live="polite"></span>
+    </figcaption>
+  </figure>
+  <button class="betrachter__pfeil betrachter__pfeil--vor" type="button" data-dir="1" aria-label={t.vor}>›</button>
+  <p class="betrachter__fuss nebentext klein">{t.fuss}</p>
+</dialog>
+
+<script>
+  const dialog = document.querySelector<HTMLDialogElement>('[data-betrachter]');
+  if (dialog) {
+    const seiten = JSON.parse(dialog.dataset.seiten!) as Record<'hell' | 'dunkel', { src: string; titel: string }[]>;
+    const tt = JSON.parse(dialog.dataset.t!);
+    const bild = dialog.querySelector<HTMLImageElement>('[data-bild]')!;
+    const titel = dialog.querySelector<HTMLElement>('[data-titel]')!;
+    const zaehler = dialog.querySelector<HTMLElement>('[data-zaehler]')!;
+    let fassung: 'hell' | 'dunkel' = 'hell';
+    let i = 0;
+    let ausloeser: HTMLElement | null = null;
+
+    const zeige = (n: number) => {
+      const liste = seiten[fassung];
+      i = Math.max(0, Math.min(liste.length - 1, n));
+      bild.src = liste[i].src;
+      bild.alt = liste[i].titel;
+      titel.textContent = liste[i].titel;
+      zaehler.textContent = `${tt.seite} ${i + 1} ${tt.von} ${liste.length}`;
+      dialog.dataset.fassung = fassung;
+      dialog.querySelector<HTMLButtonElement>('[data-dir="-1"]')!.disabled = i === 0;
+      dialog.querySelector<HTMLButtonElement>('[data-dir="1"]')!.disabled = i === liste.length - 1;
+      // Nachbarseiten vorladen, damit das Blättern ohne Warten geht
+      [i - 1, i + 1].forEach((k) => liste[k] && (new Image().src = liste[k].src));
+    };
+
+    document.querySelectorAll<HTMLButtonElement>('[data-oeffnen]').forEach((b) =>
+      b.addEventListener('click', () => {
+        ausloeser = b;
+        fassung = b.dataset.oeffnen as 'hell' | 'dunkel';
+        zeige(Number(b.dataset.seite));
+        dialog.showModal();
+      }),
+    );
+    dialog.querySelectorAll<HTMLButtonElement>('[data-dir]').forEach((b) =>
+      b.addEventListener('click', () => zeige(i + Number(b.dataset.dir))),
+    );
+    dialog.querySelector('[data-zu]')!.addEventListener('click', () => dialog.close());
+    // Klick neben das Blatt schließt
+    dialog.addEventListener('click', (e) => e.target === dialog && dialog.close());
+    dialog.addEventListener('close', () => ausloeser?.focus());
+    dialog.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') zeige(i + 1);
+      if (e.key === 'ArrowLeft') zeige(i - 1);
+    });
+    // Wischen auf dem Handy
+    let startX = 0;
+    dialog.addEventListener('touchstart', (e) => (startX = e.touches[0].clientX), { passive: true });
+    dialog.addEventListener('touchend', (e) => {
+      const dx = e.changedTouches[0].clientX - startX;
+      if (Math.abs(dx) > 50) zeige(i + (dx < 0 ? 1 : -1));
+    });
+  }
+</script>
+
+<style>
+  .abstand-32 {
+    margin-top: var(--s-32);
+  }
+  /* Tag und Nacht: die Seite, die gerade gilt, leuchtet; die andere wartet blass daneben */
+  /* Gleiche Spalten wie die Fassungen darunter: Sonne über Hell, Mond über Dunkel, Linie dazwischen */
+  .tagnacht {
+    position: relative;
+    display: grid;
+    width: 100%; /* Knöpfe werden sonst nur so breit wie ihr Inhalt */
+    grid-template-columns: 1fr 1fr;
+    column-gap: var(--s-64);
+    justify-items: center;
+    align-items: center;
+    margin-top: var(--s-32);
+    padding-block: var(--s-16);
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+  .tagnacht .tagnacht__linie {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+  /* Am Handy stehen die Fassungen untereinander: dann wieder Sonne und Mond nebeneinander, mittig */
+  @media (max-width: 760px) {
+    .tagnacht {
+      display: flex;
+      justify-content: center;
+      gap: var(--s-32);
+    }
+    .tagnacht .tagnacht__linie {
+      position: static;
+      transform: none;
+    }
+  }
+  .tagnacht svg {
+    width: 104px;
+    height: 104px;
+    overflow: visible;
+    transition: transform 0.6s cubic-bezier(0.3, 1.4, 0.5, 1), opacity 0.6s, filter 0.6s;
+  }
+  .tagnacht__strahlen {
+    fill: none;
+    stroke: var(--gold);
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    transform-origin: 12px 12px;
+  }
+  .tagnacht__mond path {
+    fill: var(--gold);
+  }
+  /* In Hell ist der Mond dunkel, passend zur dunklen Fassung */
+  :global(:root:not([data-theme='dark'])) .tagnacht__mond path {
+    fill: #07102a;
+  }
+  .tagnacht__linie {
+    width: 1px;
+    height: 64px;
+    background: color-mix(in srgb, var(--gold) 50%, transparent);
+  }
+  .tagnacht__sonne,
+  .tagnacht__mond {
+    opacity: 0.3;
+    transform: scale(0.78);
+  }
+  :global(:root:not([data-theme='dark'])) .tagnacht__sonne,
+  :global(:root[data-theme='dark']) .tagnacht__mond {
+    opacity: 1;
+    transform: scale(1);
+    filter: drop-shadow(0 0 18px color-mix(in srgb, var(--gold) 55%, transparent));
+  }
+  /* Am Tag leuchtet auch der wartende Mond, damit er als Schalter auffällt */
+  :global(:root:not([data-theme='dark'])) .tagnacht__mond {
+    opacity: 0.9;
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--gold) 70%, transparent))
+      drop-shadow(0 0 22px color-mix(in srgb, var(--gold) 55%, transparent));
+  }
+  .tagnacht:hover svg {
+    opacity: 1;
+  }
+  .tagnacht:focus-visible {
+    outline: 2px solid var(--akzent);
+    outline-offset: 4px;
+    border-radius: 999px;
+  }
+  /* Die Sonne dreht sich nur in der dunklen Ansicht */
+  @media (prefers-reduced-motion: no-preference) {
+    :global(:root[data-theme='dark']) .tagnacht__strahlen {
+      animation: tagnacht-drehen 40s linear infinite;
+    }
+  }
+  @keyframes tagnacht-drehen {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @media (max-width: 640px) {
+    .tagnacht {
+      gap: var(--s-24);
+    }
+    .tagnacht svg {
+      width: 80px;
+      height: 80px;
+    }
+  }
+  .abstand-16 {
+    margin-top: var(--s-16);
+  }
+  #h-fassungen {
+    color: var(--titel);
+    font-weight: 700;
+  }
+  .fassungen,
+  #leseprobe {
+    scroll-margin-top: 90px;
+  }
+  /* Die Seiten sind Knöpfe: beim Überfahren heben sie sich leicht, der Zeiger zeigt „vergrößern“ */
+  .blatt {
+    display: block;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: zoom-in;
+    transition: transform 0.25s ease-out;
+  }
+  .blatt:hover {
+    transform: translateY(-4px);
+  }
+  .blatt:focus-visible {
+    outline: 2px solid var(--akzent);
+    outline-offset: 4px;
+  }
+
+  /* Betrachter: dunkler Grund, eine große Seite, Pfeile links und rechts */
+  .betrachter {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    padding: var(--s-24) var(--s-16);
+    border: 0;
+    background: rgb(4 8 24 / 0.94);
+    color: #eee7d7;
+  }
+  .betrachter[open] {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--s-16);
+  }
+  .betrachter::backdrop {
+    background: rgb(4 8 24 / 0.6);
+  }
+  .betrachter__blatt {
+    margin: 0;
+    display: grid;
+    justify-items: center;
+    gap: var(--s-12);
+    min-height: 0;
+    height: 100%;
+    align-content: center;
+  }
+  .betrachter__blatt img {
+    display: block;
+    max-width: 100%;
+    max-height: calc(100dvh - 150px);
+    width: auto;
+    height: auto;
+    box-shadow: 0 24px 60px rgb(0 0 0 / 0.5);
+  }
+  .betrachter__blatt figcaption {
+    display: grid;
+    justify-items: center;
+    gap: 2px;
+    text-align: center;
+    font-family: var(--font-titel);
+    font-size: var(--t-11);
+  }
+  .betrachter .nebentext {
+    color: rgb(238 231 215 / 0.7);
+  }
+  .betrachter__pfeil,
+  .betrachter__zu {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border: 1px solid rgb(255 255 255 / 0.2);
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.06);
+    color: #eee7d7;
+    font-size: 30px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .betrachter__pfeil:hover:not(:disabled),
+  .betrachter__zu:hover {
+    background: rgb(255 255 255 / 0.14);
+  }
+  .betrachter__pfeil:disabled {
+    opacity: 0.25;
+    cursor: default;
+  }
+  .betrachter__zu {
+    position: absolute;
+    top: var(--s-16);
+    right: var(--s-16);
+    z-index: 1;
+  }
+  .betrachter__fuss {
+    grid-column: 1 / -1;
+    text-align: center;
+    margin: 0;
+  }
+  @media (max-width: 640px) {
+    .betrachter[open] {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr) auto auto;
+    }
+    .betrachter__blatt {
+      grid-column: 1 / -1;
+      grid-row: 1;
+    }
+    .betrachter__pfeil--zurueck {
+      grid-row: 2;
+      justify-self: end;
+    }
+    .betrachter__pfeil--vor {
+      grid-row: 2;
+      justify-self: start;
+    }
+    .betrachter__blatt img {
+      max-height: calc(100dvh - 220px);
+    }
+  }
+  .abstand-48 {
+    margin-top: var(--s-48);
+  }
+  .paar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--s-64);
+  }
+  .paar figure {
+    margin: 0;
+  }
+  .blaetter {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--s-16);
+  }
+  .blaetter :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    box-shadow: 0 16px 32px -16px rgb(0 0 0 / 0.4), 0 0 0 1px var(--linie);
+  }
+  .paar figcaption {
+    margin-top: var(--s-24);
+    text-align: center;
+  }
+  .paar figcaption h3 {
+    font-size: var(--t-17);
+    margin-bottom: var(--s-4);
+  }
+
+  /* Merkmale direkt unter jeder Fassung; per subgrid stehen gleiche Zeilen links und rechts auf einer Höhe */
+  .paar {
+    grid-template-rows: repeat(3, auto);
+  }
+  .paar figure {
+    display: grid;
+    grid-row: span 3;
+    grid-template-rows: subgrid;
+    row-gap: 0;
+  }
+  /* Kompakt ohne Merkmale: nur Blätter und Beschriftung */
+  .paar--kompakt {
+    grid-template-rows: repeat(2, auto);
+  }
+  .paar--kompakt figure {
+    grid-row: span 2;
+  }
+  .alle {
+    margin-top: var(--s-32);
+  }
+  .paar figcaption {
+    margin-bottom: var(--s-16);
+  }
+  /* Die Merkmale einer Fassung als Glaskarte */
+  .merkmale {
+    padding: 4px var(--s-24);
+    border: 1px solid var(--karte-rand);
+    border-radius: var(--rahmen-radius);
+    background: var(--karte);
+    box-shadow: var(--karte-licht);
+    backdrop-filter: var(--karte-blur);
+    -webkit-backdrop-filter: var(--karte-blur);
+  }
+  .merkmal {
+    display: grid;
+    grid-template-columns: 9em minmax(0, 1fr);
+    gap: var(--s-16);
+    padding-block: var(--s-12);
+    border-bottom: 1px solid var(--linie);
+  }
+  .merkmal:last-child {
+    border-bottom: 0;
+  }
+  .merkmal__punkt {
+    font-family: var(--font-titel);
+    font-style: italic;
+    font-weight: 700;
+    color: var(--akzent);
+  }
+
+  @media (max-width: 760px) {
+    .paar {
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--s-48);
+    }
+    .paar,
+    .paar--kompakt {
+      grid-template-rows: none;
+    }
+    .paar figure,
+    .paar--kompakt figure {
+      display: block;
+      grid-row: auto;
+    }
+    .merkmal {
+      grid-template-columns: 8em minmax(0, 1fr);
+    }
+    /* Am Handy nur die Fassung, die zur Ansicht passt: Sonne und Mond darüber wechseln sie */
+    :global(:root:not([data-theme='dark'])) .paar figure[data-fassung='dunkel'],
+    :global(:root[data-theme='dark']) .paar figure[data-fassung='hell'] {
+      display: none;
+    }
+  }
+</style>

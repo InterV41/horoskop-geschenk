@@ -1,0 +1,561 @@
+---
+import Base from '../layouts/Base.astro';
+import KosmosRadix from '../components/KosmosRadix.astro';
+import ZweiFassungen from '../components/ZweiFassungen.astro';
+import Kaufknopf from '../components/Kaufknopf.astro';
+import { site, delivery } from '../site';
+import { langFromPath, routes } from '../i18n';
+
+const lang = langFromPath(Astro.url.pathname);
+const T = {
+  de: {
+    title: 'Horoskop-Geschenk.de: persönliches Geburtshoroskop verschenken',
+    description: `Ein persönliches Geburtshoroskop als Geschenk: ${site.pages} Seiten, davon über ${site.pagesIndividual} individuell berechnet, hell oder dunkel gestaltet. Als PDF per Mail, ${site.priceLabel.de}.`,
+    h1: 'Die Sternenkonstellation zum Augenblick der Geburt von',
+    vorname: 'Vorname',
+    vornameHinweis: 'Dein eigener Vorname oder der einer Person, die du beschenken möchtest.',
+    weiter: 'Horoskop bestellen',
+    lieferung: `Innerhalb von ${delivery.duration('de')}.`,
+    bekommen: 'Was du bekommst',
+    punkte: [
+      { titel: `${site.pages} Seiten`, text: `Davon über ${site.pagesIndividual} Seiten individuell berechnet und geschrieben, in siebzehn Kapiteln über Persönlichkeit, Stärken und Lebensthemen.` },
+      { titel: 'Individuell berechnet', text: 'Aus Geburtsdatum, Geburtszeit und Geburtsort, astronomisch exakt.' },
+      { titel: 'Zwei Fassungen', text: 'Hell oder dunkel, gleicher Inhalt, gleicher Preis.' },
+      { titel: 'Als PDF', text: 'Per Mail, zum Lesen am Bildschirm oder zum Ausdrucken. Das Deckblatt mit dem Geburtsbild macht sich auch an der Wand gut.' },
+    ],
+    stimmen: 'Was Leserinnen und Leser sagen',
+    // Zitate aus der Testleserrunde, wörtlich. sterne: nur die echte Bewertung der Person (1 bis 5), sonst null. Vor dem Livegang Freigabe von jeder Person einholen.
+    stimmenListe: [
+      { name: 'Hannah H.', text: '100 Prozent auf mich zugeschnitten. Es war erstaunlich, das zu lesen. Vieles weiß man über sich selbst, aber der Text beschreibt darüber hinaus, wie sich das im Alltag zeigen könnte. Sehr clean und übersichtlich.', sterne: null },
+      { name: 'Luca', text: 'Stimmt viel mehr mit mir überein als gedacht. Es klang persönlich zugeschnitten und nicht einfach nur alles offen gelassen, damit es auf jeden passt. Optisch sehr ansprechend, gut lesbar mit den Farben, die Zeichen sehen sauber aus.', sterne: null },
+      { name: 'Aniek', text: 'Die Kapitel waren voll gut zu lesen, durchgehend im gleichen Ton, nicht zu euphorisch und nicht zu negativ.', sterne: null },
+      { name: 'Ricarda', text: 'Bis auf ein paar Fachbegriffe war es gut verständlich. Die Gestaltung ist toll, und einige Details haben wirklich gut gepasst.', sterne: null },
+      { name: 'Felix', text: 'Manche persönlichen Analysen waren erstaunlich treffend.', sterne: null },
+      { name: 'Celina', text: 'Ich finde, es ist super geschrieben, es wirkt sehr persönlich. Insgesamt auf mich zugeschnitten, und ausgestiegen bin ich nirgends, ich fand alles sehr gut verständlich und strukturiert. Besonders das Layout finde ich sehr schön.', sterne: null },
+    ],
+    stimmenHinweis: 'Stimmen aus unserer Leserunde vor dem Verkaufsstart.',
+    zurueck: 'Vorherige Stimme', vor: 'Nächste Stimme', sterneVon: '{n} von 5 Sternen', zuStimme: 'Stimme {n}',
+    anfZu: ['„', '“'],
+    schluss: 'Ein Geschenk, das es nur einmal gibt.',
+    schlussText: 'Berechnet für einen Menschen, einen Ort und einen Augenblick.',
+  },
+  en: {
+    title: 'Birth Chart Gift: a personal horoscope to give',
+    description: `A personal birth chart as a gift: ${site.pages} pages, more than ${site.pagesIndividual} of them individually calculated, in a light or dark design. As a PDF by email, ${site.priceLabel.en}.`,
+    h1: 'The constellation of the stars at the moment of birth of',
+    vorname: 'First name',
+    vornameHinweis: 'Your own first name or that of someone you want to give it to.',
+    weiter: 'Order your horoscope',
+    lieferung: `Within ${delivery.duration('en')}.`,
+    bekommen: 'What you get',
+    punkte: [
+      { titel: `${site.pages} pages`, text: `More than ${site.pagesIndividual} of them individually calculated and written, in seventeen chapters on personality, strengths and life themes.` },
+      { titel: 'Individually calculated', text: 'From date, time and place of birth, astronomically exact.' },
+      { titel: 'Two editions', text: 'Light or dark, same content, same price.' },
+      { titel: 'As a PDF', text: 'By email, to read on screen or to print. The cover with the natal chart also looks good on the wall.' },
+    ],
+    stimmen: 'What readers say',
+    stimmenListe: [
+      { name: 'Hannah H.', text: 'Tailored 100 percent to me. It was astonishing to read. You know a lot about yourself, but the text goes further and describes how it might show in everyday life. Very clean and clearly laid out.', sterne: null },
+      { name: 'Luca', text: 'Matches me far more than I expected. It sounded personally tailored and not just left open so that it fits everyone. Visually very appealing, easy to read with the colours, the symbols look clean.', sterne: null },
+      { name: 'Aniek', text: 'The chapters were really easy to read, in the same tone throughout, not too euphoric and not too negative.', sterne: null },
+      { name: 'Ricarda', text: 'Apart from a few technical terms it was easy to understand. The design is great and some details really fitted well.', sterne: null },
+      { name: 'Felix', text: 'Some of the personal analyses were astonishingly accurate.', sterne: null },
+      { name: 'Celina', text: 'I think it is beautifully written, it feels very personal. Overall tailored to me, and I never lost the thread; I found everything very easy to understand and well structured. I especially like the layout.', sterne: null },
+    ],
+    stimmenHinweis: 'From our reader group before launch. Translated from German.',
+    zurueck: 'Previous review', vor: 'Next review', sterneVon: '{n} out of 5 stars', zuStimme: 'Review {n}',
+    anfZu: ['“', '”'],
+    schluss: 'A gift that exists only once.',
+    schlussText: 'Calculated for one person, one place and one moment.',
+  },
+};
+const t = T[lang];
+// Das letzte Wort („von“ / „of“) steht mit dem Namensfeld zusammen in einer Zeile
+const satz = t.h1.split(' ');
+const satzEnde = satz.pop();
+const satzAnfang = satz.join(' ');
+---
+
+<Base title={t.title} description={t.description}>
+  <section class="start">
+    <div class="start__radix">
+      <KosmosRadix />
+    </div>
+    <form class="start__text" id="start-form" action={routes.bestellen[lang]} method="get">
+      <h1>
+        <label for="start-name">
+          {satzAnfang}{' '}
+          <span class="start__zeile">
+            {satzEnde}{' '}
+            {/* ohne name-Attribut, damit der Vorname nicht in der Adresse landet; das Skript reicht ihn weiter */}
+            <input
+              class="start__name"
+              id="start-name"
+              maxlength="40"
+              autocomplete="off"
+              autocapitalize="words"
+              enterkeyhint="go"
+              placeholder={`${t.vorname} …`}
+              aria-describedby="start-name-hinweis"
+            />
+          </span>
+        </label>
+      </h1>
+      <p class="nebentext klein start__hinweis" id="start-name-hinweis">{t.vornameHinweis}</p>
+      {/* Knopf und Lieferzeit als Einheit: der Hinweis steht mittig unter dem Knopf */}
+      <div class="start__kauf">
+        <button class="knopf knopf--gold knopf--gross start__knopf" type="submit">{t.weiter} · {site.priceLabel[lang]}</button>
+        <p class="nebentext klein start__lieferung">{t.lieferung}{site.vatNote[lang] && ` ${site.vatNote[lang]}.`}</p>
+      </div>
+    </form>
+  </section>
+
+  <section class="abschnitt" aria-labelledby="h-bekommen" data-sterne-ende>
+    <div class="wrap">
+      <h2 id="h-bekommen">{t.bekommen}</h2>
+      <ul class="punkte">
+        {t.punkte.map((p) => (
+          <li>
+            <h3>{p.titel}</h3>
+            <p class="nebentext">{p.text}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <ZweiFassungen kompakt />
+
+  <section class="abschnitt" aria-labelledby="h-stimmen">
+    <div class="wrap">
+      <h2 id="h-stimmen">{t.stimmen}</h2>
+      <div class="slider" data-slider>
+      <ul class="stimmen" data-spur>
+        {t.stimmenListe.map((st) => (
+          <li>
+            <figure class="stimme">
+              {st.sterne && (
+                <p class="sterne" role="img" aria-label={t.sterneVon.replace('{n}', String(st.sterne))}>
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <svg viewBox="0 0 24 24" aria-hidden="true" class:list={{ voll: i <= st.sterne! }}>
+                      <path d="M12 2.8l2.8 6 6.5.7-4.9 4.4 1.4 6.4L12 17l-5.8 3.3 1.4-6.4-4.9-4.4 6.5-.7z" />
+                    </svg>
+                  ))}
+                </p>
+              )}
+              <figcaption class:list={{ platzhalter: st.name.startsWith('[') }}>{st.name}</figcaption>
+              <blockquote>
+                <p>{t.anfZu[0]}{st.text}{t.anfZu[1]}</p>
+              </blockquote>
+            </figure>
+          </li>
+        ))}
+      </ul>
+      <div class="slider__steuerung">
+        <button class="slider__pfeil" type="button" data-zurueck aria-label={t.zurueck}>←</button>
+        <div class="slider__punkte">
+          {t.stimmenListe.map((_, i) => (
+            <button type="button" data-punkt={i} aria-label={t.zuStimme.replace('{n}', String(i + 1))}></button>
+          ))}
+        </div>
+        <button class="slider__pfeil" type="button" data-vor aria-label={t.vor}>→</button>
+      </div>
+      </div>
+      {t.stimmenHinweis && <p class="nebentext klein abstand-24">{t.stimmenHinweis}</p>}
+    </div>
+  </section>
+
+  <section class="abschnitt mitte" aria-labelledby="h-schluss">
+    <div class="wrap">
+      <h2 id="h-schluss">{t.schluss}</h2>
+      <p class="nebentext abstand-16">{t.schlussText}</p>
+      <div class="abstand-32"><Kaufknopf hinweis={false} /></div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  // Testleser-Slider: läuft alle sechs Sekunden eine Stimme weiter, hält an, solange man ihn anfasst
+  document.querySelectorAll<HTMLElement>('[data-slider]').forEach((slider) => {
+    const spur = slider.querySelector<HTMLElement>('[data-spur]')!;
+    const karten = [...spur.children] as HTMLElement[];
+    const punkte = [...slider.querySelectorAll<HTMLButtonElement>('[data-punkt]')];
+    const schritt = () => karten[1] ? karten[1].offsetLeft - karten[0].offsetLeft : spur.clientWidth;
+    const aktuell = () => Math.round(spur.scrollLeft / schritt());
+    const letzte = () => Math.max(0, karten.length - Math.round(spur.clientWidth / schritt()));
+    const geheZu = (i: number) => {
+      const ziel = i > letzte() ? 0 : i < 0 ? letzte() : i;
+      spur.scrollTo({ left: ziel * schritt() });
+    };
+    const markiere = () => {
+      const i = aktuell();
+      punkte.forEach((p, j) => p.setAttribute('aria-current', String(j === i)));
+    };
+    slider.querySelector('[data-vor]')!.addEventListener('click', () => geheZu(aktuell() + 1));
+    slider.querySelector('[data-zurueck]')!.addEventListener('click', () => geheZu(aktuell() - 1));
+    punkte.forEach((p, j) => p.addEventListener('click', () => geheZu(j)));
+    spur.addEventListener('scroll', () => requestAnimationFrame(markiere), { passive: true });
+    markiere();
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let pause = false;
+    const halt = () => (pause = true);
+    const weiter = () => (pause = false);
+    slider.addEventListener('mouseenter', halt);
+    slider.addEventListener('mouseleave', weiter);
+    slider.addEventListener('focusin', halt);
+    slider.addEventListener('focusout', weiter);
+    spur.addEventListener('touchstart', halt, { passive: true });
+    spur.addEventListener('touchend', () => setTimeout(weiter, 4000), { passive: true });
+    let imBild = false;
+    new IntersectionObserver((e) => (imBild = e[0].isIntersecting)).observe(slider);
+    setInterval(() => {
+      if (!pause && imBild && document.visibilityState === 'visible') geheZu(aktuell() + 1);
+    }, 6000);
+  });
+
+  // Vorname aus dem ersten Bildschirm ins Bestellformular mitnehmen
+  const startForm = document.getElementById('start-form') as HTMLFormElement | null;
+  startForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = (document.getElementById('start-name') as HTMLInputElement).value.trim();
+    try {
+      if (name) sessionStorage.setItem('vorname', name);
+      else sessionStorage.removeItem('vorname');
+    } catch {}
+    location.href = startForm.action;
+  });
+</script>
+
+<style>
+  .abstand-16 {
+    margin-top: var(--s-16);
+  }
+  .abstand-32 {
+    margin-top: var(--s-32);
+  }
+
+  /* Erster Bildschirm: das Rad groß, daneben Satz und Kaufknopf */
+  .start {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    gap: var(--s-48);
+    align-items: center;
+    max-width: 1440px;
+    min-height: calc(100svh - 73px);
+    margin-inline: auto;
+    padding: var(--s-32) var(--s-48) var(--s-32) var(--s-24);
+    overflow: hidden;
+  }
+  .start {
+    position: relative;
+    isolation: isolate;
+  }
+  .start__radix {
+    position: relative;
+    width: min(100%, 860px, calc(100svh - 140px));
+    min-width: min(100%, 480px);
+    justify-self: center;
+  }
+  /* Lichthof hinter dem Rad */
+  .start__radix::before {
+    content: '';
+    position: absolute;
+    inset: -30%;
+    z-index: -1;
+    background: none;
+    pointer-events: none;
+  }
+  /* Lichthof: sehr weich auslaufend, ohne erkennbare Kante */
+  :global(:root[data-theme='dark']) .start__radix::before {
+    background: radial-gradient(
+      circle closest-side,
+      rgb(46 66 140 / 0.32) 0%,
+      rgb(30 44 104 / 0.18) 35%,
+      rgb(20 30 76 / 0.07) 65%,
+      transparent 100%
+    );
+  }
+
+  .start__text h1 {
+    margin-bottom: var(--s-16);
+  }
+  .start__text h1 label {
+    cursor: text;
+  }
+  /* Zweispaltig zwischen 901 und etwa 1350 px ist die Textspalte schmal: Schrift mit der Breite verkleinern,
+     damit „Sternenkonstellation“ in die Zeile passt */
+  @media (min-width: 901px) {
+    .start__text h1 {
+      font-size: min(var(--t-36), 4.1vw);
+    }
+  }
+  /* Sehr schmale Handys: „Sternenkonstellation“ passt sonst nicht in die Zeile */
+  @media (max-width: 400px) {
+    .start__text h1 {
+      font-size: min(var(--t-26), 10.5vw);
+    }
+  }
+  /* „von“ und Namensfeld bleiben zusammen, das Feld wächst mit dem Namen */
+  .start__zeile {
+    white-space: nowrap;
+  }
+  /* Der Name setzt den Satz direkt fort: gleiche Schriftgröße wie der Satz, in Gold, mit Goldlinie */
+  .start__name {
+    display: inline-block;
+    vertical-align: baseline;
+    width: 5.2em;
+    field-sizing: content;
+    min-width: 4.6em;
+    max-width: min(9em, 100%);
+    padding: 0 0 2px;
+    font: inherit;
+    line-height: inherit;
+    text-align: left;
+    color: var(--gold);
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--gold) 70%, transparent);
+    border-radius: 0;
+    caret-color: var(--gold);
+    text-shadow: 0 0 18px color-mix(in srgb, var(--gold) 45%, transparent);
+    transition: border-color 0.2s;
+  }
+  /* Hell: dunkleres Gold, damit die Schrift auf Weiß genug Kontrast hat (4,8:1) */
+  :global(:root:not([data-theme='dark'])) .start__name {
+    color: var(--akzent);
+    caret-color: var(--akzent);
+  }
+  .start__name::placeholder {
+    color: currentColor;
+    opacity: 0.5;
+  }
+  .start__name:hover,
+  .start__name:focus {
+    outline: none;
+    border-bottom-color: var(--gold);
+  }
+  /* Tastatur: deutlich dickere Linie als sichtbarer Fokus */
+  .start__name:focus-visible {
+    border-bottom: 3px solid var(--gold);
+    margin-bottom: -2px;
+  }
+  .start__hinweis {
+    margin-top: var(--s-12);
+    font-weight: 700;
+  }
+  .start__kauf {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: var(--s-32);
+  }
+  .start__lieferung {
+    margin-top: var(--s-12);
+    font-weight: 700;
+  }
+
+  /* Alle Abschnittsüberschriften wie „Wie Tag und Nacht“: gleiche Größe, fett, Titelfarbe */
+  #h-bekommen,
+  #h-stimmen,
+  #h-schluss {
+    color: var(--titel);
+    font-weight: 700;
+  }
+  .punkte {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--s-32);
+    list-style: none;
+    margin: var(--s-48) 0 0;
+    padding: 0;
+  }
+  .punkte li {
+    padding: var(--s-24);
+    border: 1px solid var(--karte-rand);
+    border-radius: var(--rahmen-radius);
+    background: var(--karte);
+    box-shadow: var(--karte-licht);
+    backdrop-filter: var(--karte-blur);
+    -webkit-backdrop-filter: var(--karte-blur);
+  }
+  .punkte h3 {
+    font-size: var(--t-13);
+    margin-bottom: var(--s-8);
+    /* „34 Seiten“: Ziffern aus der Titelschrift selbst, damit sie nicht fetter wirken als das Wort daneben */
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-variant-numeric: lining-nums;
+    /* Gold für Schrift: in Hell das dunklere Akzentgold, damit es lesbar bleibt */
+    color: var(--akzent);
+  }
+
+  .abstand-24 {
+    margin-top: var(--s-24);
+  }
+  /* Testleser: eine Spur, die von selbst weiterläuft; drei Stimmen nebeneinander, am Handy eine */
+  .stimmen {
+    --sichtbar: 3;
+    display: flex;
+    gap: var(--s-24);
+    list-style: none;
+    margin: var(--s-48) 0 0;
+    padding: 1px; /* Rahmen der Karten nicht abschneiden */
+    text-align: left;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+  .stimmen::-webkit-scrollbar {
+    display: none;
+  }
+  .stimmen > li {
+    flex: 0 0 calc((100% - (var(--sichtbar) - 1) * var(--s-24)) / var(--sichtbar));
+    display: flex;
+    scroll-snap-align: start;
+  }
+  .sterne {
+    display: flex;
+    gap: 2px;
+  }
+  .sterne svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: var(--gold);
+    stroke-width: 1.4;
+    stroke-linejoin: round;
+  }
+  .sterne svg.voll {
+    fill: var(--gold);
+  }
+  .slider__steuerung {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--s-16);
+    margin-top: var(--s-24);
+  }
+  .slider__pfeil {
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--karte-rand);
+    border-radius: 50%;
+    background: var(--karte);
+    box-shadow: var(--karte-licht);
+    backdrop-filter: var(--karte-blur);
+    -webkit-backdrop-filter: var(--karte-blur);
+    color: var(--akzent);
+    font-size: var(--t-11);
+    cursor: pointer;
+  }
+  .slider__pfeil:hover {
+    background: color-mix(in srgb, var(--gold) 12%, transparent);
+  }
+  .slider__punkte {
+    display: flex;
+    gap: var(--s-4);
+  }
+  .slider__punkte button {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    position: relative;
+  }
+  .slider__punkte button::before {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border-radius: 50%;
+    border: 1px solid var(--gold);
+    transition: background-color 0.3s;
+  }
+  .slider__punkte button[aria-current='true']::before {
+    background: var(--gold);
+  }
+  .stimme {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: var(--s-12);
+    width: 100%;
+    /* Jede Stimme eine eigene Karte im abgerundeten Rahmen */
+    padding: var(--s-32);
+    border: 1px solid var(--karte-rand);
+    border-radius: var(--rahmen-radius);
+    background: var(--karte);
+    box-shadow: var(--karte-licht);
+    backdrop-filter: var(--karte-blur);
+    -webkit-backdrop-filter: var(--karte-blur);
+  }
+  .stimme blockquote {
+    margin: 0;
+  }
+  .stimme blockquote p {
+    font-family: var(--font-titel);
+    font-size: var(--t-13);
+    line-height: 1.4;
+  }
+  /* Name über dem Zitat, groß in Gold */
+  .stimme figcaption {
+    font-family: var(--font-titel);
+    font-style: italic;
+    font-size: var(--t-17);
+    line-height: 1.2;
+    color: var(--akzent);
+  }
+  .stimme figcaption.platzhalter {
+    padding: var(--s-4) var(--s-8);
+    font-size: var(--t-9);
+  }
+
+
+  /* Tablet hochkant und kleiner: Rad oben, so breit wie möglich */
+  @media (max-width: 900px) {
+    .start {
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--s-24);
+      min-height: 0;
+      padding: var(--s-24) var(--s-24) var(--s-48);
+      text-align: center;
+    }
+    .start__radix {
+      width: min(100%, 640px, calc(100svh - 300px));
+      min-width: min(100%, 320px);
+    }
+  }
+  /* Handy: Rad fast randlos */
+  @media (max-width: 520px) {
+    .start {
+      padding-inline: var(--s-8);
+    }
+    .start__radix {
+      width: 100%;
+    }
+    .start__text {
+      padding-inline: var(--s-16);
+    }
+  }
+  @media (max-width: 900px) {
+    .punkte {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .stimmen {
+      --sichtbar: 2;
+    }
+  }
+  @media (max-width: 640px) {
+    .stimmen {
+      --sichtbar: 1;
+    }
+    .punkte {
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--s-24);
+    }
+  }
+</style>

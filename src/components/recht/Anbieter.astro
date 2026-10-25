@@ -1,0 +1,57 @@
+---
+// Anschrift des Anbieters aus site.ts; Platzhalter in eckigen Klammern werden sichtbar markiert
+import { anbieter } from '../../site';
+import type { Lang } from '../../i18n';
+
+interface Props {
+  lang: Lang;
+  mitEmail?: boolean;
+  mitTelefon?: boolean;
+}
+const { lang, mitEmail = true, mitTelefon = false } = Astro.props;
+const zeilen = [anbieter.name, anbieter.strasse, anbieter.ort, anbieter.land[lang]];
+const offen = (w: string) => w.startsWith('[');
+---
+
+<p class:list={['anbieter', { 'anbieter--offen': zeilen.some(offen) }]}>
+  {zeilen.map((z, i) => (
+    <Fragment>
+      {offen(z) ? <span class="anbieter__luecke">{z}</span> : z}
+      {i < zeilen.length - 1 && <br />}
+    </Fragment>
+  ))}
+  {mitTelefon && (
+    <Fragment>
+      <br />
+      {lang === 'en' ? 'Phone' : 'Telefon'}: {offen(anbieter.telefon) ? <span class="anbieter__luecke">{anbieter.telefon}</span> : anbieter.telefon}
+    </Fragment>
+  )}
+  {mitEmail && (
+    <Fragment>
+      <br />
+      {lang === 'en' ? 'Email' : 'E-Mail'}: {offen(anbieter.email) ? <span class="anbieter__luecke">{anbieter.email}</span> : <a href={`mailto:${anbieter.email}`}>{anbieter.email}</a>}
+    </Fragment>
+  )}
+</p>
+
+<style>
+  /* Kontaktdaten als Karte im Stil des Bestellformulars */
+  .anbieter {
+    margin-block: var(--s-16);
+    padding: var(--s-16) var(--s-24);
+    background: var(--karte);
+    box-shadow: var(--karte-licht);
+    backdrop-filter: var(--karte-blur);
+    -webkit-backdrop-filter: var(--karte-blur);
+    border: 1px solid var(--karte-rand);
+    border-left: 2px solid var(--gold);
+    border-radius: 20px;
+    line-height: 1.7;
+  }
+  /* Noch nicht ausgefüllte Angaben: dezent in Gold markiert statt als Kasten */
+  .anbieter__luecke {
+    color: var(--akzent);
+    font-style: italic;
+    border-bottom: 1px dotted var(--akzent);
+  }
+</style>

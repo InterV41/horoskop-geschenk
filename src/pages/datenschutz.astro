@@ -1,0 +1,140 @@
+---
+import Rechtstext from '../layouts/Rechtstext.astro';
+import Anbieter from '../components/recht/Anbieter.astro';
+import { anbieter } from '../site';
+---
+
+<Rechtstext titel="Datenschutzerklärung" pfad="/datenschutz" beschreibung="Wie Horoskop-Geschenk.de mit deinen Daten umgeht, wofür Geburtsdaten genutzt und wann sie gelöscht werden.">
+  <p class="nebentext">Stand: {anbieter.stand.de}</p>
+
+  <h2>Kurz gesagt</h2>
+  <p>
+    Wir erheben nur, was wir für dein Horoskop brauchen: Vorname, Geburtsdatum, Geburtszeit, Geburtsort und deine
+    E-Mail-Adresse. Wir verwenden keine Tracking-Cookies, legen kein Kundenkonto an und geben deine Daten nicht für
+    Werbung weiter. Die Geburtsdaten löschen wir 30 Tage nach der Auslieferung.
+  </p>
+
+  <h2>Verantwortlich</h2>
+  <Anbieter lang="de" />
+
+  <h2>Welche Daten wir wofür verarbeiten</h2>
+
+  <h3>Bestellung und Erstellung des Horoskops</h3>
+  <p>
+    Für die Bestellung verarbeiten wir die Angaben zur Person, für die das Horoskop ist (Vorname, Geburtsdatum,
+    Geburtszeit oder den Hinweis, dass sie unbekannt ist, Geburtsort mit Koordinaten und Zeitzone), die gewählte
+    Fassung und deine E-Mail-Adresse. Wir nutzen sie, um das Horoskop zu berechnen, zu erstellen und dir zu
+    schicken. Rechtsgrundlage ist die Erfüllung des Vertrags (Art. 6 Abs. 1 lit. b DSGVO).
+  </p>
+  <p>
+    Geburtsdaten sind keine besonderen Kategorien personenbezogener Daten im Sinne von Art. 9 DSGVO. Wir behandeln
+    sie trotzdem mit besonderer Sorgfalt: Sie werden nur für dein Horoskop verwendet, nicht ausgewertet und nicht
+    weitergegeben, außer an die unten genannten Dienstleister, soweit das für die Erstellung nötig ist.
+  </p>
+
+  <h3>Horoskope als Geschenk</h3>
+  <p>
+    Verschenkst du ein Horoskop, gibst du die Daten eines anderen Menschen ein. Wir verarbeiten sie allein, um das
+    Geschenk zu erstellen. Rechtsgrundlage ist unser und dein berechtigtes Interesse, den Geschenkauftrag
+    auszuführen (Art. 6 Abs. 1 lit. f DSGVO). Die beschenkte Person kann sich jederzeit an uns wenden und hat
+    dieselben Rechte wie du.
+  </p>
+
+  <h3>Erstellung der Texte</h3>
+  <p>
+    Für die Erstellung der Texte setzen wir einen technischen Dienstleister ein, der in unserem Auftrag und nach
+    unseren Weisungen arbeitet (Auftragsverarbeitung nach Art. 28 DSGVO). Dafür übermitteln wir die berechneten
+    astrologischen Stellungen und gegebenenfalls den Vornamen, aber keine E-Mail-Adresse und keine Zahlungsdaten.
+    Der Dienstleister darf die Daten nur für diesen Auftrag verwenden. <span class="platzhalter">[Ort der Verarbeitung: „Die Verarbeitung findet in der EU statt.“ oder „Dabei können Daten in die USA übermittelt werden; Grundlage ist der Angemessenheitsbeschluss der EU-Kommission (EU-U.S. Data Privacy Framework) bzw. Standardvertragsklauseln.“]</span> Rechtsgrundlage ist Art. 6 Abs. 1
+    lit. b DSGVO. Auf Anfrage nennen wir dir den Dienstleister.
+  </p>
+
+  <h3>Bezahlung</h3>
+  <p>
+    Bezahlt wird über Stripe (Stripe Payments Europe, Ltd., 1 Grand Canal Street Lower, Dublin 2, Irland). Stripe
+    verarbeitet deinen Namen, deine Zahlungsdaten und deine E-Mail-Adresse in eigener Verantwortung, um die Zahlung
+    abzuwickeln und Betrug zu verhindern. Kartendaten bekommen wir nie zu sehen. Stripe kann Daten auch in die USA
+    übermitteln; dafür gelten der Angemessenheitsbeschluss der EU-Kommission (EU-U.S. Data Privacy Framework) und
+    Standardvertragsklauseln. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO. Mehr dazu in der Datenschutzerklärung
+    von Stripe unter stripe.com/de/privacy.
+  </p>
+
+  <h3>E-Mail-Versand</h3>
+  <p>
+    Bestellbestätigung und Horoskop verschicken wir über einen E-Mail-Dienstleister, der in unserem Auftrag arbeitet
+    (Art. 28 DSGVO). Er verarbeitet dafür deine E-Mail-Adresse und den Inhalt der Nachricht. <span class="platzhalter">[Ort der Verarbeitung: „Die Verarbeitung findet in der EU statt.“ oder „Dabei können Daten in die USA übermittelt werden; Grundlage ist der Angemessenheitsbeschluss der EU-Kommission (EU-U.S. Data Privacy Framework) bzw. Standardvertragsklauseln.“]</span>
+    Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.
+  </p>
+
+  <h3>Hosting und Server-Logdateien</h3>
+  <p>
+    Die Website liegt bei einem Hosting-Dienstleister, der in unserem Auftrag arbeitet (Art. 28 DSGVO). <span class="platzhalter">[Ort der Verarbeitung: „Die Verarbeitung findet in der EU statt.“ oder „Dabei können Daten in die USA übermittelt werden; Grundlage ist der Angemessenheitsbeschluss der EU-Kommission (EU-U.S. Data Privacy Framework) bzw. Standardvertragsklauseln.“]</span> Beim Aufruf einer Seite verarbeitet der Server technisch notwendige
+    Daten wie IP-Adresse, Zeitpunkt, aufgerufene Adresse und Browserkennung, um die Seite auszuliefern und vor
+    Angriffen zu schützen. Rechtsgrundlage ist unser berechtigtes Interesse an einem sicheren Betrieb (Art. 6 Abs. 1
+    lit. f DSGVO). Die Logdaten werden nach spätestens <span class="platzhalter">[Anzahl]</span> Tagen gelöscht.
+  </p>
+
+  <h3>Ortsvorschläge im Bestellformular</h3>
+  <p>
+    Damit du den Geburtsort nicht genau buchstabieren musst, schlägt das Formular Orte vor. Dafür wird der
+    eingetippte Ortsname zusammen mit deiner IP-Adresse an die Ortssuche von Open-Meteo (Schweiz) übertragen. Für die
+    Schweiz besteht ein Angemessenheitsbeschluss der EU-Kommission. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO,
+    weil der genaue Ort für die Berechnung nötig ist.
+  </p>
+
+  <h3>Speicher im Browser</h3>
+  <p>
+    Wir setzen keine Cookies. Die Seite speichert im Browser nur, was für ihre Funktion nötig ist: die gewählte
+    Ansicht hell oder dunkel für die Dauer des Besuchs und den Warenkorb mit den eingegebenen Geburtsdaten. Der
+    Warenkorb bleibt auf deinem Gerät, bis du bestellst, und wird nach drei Tagen ohne Bestellung automatisch
+    gelöscht. Rechtsgrundlage ist § 25 Abs. 2 Nr. 2 TDDDG, weil diese Speicherung für den von dir gewünschten Dienst
+    unbedingt erforderlich ist.
+  </p>
+
+  <h3>Schriften und Reichweitenmessung</h3>
+  <p>
+    Alle Schriften liegen auf unserem eigenen Server, es werden keine Daten an Google oder andere Schriftanbieter
+    übertragen. <span class="platzhalter">[Falls Plausible genutzt wird: Wir zählen Besuche mit Plausible Analytics
+    (Plausible Insights OÜ, Estland), ohne Cookies und ohne Personenbezug. Rechtsgrundlage Art. 6 Abs. 1 lit. f
+    DSGVO. Sonst diesen Absatz streichen.]</span>
+  </p>
+
+  <h3>Neuigkeiten per E-Mail</h3>
+  <p>
+    Wenn du beim Bestellen das Häkchen für Neuigkeiten setzt, schicken wir dir gelegentlich eine E-Mail zu neuen
+    Angeboten und Gutscheinen. Das Häkchen ist freiwillig und für die Bestellung nicht nötig. Damit niemand eine
+    fremde Adresse einträgt, bestätigst du die Anmeldung über einen Link in einer ersten E-Mail. Rechtsgrundlage ist
+    deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO). Du kannst sie jederzeit widerrufen, über den Abmeldelink in
+    jeder E-Mail oder mit einer kurzen Nachricht an uns. Wir speichern dafür nur deine E-Mail-Adresse und den
+    Zeitpunkt der Anmeldung und Bestätigung, bis du dich abmeldest.
+  </p>
+
+  <h3>Kontakt</h3>
+  <p>
+    Schreibst du uns eine E-Mail, verarbeiten wir deine Nachricht, um sie zu beantworten (Art. 6 Abs. 1 lit. b oder
+    f DSGVO).
+  </p>
+
+  <h2>Wie lange wir Daten speichern</h2>
+  <ul>
+    <li>Geburtsdaten und das erstellte Horoskop: 30 Tage nach der Auslieferung, damit wir bei einem Tippfehler neu erstellen können. Danach werden sie gelöscht.</li>
+    <li>Bestell- und Zahlungsbelege: so lange, wie es das Steuer- und Handelsrecht verlangt, in der Regel bis zu zehn Jahre (§ 147 AO, § 257 HGB). Diese Belege enthalten keine Geburtsdaten.</li>
+    <li>E-Mails: so lange, wie es für die Bearbeitung nötig ist, längstens bis zum Ende der gesetzlichen Aufbewahrungsfristen.</li>
+  </ul>
+
+  <h2>Deine Rechte</h2>
+  <p>
+    Du hast das Recht auf Auskunft (Art. 15 DSGVO), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der
+    Verarbeitung (Art. 18) und Datenübertragbarkeit (Art. 20). Soweit wir Daten auf Grundlage eines berechtigten
+    Interesses verarbeiten, kannst du jederzeit widersprechen (Art. 21). Eine E-Mail an uns genügt.
+  </p>
+  <p>
+    Du kannst dich außerdem bei einer Datenschutz-Aufsichtsbehörde beschweren, zum Beispiel bei der Behörde in dem
+    Bundesland, in dem du wohnst, oder bei der für uns zuständigen Behörde:
+    <span class="platzhalter">[zuständige Landesdatenschutzbehörde ergänzen]</span>.
+  </p>
+  <p>
+    Eine automatisierte Entscheidung im Sinne von Art. 22 DSGVO, die dir gegenüber rechtliche Wirkung entfaltet,
+    findet nicht statt.
+  </p>
+</Rechtstext>

@@ -1,0 +1,113 @@
+---
+// Bildzeichen der Marke: die Radix der Startseite in Haarlinien (Maße aus scripts/kosmos/layout.ts).
+// Ohne Zeichenring-Innenkreis, innen nur fünf Aspekte. Farbe über currentColor, Strichstärke über --rz-strich.
+// Erfundene Konstellation, gehört zu keiner realen Person.
+import '@fontsource/noto-sans-symbols/400.css';
+import '@fontsource/noto-sans-symbols-2/400.css';
+import { R, SPUR } from '../scripts/kosmos/layout';
+
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+
+const VS = '︎'; // Textdarstellung statt Emoji
+const f2 = (x: number) => x.toFixed(2);
+const pt = (r: number, grad: number): [number, number] => {
+  const w = (grad * Math.PI) / 180;
+  return [Math.cos(w) * r, Math.sin(w) * r];
+};
+const strich = (r1: number, r2: number, w: number) => {
+  const [x1, y1] = pt(r1, w), [x2, y2] = pt(r2, w);
+  return { x1: f2(x1), y1: f2(y1), x2: f2(x2), y2: f2(y2) };
+};
+
+// Häuser wie auf der Startseite: Aszendent links, Abstände ungleich
+const CUSPS = [0, 31, 60, 88, 119, 151, 180, 211, 240, 268, 299, 331];
+const TIERKREIS = 180 + 22; // Bildwinkel von 0° Widder
+const ZEICHEN = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'];
+// Bildwinkel der Planeten (180° = Aszendent)
+const PLANETEN: [string, number][] = [
+  ['☉', 203], ['☽', 141], ['☿', 214], ['♀', 236], ['♂', 97], ['♃', 23], ['♄', 318], ['♅', 288], ['♆', 266], ['♇', 167],
+];
+// Sonne–Mond–Jupiter als Dreieck mit Opposition, dazu zwei Trigone
+const ASPEKTE: [number, number][] = [[0, 5], [1, 5], [0, 1], [2, 4], [7, 9]];
+
+const kreise = [R.out, R.ring, R.asp, R.hub, R.hub - 26];
+const grenzen = Array.from({ length: 12 }, (_, i) => strich(R.out, R.ring, TIERKREIS + i * 30));
+const skala = Array.from({ length: 72 }, (_, i) => strich(R.ring, R.ring + (i % 2 === 0 ? 16 : 9), TIERKREIS + i * 5));
+const zeichen = ZEICHEN.map((z, i) => ({ z: z + VS, p: pt((R.out + R.ring) / 2 + 8, TIERKREIS + i * 30 + 15) }));
+const haeuser = CUSPS.map((c, i) => ({ ...strich(R.ring, R.hub, 180 + c), achse: i % 3 === 0 }));
+const nabe = CUSPS.map((c) => strich(R.hub, R.hub - 26, 180 + c));
+const aspekte = ASPEKTE.map(([i, j]) => {
+  const [x1, y1] = pt(R.asp, PLANETEN[i][1]), [x2, y2] = pt(R.asp, PLANETEN[j][1]);
+  return { x1: f2(x1), y1: f2(y1), x2: f2(x2), y2: f2(y2) };
+});
+const planeten = PLANETEN.map(([g, w]) => ({ g: g + VS, punkt: pt(R.asp, w), text: pt(SPUR - 18, w) }));
+// Eigene Maske je Einbindung, damit IDs auf der Seite eindeutig bleiben
+const maske = `rz-nabe-${Math.random().toString(36).slice(2, 8)}`;
+---
+
+<svg class:list={['radixzeichen', className]} viewBox="-470 -470 940 940" aria-hidden="true" focusable="false">
+  <defs>
+    <mask id={maske} maskUnits="userSpaceOnUse" x="-470" y="-470" width="940" height="940">
+      <rect x="-470" y="-470" width="940" height="940" fill="#fff" />
+      <circle r={R.hub} fill="#000" />
+    </mask>
+  </defs>
+  {kreise.map((r) => <circle class="l" r={r} />)}
+  {grenzen.map((s) => <line class="l" {...s} />)}
+  {skala.map((s) => <line class="l fein" {...s} />)}
+  {zeichen.map(({ z, p }) => <text x={f2(p[0])} y={f2(p[1])}>{z}</text>)}
+  {haeuser.map(({ achse, ...s }) => <line class:list={['l', achse ? 'achse' : 'gestrichelt']} {...s} />)}
+  {nabe.map((s) => <line class="l fein" {...s} />)}
+  {aspekte.map((s) => <line class="l aspekt" mask={`url(#${maske})`} {...s} />)}
+  {planeten.map(({ g, punkt, text }) => (
+    <>
+      <circle class="punkt" cx={f2(punkt[0])} cy={f2(punkt[1])} r="9" />
+      <text class="planet" x={f2(text[0])} y={f2(text[1])}>{g}</text>
+    </>
+  ))}
+</svg>
+
+<style>
+  .radixzeichen {
+    --rz-strich: 0.75px;
+    display: block;
+    flex: none;
+    overflow: visible;
+  }
+  /* Haarlinien: bleiben in jeder Größe gleich fein */
+  .l {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: var(--rz-strich);
+    vector-effect: non-scaling-stroke;
+  }
+  .fein {
+    opacity: 0.7;
+  }
+  .achse {
+    stroke-width: calc(var(--rz-strich) * 1.6);
+  }
+  .gestrichelt {
+    stroke-dasharray: 2 2;
+  }
+  .aspekt {
+    opacity: 0.85;
+  }
+  .punkt,
+  text {
+    fill: currentColor;
+  }
+  text {
+    text-shadow: none;
+    font-family: 'Noto Sans Symbols', 'Noto Sans Symbols 2', sans-serif;
+    font-size: 30px;
+    text-anchor: middle;
+    dominant-baseline: central;
+  }
+  .planet {
+    font-size: 34px;
+  }
+</style>

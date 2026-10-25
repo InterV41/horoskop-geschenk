@@ -1,0 +1,158 @@
+---
+// Zeitstrahl "Geschichte der Astrologie": vierzehn Stationen, Jahreszahlen vom Auftraggeber geprüft.
+// Inhalt nur nach Rücksprache ändern. Farben kommen aus dem Folio-Gestaltungssystem.
+import '@fontsource/cormorant-garamond/600.css';
+import '@fontsource/eb-garamond/600.css';
+import { langFromPath } from '../i18n';
+
+interface Props {
+  ziel?: string; // nur die Stationen dieses Abschnitts; ohne Angabe nur der Titel
+}
+const { ziel } = Astro.props;
+
+const lang = langFromPath(Astro.url.pathname);
+const DATEN = {
+  de: {
+    titel: '4000 Jahre Astrologie',
+    stationen: [
+      ['um 2100 v. Chr.', 'Auf ägyptischen Sargdeckeln erscheinen Sternuhren mit 36 Dekanen. Aus ihnen gehen die zwölf Stunden der Nacht hervor.'],
+      ['ab ca. 2000 v. Chr.', 'Babylonische Priester halten Himmelsbeobachtungen auf Tontafeln fest, daneben die Ereignisse im Land.'],
+      ['1. Jahrtausend v. Chr.', 'Die Omenserie Enuma Anu Enlil liegt in rund 70 Keilschrifttafeln vor. Gedeutet wird für König und Reich.'],
+      ['um 450 v. Chr.', 'Die Ekliptik wird in zwölf Abschnitte zu je dreißig Grad geteilt. Die Tierkreiszeichen entstehen.'],
+      ['410 v. Chr.', 'Älteste bekannte Tafel mit einem Horoskop für ein einzelnes Kind. Ab hier ist persönliche Astrologie belegt.'],
+      ['ab 331 v. Chr.', 'Das babylonische Material gelangt nach Ägypten und Griechenland. In Alexandria kommen Aszendent, Häuser und Aspekte hinzu.'],
+      ['um 150 n. Chr.', 'Claudius Ptolemäus fasst den Stand der Disziplin in der Tetrabiblos zusammen. Das Werk bleibt anderthalb Jahrtausende maßgeblich.'],
+      ['9. Jahrhundert', 'In Bagdad werden die griechischen Texte übersetzt und die Planetenberechnung verbessert. Abu Maʿschar stirbt 886.'],
+      ['12. Jahrhundert', 'Gelehrte in Toledo übertragen die arabischen Handschriften ins Lateinische. Astrologie wird Hoffach und Universitätsfach.'],
+      ['um 1600', 'Johannes Kepler erstellt am Prager Hof Horoskope für Kaiser Rudolf II. und für Wallenstein.'],
+      ['1666', 'Die neu gegründete Pariser Akademie der Wissenschaften nimmt die Astrologie nicht in ihr Programm auf. Die Fächer trennen sich.'],
+      ['24. August 1930', 'Der Sunday Express druckt ein Horoskop zur Geburt von Prinzessin Margaret. Daraus wird die erste feste Zeitungsrubrik.'],
+      ['1952', 'C. G. Jung veröffentlicht seine Schrift über Synchronizität. Er versteht das Horoskop als Sprache der Bilder, nicht als Ursache.'],
+      ['20. Jahrhundert bis heute', 'Die psychologische Astrologie verschiebt den Schwerpunkt von der Vorhersage zur Charakterbeschreibung. Grundlage bleibt das Radix aus Datum, Zeit und Ort.'],
+    ],
+  },
+  en: {
+    titel: '4000 years of astrology',
+    stationen: [
+      ['c. 2100 BC', 'Star clocks with 36 decans appear on Egyptian coffin lids. The twelve hours of the night derive from them.'],
+      ['from c. 2000 BC', 'Babylonian priests record observations of the sky on clay tablets, alongside events in the land.'],
+      ['1st millennium BC', 'The omen series Enuma Anu Enlil exists in around 70 cuneiform tablets. Interpretation concerns king and realm.'],
+      ['c. 450 BC', 'The ecliptic is divided into twelve sections of thirty degrees each. The zodiac signs emerge.'],
+      ['410 BC', 'Oldest known tablet with a horoscope for an individual child. From here, personal astrology is documented.'],
+      ['from 331 BC', 'The Babylonian material reaches Egypt and Greece. In Alexandria the ascendant, houses and aspects are added.'],
+      ['c. AD 150', 'Claudius Ptolemy summarises the state of the discipline in the Tetrabiblos. The work remains authoritative for one and a half millennia.'],
+      ['9th century', 'In Baghdad the Greek texts are translated and planetary calculation is improved. Abu Maʿshar dies in 886.'],
+      ['12th century', 'Scholars in Toledo translate the Arabic manuscripts into Latin. Astrology becomes a court and university subject.'],
+      ['c. 1600', 'Johannes Kepler casts horoscopes at the court in Prague for Emperor Rudolf II and for Wallenstein.'],
+      ['1666', 'The newly founded Paris Academy of Sciences does not include astrology in its programme. The disciplines separate.'],
+      ['24 August 1930', 'The Sunday Express prints a horoscope on the birth of Princess Margaret. It becomes the first regular newspaper column.'],
+      ['1952', 'C. G. Jung publishes his essay on synchronicity. He reads the horoscope as a language of images, not as a cause.'],
+      ['20th century to today', 'Psychological astrology shifts the focus from prediction to describing character. The basis remains the radix from date, time and place.'],
+    ],
+  },
+}[lang];
+// Zu welchem Abschnitt der Geschichte-Seite jede Station gehört (Anker der h2)
+const ZIELE = ['aegypten', 'babylon', 'babylon', 'tierkreis', 'tierkreis', 'griechenland', 'griechenland', 'mittelalter', 'mittelalter', 'kepler', 'kepler', 'gegenwart', 'jung', 'jung'];
+const stationen = DATEN.stationen.map(([datum, text], i) => ({ datum, text, ziel: ZIELE[i] })).filter((s) => s.ziel === ziel);
+---
+
+{!ziel && <h2 class="zeitstrahl__titel">{DATEN.titel}</h2>}
+{stationen.length > 0 && (
+  <ol class="zeitstrahl__liste">
+    {stationen.map((st) => (
+      <li class="zeitstrahl__station" data-ziel={st.ziel}>
+        <span class="zeitstrahl__datum">{st.datum}</span>
+        <span class="zeitstrahl__text">{st.text}</span>
+      </li>
+    ))}
+  </ol>
+)}
+
+<script>
+  // Die Stationen des Abschnitts, der gerade gelesen wird, leuchten golden auf
+  const stationen = [...document.querySelectorAll<HTMLElement>('.zeitstrahl__station')];
+  const ziele = [...new Set(stationen.map((s) => s.dataset.ziel!))]
+    .map((id) => document.getElementById(id))
+    .filter((el): el is HTMLElement => !!el);
+  if (ziele.length) {
+    let aktiv = '';
+    const setze = () => {
+      // der letzte Abschnitt, dessen Überschrift das obere Drittel erreicht hat
+      const grenze = innerHeight * 0.4;
+      let id = ziele[0].id;
+      for (const z of ziele) if (z.getBoundingClientRect().top < grenze) id = z.id;
+      if (id === aktiv) return;
+      aktiv = id;
+      for (const s of stationen) s.classList.toggle('ist-aktiv', s.dataset.ziel === id);
+    };
+    let geplant = false;
+    addEventListener('scroll', () => {
+      if (!geplant) {
+        geplant = true;
+        requestAnimationFrame(() => {
+          geplant = false;
+          setze();
+        });
+      }
+    }, { passive: true });
+    setze();
+  }
+</script>
+
+<style>
+  .zeitstrahl__titel {
+    font-size: var(--t-17);
+    font-weight: 600;
+    color: var(--titel);
+  }
+  .zeitstrahl__liste {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 var(--s-32);
+    position: relative;
+  }
+  .zeitstrahl__station {
+    position: relative;
+    padding-bottom: var(--s-32);
+  }
+  .zeitstrahl__station:last-child {
+    padding-bottom: 0;
+  }
+  /* Punkt auf der Linie */
+  .zeitstrahl__station::before {
+    content: '';
+    position: absolute;
+    left: calc(var(--s-32) * -1);
+    top: 9px;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--papier);
+    border: 1.5px solid var(--gold);
+    transition: background-color 0.3s, box-shadow 0.3s;
+  }
+  .zeitstrahl__station.ist-aktiv::before {
+    background: var(--gold);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--gold) 65%, transparent);
+  }
+  .zeitstrahl__datum {
+    display: block;
+    font-family: var(--font-titel);
+    font-weight: 600;
+    font-size: var(--t-17);
+    line-height: 1.2;
+    color: var(--akzent);
+    margin-bottom: var(--s-8);
+  }
+  .zeitstrahl__text {
+    display: block;
+    font-weight: 600;
+    font-size: var(--t-11);
+    line-height: 1.45;
+    color: var(--tinte2);
+    transition: color 0.3s;
+  }
+  .zeitstrahl__station.ist-aktiv .zeitstrahl__text {
+    color: var(--tinte);
+  }
+</style>

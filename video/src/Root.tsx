@@ -1,5 +1,7 @@
 import { Composition } from 'remotion';
 import { PartnerVideo, type PartnerVideoProps } from './PartnerVideo';
+import { KosmosFlug } from './KosmosFlug';
+import { BILDER as FLUG_BILDER, FPS as FLUG_FPS, BREITE as FLUG_BREITE } from './flug/drehbuch';
 
 /* 12 Sekunden bei 30 Bildern: Zerfall, Wirbel, Aufbau, Nachzeichnen */
 const LAENGE = 360;
@@ -22,5 +24,11 @@ export const Root: React.FC = () => (
     {varianten.map((v) => (
       <Composition key={v.id} id={v.id} component={PartnerVideo} durationInFrames={LAENGE} fps={FPS} width={v.w} height={v.h} defaultProps={v.props} />
     ))}
+    {/* Kosmos-Flug für die Startseite: quadratisch, je Fassung und Sprache */}
+    {(['de', 'en'] as const).flatMap((sprache) =>
+      (['dunkel', 'hell'] as const).map((fassung) => (
+        <Composition key={`flug-${fassung}-${sprache}`} id={`kosmos-flug-${fassung}-${sprache}`} component={KosmosFlug} durationInFrames={FLUG_BILDER} fps={FLUG_FPS} width={FLUG_BREITE} height={FLUG_BREITE} defaultProps={{ fassung, sprache }} />
+      )),
+    )}
   </>
 );

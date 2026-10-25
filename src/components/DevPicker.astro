@@ -1,0 +1,89 @@
+---
+// Nur im Dev-Modus: Alt+Klick markiert ein Element und merkt es sich in window.__picked,
+// damit Claude es auslesen kann. Wird im Produktions-Build nicht ausgeliefert.
+---
+
+<script>
+  type Picked = {
+    tag: string;
+    classes: string;
+    text: string;
+    source: string | null;
+    selector: string;
+  };
+
+  const marks: HTMLElement[] = [];
+  const picked: Picked[] = [];
+  (window as any).__picked = picked;
+
+  const badge = document.createElement('div');
+  badge.style.cssText =
+    'position:fixed;left:12px;bottom:12px;z-index:99999;padding:6px 10px;font:12px/1.3 system-ui;' +
+    'background:#e5484d;color:#fff;border-radius:6px;pointer-events:auto;cursor:pointer;display:none';
+  badge.title = 'Klicken, um die Auswahl zu leeren';
+  document.body.append(badge);
+
+  const selectorOf = (el: Element): string => {
+    const parts: string[] = [];
+    let node: Element | null = el;
+    while (node && node !== document.body && parts.length < 5) {
+      let part = node.tagName.toLowerCase();
+      if (node.id) {
+        parts.unshift(`${part}#${node.id}`);
+        break;
+      }
+      const cls = [...node.classList].filter((c) => !c.startsWith('astro-'))[0];
+      if (cls) part += `.${cls}`;
+      parts.unshift(part);
+      node = node.parentElement;
+    }
+    return parts.join(' > ');
+  };
+
+  const sourceOf = (el: Element): string | null => {
+    let node: Element | null = el;
+    while (node) {
+      const file = node.getAttribute('data-astro-source-file');
+      if (file) return `${file.replace(/^.*?\/src\//, 'src/')}:${(node.getAttribute('data-astro-source-loc') || '').split(':')[0]}`;
+      node = node.parentElement;
+    }
+    return null;
+  };
+
+  const render = () => {
+    badge.style.display = picked.length ? 'block' : 'none';
+    badge.textContent = `${picked.length} Element${picked.length === 1 ? '' : 'e'} ausgewählt · ✕`;
+  };
+
+  const clear = () => {
+    marks.forEach((m) => (m.style.outline = m.dataset.prevOutline || ''));
+    marks.length = 0;
+    picked.length = 0;
+    render();
+  };
+  badge.addEventListener('click', clear);
+
+  document.addEventListener(
+    'click',
+    (e) => {
+      if (!e.altKey) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const el = e.target as HTMLElement;
+      if (el === badge) return;
+      el.dataset.prevOutline = el.style.outline;
+      el.style.outline = '2px dashed #e5484d';
+      el.style.outlineOffset = '2px';
+      marks.push(el);
+      picked.push({
+        tag: el.tagName.toLowerCase(),
+        classes: el.getAttribute('class') || '',
+        text: (el.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 120),
+        source: sourceOf(el),
+        selector: selectorOf(el),
+      });
+      render();
+    },
+    true,
+  );
+</script>

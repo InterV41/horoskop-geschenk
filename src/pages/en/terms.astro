@@ -1,0 +1,116 @@
+---
+import Rechtstext from '../../layouts/Rechtstext.astro';
+import Anbieter from '../../components/recht/Anbieter.astro';
+import { anbieter, delivery, site } from '../../site';
+import { routes } from '../../i18n';
+---
+
+<Rechtstext titel="Terms and conditions" pfad="/en/terms" beschreibung="Terms and conditions for buying a personal birth chart as a PDF from Horoskop-Geschenk.de.">
+  <p class="nebentext">Last updated: {anbieter.stand.en}</p>
+
+  <h2>1. Scope and provider</h2>
+  <p>These terms apply to all orders placed via the website horoskop-geschenk.de. Your contractual partner is:</p>
+  <Anbieter lang="en" />
+  <p>Deviating terms of the customer do not apply.</p>
+
+  <h2>2. What you buy</h2>
+  <p>
+    You buy a personal birth chart as a PDF file of {site.pages} pages, more than {site.pagesIndividual} of them
+    individually calculated and written (one page more or less depending on the natal chart), in a light, a dark or
+    both designs. It is calculated from first name, date, time and place of birth. The texts are created automatically on the basis of this calculation, following fixed rules of interpretation.
+  </p>
+  <p>
+    Astrology is a system of interpretation, not a science. The horoscope does not predict events and is no
+    substitute for medical, psychological, legal or financial advice. You are responsible for any decisions you make
+    on the basis of the horoscope.
+  </p>
+
+  <h2>3. Ordering and conclusion of the contract</h2>
+  <p>
+    The presentation on the website is not yet a binding offer. You place one or more horoscopes in the cart, check
+    all details there and can change or remove them at any time. By clicking “Order with obligation to pay” you
+    submit a binding offer. The contract is concluded as soon as payment has been completed successfully.
+  </p>
+  <p>
+    Immediately afterwards you receive an order confirmation by email. It contains the content of your order, these
+    terms, the withdrawal policy and your consent to the start of creation. We do not otherwise store the contract
+    text; please keep the email. The contract languages are German and English.
+  </p>
+
+  <h2>4. Prices and payment</h2>
+  <p>
+    One horoscope costs {site.priceLabel.en}, both designs together cost {site.bothPriceLabel.en}. All prices are
+    final prices. <span class="platzhalter">{anbieter.steuer}</span> Payment is made in advance via our payment
+    service provider Stripe, by card, PayPal, Apple Pay or the methods offered there.
+  </p>
+  <p>
+    Voucher codes are checked and deducted at checkout. They cannot be redeemed for cash and can only be used once,
+    unless stated otherwise on the voucher.
+  </p>
+
+  <h2>5. Delivery</h2>
+  <p>
+    The horoscope is sent as a PDF by email to the address you give when ordering, usually within
+    {delivery.duration('en')} of receipt of payment. Please give an address at which you can be reached and also
+    check your spam folder. If nothing arrives, get in touch and we will send it again.
+  </p>
+
+  <h2>6. Your details</h2>
+  <p>
+    The horoscope is based on the details you provide. You are responsible for their accuracy. Without the time of
+    birth, the ascendant and houses cannot be determined; the horoscope is then less extensive, the price stays the
+    same. If a typing error has crept in, let us know within 30 days of delivery and we will recreate the horoscope
+    once free of charge.
+  </p>
+
+  <h2>7. Horoscopes as a gift</h2>
+  <p>
+    If you order a horoscope for another person, you enter their details. You confirm that you may use these details
+    for the gift, for example because the person told you or because you know them as someone close to them. How we
+    handle the data is described in the <a href={routes.datenschutz.en}>privacy policy</a>.
+  </p>
+
+  <h2>8. Right of withdrawal</h2>
+  <p>
+    As a consumer you have a right of withdrawal in accordance with the{' '}
+    <a href={routes.widerruf.en}>withdrawal policy</a>. It expires early if, when ordering, you expressly agree that
+    we begin creation immediately and confirm that you thereby lose your right of withdrawal (section 356 (5) German
+    Civil Code).
+  </p>
+
+  <h2>9. Use</h2>
+  <p>
+    The horoscope is intended for private use. You may print it, give it as a gift and pass it on to the person it was
+    created for. Commercial use, resale and publication of texts or design are not permitted. The rights to the texts
+    and design remain with us.
+  </p>
+
+  <h2>10. Defects</h2>
+  <p>
+    The statutory rights for defects of digital products apply (sections 327 et seq. German Civil Code). If a file is
+    faulty, incomplete or unreadable, let us know and we will supply a correct version. Not liking an astrological
+    interpretation is not a defect.
+  </p>
+
+  <h2>11. Liability</h2>
+  <p>
+    We are liable without limitation for intent and gross negligence, for injury to life, body or health and under the
+    Product Liability Act. In the case of slight negligence we are only liable for the breach of an essential
+    contractual obligation, meaning an obligation whose fulfilment makes the contract possible in the first place and
+    on which you may rely. In this case liability is limited to the foreseeable damage typical for the contract.
+  </p>
+
+  <h2>12. Dispute resolution</h2>
+  <p>
+    We are neither obliged nor willing to take part in dispute resolution proceedings before a consumer arbitration
+    board. If you have questions or problems, simply write to us and we will find a solution.
+  </p>
+
+  <h2>13. Final provisions</h2>
+  <p>
+    German law applies, excluding the UN Convention on Contracts for the International Sale of Goods. If you are a
+    consumer, the mandatory consumer protection provisions of the country in which you have your habitual residence
+    remain unaffected.
+  </p>
+  <p class="nebentext klein">This English version is provided for convenience. In case of doubt, the German version applies.</p>
+</Rechtstext>

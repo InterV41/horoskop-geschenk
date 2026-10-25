@@ -1,0 +1,378 @@
+---
+// Leseprobe aus dem Testhoroskop "Mia" (erfundene Person). Text ab Seite 5 ist im Bild verwischt.
+// Die Fassung folgt der Ansicht der Seite: hell oder dunkel. Start beim Inhaltsverzeichnis.
+import { Image } from 'astro:assets';
+import { langFromPath } from '../i18n';
+import { seitenTitel } from '../data/leseprobe';
+
+const lang = langFromPath(Astro.url.pathname);
+
+const hell = import.meta.glob<{ default: ImageMetadata }>('../assets/leseprobe/hell/*.png', { eager: true });
+const dunkel = import.meta.glob<{ default: ImageMetadata }>('../assets/leseprobe/dunkel/*.png', { eager: true });
+
+const titel = seitenTitel(lang);
+const t = {
+  de: {
+    seite: 'Seite', von: 'von', hell: 'Hell', dunkel: 'Dunkel', fassung: 'Fassung der Leseprobe',
+    liste: 'Beispielseiten, seitlich blättern', zurueck: 'Vorherige Seite', vor: 'Nächste Seite',
+    altHell: 'helle Fassung', altDunkel: 'dunkle Fassung',
+    fuss: 'Beispielfassung mit erfundener Person.',
+  },
+  en: {
+    seite: 'Page', von: 'of', hell: 'Light', dunkel: 'Dark', fassung: 'Edition of the sample',
+    liste: 'Sample pages, scroll sideways', zurueck: 'Previous page', vor: 'Next page',
+    altHell: 'light edition', altDunkel: 'dark edition',
+    fuss: 'Sample edition for a fictitious person.',
+  },
+}[lang];
+// Folgeseiten übernehmen die Beschriftung der vorigen Seite
+const seiten = Object.keys(hell)
+  .sort()
+  .map((pfad) => Number(pfad.match(/(\d+)\.png$/)![1]))
+  .map((nr) => {
+    let n = nr;
+    while (!titel[n] && n > 1) n--;
+    return { nr, datei: String(nr).padStart(2, '0'), titel: `${t.seite} ${nr} · ${titel[n]}` };
+  });
+const START = 1; // Inhaltsverzeichnis in der Mitte, Deckblatt links daneben
+
+const bild = (fassung: 'hell' | 'dunkel', datei: string) =>
+  (fassung === 'hell' ? hell : dunkel)[`../assets/leseprobe/${fassung}/${datei}.png`].default;
+const bildProps = { widths: [340, 680], sizes: '(max-width: 640px) 72vw, 340px', format: 'webp' as const, quality: 76 };
+
+interface Props {
+  id?: string;
+  symbole?: boolean; // Sonne und Mond statt der Knöpfe „Hell / Dunkel“
+}
+const { id = 'leseprobe', symbole = false } = Astro.props;
+---
+
+<div class="leseprobe" id={id} data-start={START}>
+  {symbole ? (
+    // Große Sonne und großer Mond: die gewählte Fassung leuchtet, die andere wartet blass daneben
+    <div class="symbole" role="group" aria-label={t.fassung}>
+      <button class="symbole__sonne" type="button" data-fassung-wahl="hell" aria-label={t.hell} title={t.hell}>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <g class="symbole__strahlen">
+            <circle cx="12" cy="12" r="3.6" />
+            <path d="M17.8 12h4M12 17.8v4M6.2 12h-4M12 6.2v-4M16.1 16.1l2.83 2.83M7.9 16.1l-2.83 2.83M7.9 7.9 5.07 5.07M16.1 7.9l2.83-2.83M17.73 14.37l1.48.61M14.37 17.73l.61 1.48M9.63 17.73l-.61 1.48M6.27 14.37l-1.48.61M6.27 9.63l-1.48-.61M9.63 6.27l-.61-1.48M14.37 6.27l.61-1.48M17.73 9.63l1.48-.61" />
+          </g>
+        </svg>
+      </button>
+      <span class="symbole__linie" aria-hidden="true"></span>
+      <button class="symbole__mond" type="button" data-fassung-wahl="dunkel" aria-label={t.dunkel} title={t.dunkel}>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M20 14.6A8.2 8.2 0 1 1 9.4 4a8.6 8.6 0 0 0 10.6 10.6z" />
+        </svg>
+      </button>
+    </div>
+  ) : (
+    <div class="leseprobe__fassung" role="group" aria-label={t.fassung}>
+      <button type="button" data-fassung-wahl="hell">{t.hell}</button>
+      <button type="button" data-fassung-wahl="dunkel">{t.dunkel}</button>
+    </div>
+  )}
+
+  <ol class="leseprobe__seiten" tabindex="0" aria-label={t.liste}>
+    {seiten.map((s, i) => (
+      <li class:list={['leseprobe__seite', { 'ist-aktiv': i === START }]}>
+        <figure>
+          <div class="leseprobe__blatt">
+            <Image class="nur-hell" src={bild('hell', s.datei)} alt={`${s.titel}, ${t.altHell}`} {...bildProps} />
+            <Image class="nur-dunkel" src={bild('dunkel', s.datei)} alt={`${s.titel}, ${t.altDunkel}`} {...bildProps} />
+          </div>
+          <figcaption>{s.titel}</figcaption>
+        </figure>
+      </li>
+    ))}
+  </ol>
+
+  <div class="leseprobe__blaettern">
+    <button class="leseprobe__pfeil" type="button" aria-label={t.zurueck} data-dir="-1">‹</button>
+    <p class="leseprobe__zaehler nebentext klein" aria-live="polite">
+      {t.seite} <span data-nr>{START + 1}</span> {t.von} {seiten.length}
+    </p>
+    <button class="leseprobe__pfeil" type="button" aria-label={t.vor} data-dir="1">›</button>
+  </div>
+  <p class="nebentext klein mitte">{t.fuss}</p>
+</div>
+
+<script>
+  const root = document.documentElement;
+  document.querySelectorAll<HTMLElement>('.leseprobe').forEach((probe) => {
+    const liste = probe.querySelector<HTMLOListElement>('.leseprobe__seiten')!;
+    const seiten = [...probe.querySelectorAll<HTMLElement>('.leseprobe__seite')];
+    const nr = probe.querySelector('[data-nr]')!;
+    const fassung = probe.querySelectorAll<HTMLButtonElement>('[data-fassung-wahl]');
+
+    const mitteVon = (s: HTMLElement) => s.offsetLeft + s.offsetWidth / 2;
+    const aktuelle = () => {
+      const mitte = liste.scrollLeft + liste.clientWidth / 2;
+      return seiten.reduce((best, s, i) => (Math.abs(mitteVon(s) - mitte) < Math.abs(mitteVon(seiten[best]) - mitte) ? i : best), 0);
+    };
+    // Ziel der laufenden Blätterbewegung, damit schnelle Klicks sich aufaddieren
+    let ziel = -1;
+    const zeige = (i: number, sofort = false) => {
+      ziel = Math.max(0, Math.min(seiten.length - 1, i));
+      const s = seiten[ziel];
+      liste.scrollTo({ left: mitteVon(s) - liste.clientWidth / 2, behavior: sofort ? 'instant' : 'smooth' });
+    };
+    const markiere = () => {
+      const a = aktuelle();
+      nr.textContent = String(a + 1);
+      seiten.forEach((s, i) => s.classList.toggle('ist-aktiv', i === a));
+    };
+
+    zeige(Number(probe.dataset.start ?? 0), true);
+    ziel = -1;
+    markiere();
+    liste.addEventListener('scroll', markiere, { passive: true });
+    liste.addEventListener('scrollend', () => (ziel = -1));
+    const basis = () => (ziel >= 0 ? ziel : aktuelle());
+    addEventListener('resize', () => zeige(aktuelle(), true));
+    probe.querySelectorAll<HTMLButtonElement>('[data-dir]').forEach((b) =>
+      b.addEventListener('click', () => zeige(basis() + Number(b.dataset.dir))),
+    );
+    // Klick auf eine Nachbarseite holt sie in die Mitte
+    seiten.forEach((s, i) => s.addEventListener('click', () => i !== aktuelle() && zeige(i)));
+    liste.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') { e.preventDefault(); zeige(basis() + 1); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); zeige(basis() - 1); }
+    });
+
+    // Die Fassung gilt nur für die Leseprobe. Start passend zur Ansicht der Seite;
+    // nach eigener Wahl bleibt die Leseprobe dabei, auch wenn die Seite umschaltet.
+    let eigeneWahl = false;
+    const setze = (f: string) => {
+      probe.dataset.fassung = f;
+      fassung.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.fassungWahl === f)));
+    };
+    const vonSeite = () => setze(root.dataset.theme === 'dark' ? 'dunkel' : 'hell');
+    fassung.forEach((b) =>
+      b.addEventListener('click', () => {
+        eigeneWahl = true;
+        setze(b.dataset.fassungWahl!);
+      }),
+    );
+    document.addEventListener('themechange', () => !eigeneWahl && vonSeite());
+    vonSeite();
+  });
+</script>
+
+<style>
+  .leseprobe {
+    --blatt: 340px;
+    display: grid;
+    justify-items: center;
+    gap: var(--s-24);
+  }
+
+  /* Sonne und Mond als Umschalter der Leseprobe */
+  .symbole {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-32);
+    margin-bottom: var(--s-8);
+  }
+  .symbole button {
+    padding: var(--s-8);
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    opacity: 0.3;
+    transform: scale(0.78);
+    transition: transform 0.6s cubic-bezier(0.3, 1.4, 0.5, 1), opacity 0.6s, filter 0.6s;
+  }
+  .symbole button:hover {
+    opacity: 0.7;
+  }
+  .symbole button[aria-pressed='true'] {
+    opacity: 1;
+    transform: scale(1);
+    filter: drop-shadow(0 0 18px color-mix(in srgb, var(--gold) 55%, transparent));
+  }
+  .symbole button:focus-visible {
+    outline: 2px solid var(--akzent);
+    outline-offset: 4px;
+    border-radius: 999px;
+  }
+  .symbole svg {
+    display: block;
+    width: 104px;
+    height: 104px;
+    overflow: visible;
+  }
+  .symbole__strahlen {
+    fill: none;
+    stroke: var(--gold);
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    transform-origin: 12px 12px;
+  }
+  .symbole__mond path {
+    fill: var(--gold);
+  }
+  /* In Hell ist der Mond dunkel, passend zur dunklen Fassung */
+  :global(:root:not([data-theme='dark'])) .symbole__mond path {
+    fill: #07102a;
+  }
+  .symbole__linie {
+    width: 1px;
+    height: 64px;
+    background: color-mix(in srgb, var(--gold) 50%, transparent);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .symbole__sonne[aria-pressed='true'] .symbole__strahlen {
+      animation: symbole-drehen 40s linear infinite;
+    }
+  }
+  @keyframes symbole-drehen {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @media (max-width: 640px) {
+    .symbole {
+      gap: var(--s-24);
+    }
+    .symbole svg {
+      width: 80px;
+      height: 80px;
+    }
+  }
+
+  /* Hell/Dunkel wie die Menüleiste: Milchglas-Pille, die gewählte Fassung nur in Goldschrift */
+  .leseprobe__fassung {
+    display: inline-flex;
+    gap: var(--s-4);
+    padding: 5px;
+    border: 1px solid rgb(255 255 255 / 0.16);
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.06);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12);
+    backdrop-filter: blur(14px) saturate(1.4);
+  }
+  :global(:root[data-theme='light']) .leseprobe__fassung {
+    border-color: var(--linie);
+    background: rgb(255 255 255 / 0.72);
+  }
+  .leseprobe__fassung button {
+    min-width: 96px;
+    min-height: 44px;
+    padding: 0 var(--s-16);
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--tinte);
+    font-family: var(--font-text);
+    font-size: var(--t-11);
+    font-weight: 700;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .leseprobe__fassung button:hover,
+  .leseprobe__fassung button[aria-pressed='true'] {
+    color: var(--akzent);
+  }
+
+  .leseprobe__seiten {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: var(--s-24);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    list-style: none;
+    margin: 0;
+    /* Rand so breit, dass auch die erste und letzte Seite in die Mitte rücken können */
+    padding: var(--s-16) calc(50% - var(--blatt) / 2) var(--s-8);
+  }
+  .leseprobe__seiten::-webkit-scrollbar {
+    display: none;
+  }
+  .leseprobe__seite {
+    flex: 0 0 var(--blatt);
+    scroll-snap-align: center;
+    opacity: 0.5;
+    transform: scale(0.86);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+    cursor: pointer;
+  }
+  .leseprobe__seite.ist-aktiv {
+    opacity: 1;
+    transform: none;
+    cursor: default;
+  }
+  .leseprobe__seite figure {
+    margin: 0;
+  }
+  .leseprobe__blatt {
+    aspect-ratio: 1190 / 1683;
+    box-shadow: 0 24px 48px -24px rgb(0 0 0 / 0.45), 0 0 0 1px var(--linie);
+    background: var(--flaeche);
+  }
+  .leseprobe__blatt :global(img) {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .leseprobe figcaption {
+    margin-top: var(--s-12);
+    text-align: center;
+    font-family: var(--font-titel);
+    font-size: var(--t-13);
+    visibility: hidden;
+  }
+  .leseprobe__seite.ist-aktiv figcaption {
+    visibility: visible;
+  }
+
+  /* Nur die gewählte Fassung zeigen; die andere lädt erst beim Umschalten */
+  .leseprobe[data-fassung='dunkel'] :global(.nur-hell),
+  .leseprobe:not([data-fassung='dunkel']) :global(.nur-dunkel) {
+    display: none !important;
+  }
+
+  .leseprobe__blaettern {
+    display: flex;
+    align-items: center;
+    gap: var(--s-12);
+  }
+  .leseprobe__zaehler {
+    min-width: 7em;
+    text-align: center;
+  }
+  .leseprobe__pfeil {
+    width: 48px;
+    height: 48px;
+    border: 1px solid var(--linie);
+    border-radius: 50%;
+    background: var(--papier);
+    color: var(--tinte);
+    font-size: 1.6rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .leseprobe__pfeil:hover {
+    border-color: var(--gold);
+  }
+
+  @media (max-width: 640px) {
+    .leseprobe {
+      --blatt: 72vw;
+    }
+    .leseprobe__seiten {
+      gap: var(--s-12);
+    }
+    .leseprobe > p {
+      padding-inline: var(--s-24);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .leseprobe__seite {
+      transition: none;
+    }
+  }
+</style>

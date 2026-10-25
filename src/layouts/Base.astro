@@ -1,52 +1,216 @@
 ---
 import '@fontsource/cormorant-garamond/400.css';
 import '@fontsource/cormorant-garamond/500.css';
+import '@fontsource/cormorant-garamond/600.css';
+import '@fontsource/cormorant-garamond/700.css';
 import '@fontsource/cormorant-garamond/400-italic.css';
 import '@fontsource/eb-garamond/400.css';
+import '@fontsource/eb-garamond/400-italic.css';
 import '@fontsource/eb-garamond/500.css';
+import '@fontsource/eb-garamond/600.css';
+import '@fontsource/eb-garamond/700.css';
 import '../styles/global.css';
 import '../styles/bewegung.css';
+import DevPicker from '../components/DevPicker.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import { site } from '../site';
+import { langFromPath, alternatePath, normPath, routes, localeOf, type Lang } from '../i18n';
 
-interface Props {
-  title: string;
-  description: string;
+interface Crumb {
+  name: string;
+  path: string;
 }
-const { title, description } = Astro.props;
+interface Props {
+  title: string; // bis etwa 60 Zeichen, Suchbegriff vorne
+  description: string; // bis etwa 155 Zeichen
+  noindex?: boolean;
+  breadcrumbs?: Crumb[]; // ohne Startseite, die kommt automatisch dazu
+  jsonLd?: Record<string, unknown>[];
+  // Adressen dieser Seite in beiden Sprachen; ohne Angabe aus der Adresstabelle in i18n.ts.
+  // null heißt: in dieser Sprache gibt es kein Gegenstück.
+  alternates?: Partial<Record<Lang, string | null>>;
+}
+const { title, description, noindex = false, breadcrumbs, jsonLd = [], alternates } = Astro.props;
+
+// Vorschau zum Weitergeben (PUBLIC_VORSCHAU=1 beim Bauen): keine Seite darf in Suchmaschinen landen
+const vorschau = import.meta.env.PUBLIC_VORSCHAU === '1';
+const lang = langFromPath(Astro.url.pathname);
+const pfad = normPath(Astro.url.pathname);
+const canonical = new URL(pfad, site.url).href;
+const sprachen = {
+  de: alternates?.de !== undefined ? alternates.de : lang === 'de' ? pfad : alternatePath(pfad, 'de'),
+  en: alternates?.en !== undefined ? alternates.en : lang === 'en' ? pfad : alternatePath(pfad, 'en'),
+};
+
+const schemas: Record<string, unknown>[] = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: site.brand,
+    url: site.url,
+    logo: new URL('/favicon.svg', site.url).href,
+  },
+  ...jsonLd,
+];
+if (breadcrumbs?.length) {
+  schemas.push({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [{ name: lang === 'en' ? 'Home' : 'Startseite', path: routes.start[lang] }, ...breadcrumbs].map((c, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: c.name,
+      item: new URL(c.path, site.url).href,
+    })),
+  });
+}
 ---
 
 <!doctype html>
-<html lang="de">
+<html lang={lang} data-theme="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content={description} />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {!noindex && sprachen.de && <link rel="alternate" hreflang="de" href={new URL(sprachen.de, site.url).href} />}
+    {!noindex && sprachen.en && <link rel="alternate" hreflang="en" href={new URL(sprachen.en, site.url).href} />}
+    {!noindex && sprachen.de && <link rel="alternate" hreflang="x-default" href={new URL(sprachen.de, site.url).href} />}
+    {(noindex || vorschau) && <meta name="robots" content="noindex, nofollow" />}
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content={localeOf[lang]} />
+    <meta property="og:site_name" content={site.brand} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="theme-color" content="#07102a" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
     <script is:inline>
+      // Die Seite startet immer dunkel, unabhängig vom Gerät. Der Umschalter gilt für den laufenden Besuch.
       (() => {
         let t = null;
-        try { t = localStorage.getItem('theme'); } catch {}
-        if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        document.documentElement.dataset.theme = t;
+        try {
+          localStorage.removeItem('theme');
+          t = sessionStorage.getItem('theme');
+        } catch {}
+        document.documentElement.dataset.theme = t === 'light' ? 'light' : 'dark';
       })();
     </script>
-    <!-- Überschriften gleiten herein, sobald sie ins Bild kommen (Stil in bewegung.css) -->
-    <script is:inline>
-      (function () {
-        if (matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return;
-        document.documentElement.classList.add('einblenden');
-        addEventListener('DOMContentLoaded', function () {
-          var io = new IntersectionObserver(function (es) {
-            es.forEach(function (e) {
-              if (e.isIntersecting) { e.target.classList.add('ist-da'); io.unobserve(e.target); }
-            });
-          }, { rootMargin: '0px 0px -8% 0px' });
-          document.querySelectorAll('h1, h2').forEach(function (h) { io.observe(h); });
-        });
-      })();
-    </script>
+    {schemas.map((s) => <script type="application/ld+json" set:html={JSON.stringify(s)} />)}
   </head>
   <body>
-    <slot />
+    <div class="himmel-raum" aria-hidden="true">
+      <div class="himmel"><div class="himmel__fern"></div><div class="himmel__nah"></div></div>
+    </div>
+    <a class="skiplink" href="#inhalt">{lang === 'en' ? 'Skip to content' : 'Zum Inhalt springen'}</a>
+    <SiteHeader andereSprache={sprachen[lang === 'de' ? 'en' : 'de'] ?? routes.start[lang === 'de' ? 'en' : 'de']} />
+    <main id="inhalt">
+      <slot />
+    </main>
+    <SiteFooter />
+    {import.meta.env.DEV && <DevPicker />}
+    <script is:inline>
+      (() => {
+        const raum = document.querySelector('.himmel-raum');
+        const fern = document.querySelector('.himmel__fern');
+        const nah = document.querySelector('.himmel__nah');
+        if (!raum || !fern || !nah) return;
+
+        // Wo Text steht, keine Sterne: eine unsichtbare Maske mit weichen Aussparungen um jeden Text.
+        // Sie scrollt mit der Seite, die Sterne darunter ziehen langsamer vorbei.
+        const TEXT =
+          'main h1, main h2, main h3, main p, main li, main dt, main dd, main blockquote, main figcaption, main label, main legend, main th, main td, main caption, main summary, main .knopf, .start__name, footer p, footer li, footer a';
+        const RAND = 18; // Luft um den Text
+        const WEICH = 12; // weicher Übergang am Rand
+        let maskeGeplant = false;
+        const maske = () => {
+          maskeGeplant = false;
+          const b = document.body.getBoundingClientRect();
+          const w = Math.ceil(b.width);
+          const h = Math.ceil(raum.offsetHeight);
+          const r = document.createRange();
+          let loecher = '';
+          for (const el of document.querySelectorAll(TEXT)) {
+            if (el.closest('.himmel-raum, .start__radix, [hidden]')) continue;
+            let k;
+            if (el instanceof HTMLInputElement) k = el.getBoundingClientRect();
+            else {
+              r.selectNodeContents(el);
+              k = r.getBoundingClientRect();
+            }
+            if (!k.width || !k.height) continue;
+            const x = Math.round(k.left - b.left - RAND);
+            const y = Math.round(k.top - b.top - RAND);
+            loecher += `<rect x="${x}" y="${y}" width="${Math.round(k.width + 2 * RAND)}" height="${Math.round(k.height + 2 * RAND)}" rx="${RAND}"/>`;
+          }
+          // In Hell gibt es Sterne nur, solange die Animation oben läuft: sie enden am ersten markierten Abschnitt
+          // danach (data-sterne-ende), mit weichem Auslauf davor
+          let ende = '';
+          const marke = document.querySelector('[data-sterne-ende]');
+          if (marke && document.documentElement.dataset.theme === 'light') {
+            const y = Math.round(marke.getBoundingClientRect().top - b.top);
+            const AUSLAUF = 240;
+            ende =
+              `<linearGradient id="a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000"/></linearGradient>` +
+              `<rect x="0" y="${y - AUSLAUF}" width="100%" height="${AUSLAUF}" fill="url(#a)"/>` +
+              `<rect x="0" y="${y}" width="100%" height="${Math.max(0, h - y)}" fill="#000"/>`;
+          }
+          const svg =
+            `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">` +
+            `<filter id="f" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="${WEICH}"/></filter>` +
+            `<mask id="m"><rect width="100%" height="100%" fill="#fff"/><g fill="#000" filter="url(#f)">${loecher}</g>${ende}</mask>` +
+            `<rect width="100%" height="100%" fill="#000" mask="url(#m)"/></svg>`;
+          const url = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+          raum.style.webkitMaskImage = url;
+          raum.style.maskImage = url;
+        };
+        const maskeSpaeter = () => {
+          if (!maskeGeplant) {
+            maskeGeplant = true;
+            requestAnimationFrame(maske);
+          }
+        };
+        new ResizeObserver(maskeSpaeter).observe(document.body);
+        document.addEventListener('themechange', maskeSpaeter);
+        document.fonts?.ready.then(maskeSpaeter);
+        maske();
+
+        // Sterne ziehen beim Scrollen langsamer mit als die Seite. Pro Bild höchstens ein Schreibzugriff auf transform.
+        if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        const KACHEL = 1200;
+        let geplant = false;
+        const setze = () => {
+          geplant = false;
+          const y = window.scrollY;
+          fern.style.transform = `translate3d(0, ${-((y * 0.08) % KACHEL)}px, 0)`;
+          nah.style.transform = `translate3d(0, ${-((y * 0.2) % KACHEL)}px, 0)`;
+        };
+        addEventListener('scroll', () => {
+          if (!geplant) {
+            geplant = true;
+            requestAnimationFrame(setze);
+          }
+        }, { passive: true });
+        setze();
+      })();
+    </script>
   </body>
 </html>
+
+<style>
+  .skiplink {
+    position: absolute;
+    left: var(--s-16);
+    top: -100px;
+    z-index: 100;
+    padding: var(--s-8) var(--s-16);
+    background: var(--knopf);
+    color: var(--knopftext);
+  }
+  .skiplink:focus {
+    top: var(--s-8);
+  }
+</style>

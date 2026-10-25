@@ -1,0 +1,16 @@
+---
+import Rechtstext from '../../layouts/Rechtstext.astro';
+import Anbieter from '../../components/recht/Anbieter.astro';
+import { anbieter } from '../../site';
+---
+
+<Rechtstext titel="Legal notice" pfad="/en/legal-notice" beschreibung="Legal notice of Horoskop-Geschenk.de with details of the provider.">
+  <h2>Information pursuant to section 5 DDG (German Digital Services Act)</h2>
+  <Anbieter lang="en" />
+
+  <h2>VAT</h2>
+  <p><span class="platzhalter">{anbieter.steuer}</span></p>
+
+  <h2>Consumer dispute resolution</h2>
+  <p>We are neither obliged nor willing to take part in dispute resolution proceedings before a consumer arbitration board.</p>
+</Rechtstext>

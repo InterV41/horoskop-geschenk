@@ -1,0 +1,312 @@
+---
+// Animierte Radix für die Startseite. Folgt der Ansicht der Seite (hell oder dunkel).
+// Erfundene Konstellation, gehört zu keiner realen Person.
+import '@fontsource/stix-two-text/400.css';
+import '@fontsource/stix-two-text/500.css';
+import '@fontsource/noto-sans-symbols/400.css';
+import '@fontsource/noto-sans-symbols-2/400.css';
+
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+---
+
+<div class:list={['radix', className]} data-radix></div>
+
+<script>
+  /* Tempo: 1 = normal, 0.5 = halb so schnell, 2 = doppelt so schnell */
+  const SPEED = 1;
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const XL = 'http://www.w3.org/1999/xlink';
+  const C = 'currentColor';
+  const VS = '︎'; // Textdarstellung statt Emoji
+
+  type Attrs = Record<string, string | number>;
+  function el(tag: string, attrs: Attrs, parent?: Element) {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, String(attrs[k]));
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  const pt = (r: number, a: number): [number, number] => {
+    a = (a * Math.PI) / 180;
+    return [Math.cos(a) * r, -Math.sin(a) * r];
+  };
+  const f = (p: [number, number]) => p[0].toFixed(2) + ' ' + p[1].toFixed(2);
+  function line(g: Element, r1: number, a1: number, r2: number, a2: number, w: number, extra: Attrs = {}) {
+    const p = pt(r1, a1), q = pt(r2, a2);
+    return el('line', { x1: p[0].toFixed(2), y1: p[1].toFixed(2), x2: q[0].toFixed(2), y2: q[1].toFixed(2), stroke: C, 'stroke-width': w, 'data-w': w, ...extra }, g);
+  }
+  function txt(g: Element, cls: string, s: string) {
+    const t = el('text', { class: cls }, g);
+    t.textContent = s;
+    return t;
+  }
+  const norm = (x: number) => ((x % 360) + 360) % 360;
+  const abst = (x: number, y: number) => { const d = norm(x - y); return d > 180 ? 360 - d : d; };
+  const klemm = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
+
+  document.querySelectorAll<HTMLElement>('[data-radix]').forEach((host, nr) => {
+    /* Maße wie im Radix-Rad der PDFs */
+    const R = { out: 418, band: 370, ring: 332, asp: 212, hub: 92 };
+    const BAND_MID = (R.out + R.band) / 2;
+    const SPUR = 292; // feste Bahn der Planetenzeichen
+
+    const svg = el('svg', { viewBox: '-470 -470 940 940', role: 'img', 'aria-label': 'Animiertes Geburtshoroskop-Rad' }, host);
+    const defs = el('defs', {}, svg);
+
+    /* Grundkreise */
+    const base = el('g', { fill: 'none' }, svg);
+    el('circle', { r: R.out, style: 'fill:var(--rx-disk)' }, base);
+    [[R.out, 1.1], [R.out - 7, 0.45], [R.band, 0.85], [R.ring, 0.6], [R.asp, 0.6]].forEach(([r, w]) =>
+      el('circle', { r, stroke: C, 'stroke-width': w, 'data-w': w }, base),
+    );
+
+    /* Tierkreis: Gradskala, Zeichengrenzen und Namen, dreht sich als Ganzes */
+    const zodiac = el('g', {}, svg);
+    for (let k = 0; k < 360; k++) {
+      const major = k % 10 === 0, mid = k % 5 === 0;
+      line(zodiac, R.band, k, R.band - (major ? 16 : mid ? 10 : 5), k, major ? 0.7 : 0.45, major ? {} : { opacity: 0.7 });
+    }
+    for (let i = 0; i < 12; i++) line(zodiac, R.out, i * 30, R.ring, i * 30, 0.9);
+
+    const NAMEN = ['WIDDER', 'STIER', 'ZWILLINGE', 'KREBS', 'LÖWE', 'JUNGFRAU', 'WAAGE', 'SKORPION', 'SCHÜTZE', 'STEINBOCK', 'WASSERMANN', 'FISCHE'];
+    const namen = NAMEN.map((n, i) => {
+      const m = i * 30 + 15, off = 15 * 0.34;
+      const rt = BAND_MID - off, rb = BAND_MID + off;
+      // oberer Bogen im Uhrzeigersinn, unterer dagegen: so steht die Schrift immer lesbar
+      const idT = `rx${nr}-nt${i}`, idB = `rx${nr}-nb${i}`;
+      el('path', { id: idT, d: 'M' + f(pt(rt, m + 15)) + ' A' + rt + ' ' + rt + ' 0 0 1 ' + f(pt(rt, m - 15)) }, defs);
+      el('path', { id: idB, d: 'M' + f(pt(rb, m - 15)) + ' A' + rb + ' ' + rb + ' 0 0 0 ' + f(pt(rb, m + 15)) }, defs);
+      const mk = (id: string) => {
+        const t = el('text', { class: 'rx-name' }, zodiac);
+        const tp = el('textPath', { href: '#' + id, startOffset: '50%' }, t);
+        tp.setAttributeNS(XL, 'xlink:href', '#' + id);
+        tp.textContent = n;
+        return t;
+      };
+      return { mid: m, top: mk(idT), bot: mk(idB) };
+    });
+    const ZEICHEN = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'];
+    const zeichen = ZEICHEN.map((z) => txt(svg, 'rx-glyph rx-zeichen', z + VS));
+
+    /* Häuser: stehen fest, Aszendent links */
+    const CUSPS = [0, 31, 60, 88, 119, 151, 180, 211, 240, 268, 299, 331];
+    const houses = el('g', {}, svg);
+    CUSPS.forEach((o, i) => {
+      const axis = i % 3 === 0;
+      line(houses, R.ring, 180 + o, R.hub, 180 + o, axis ? 1.1 : 0.6, axis ? {} : { 'stroke-dasharray': '3 4' });
+    });
+    ([['ASC', 0], ['IC', 3], ['DC', 6], ['MC', 9]] as const).forEach(([label, i]) => {
+      const p = pt(R.out + 24, 180 + CUSPS[i]);
+      const t = txt(houses, 'rx-achse', label);
+      t.setAttribute('x', String(p[0]));
+      t.setAttribute('y', String(p[1]));
+    });
+
+    /* Planeten mit Startlänge (Grad) und Tempo (Grad pro Sekunde) */
+    type Planet = { g: string; lon?: number; v?: number; gross?: boolean; sonne?: boolean; amp?: number; fq?: number; ph?: number;
+      text?: Element; dot?: Element; cur?: number; a?: number; ix?: number; iy?: number };
+    const PLANETEN: Planet[] = [
+      { g: '☉', lon: 90, v: 0.5, gross: true },
+      { g: '☽', lon: 75, v: 2.6, gross: true },
+      { g: '☿', sonne: true, amp: 24, fq: 0.3, ph: 0.4 },
+      { g: '♀', sonne: true, amp: 42, fq: 0.15, ph: 2.0 },
+      { g: '♂', lon: 20, v: 0.3 },
+      { g: '♃', lon: 105, v: 0.1 },
+      { g: '♄', lon: 292, v: 0.06 },
+      { g: '♅', lon: 280, v: 0.03 },
+      { g: '♆', lon: 283, v: 0.02 },
+      { g: '♇', lon: 226, v: 0.012 },
+    ];
+
+    /* Aspekte: weich durchgezogen, spannungsreich gestrichelt, je genauer desto kräftiger */
+    const ASPEKTE = [
+      { deg: 60, orb: 5, hart: false },
+      { deg: 90, orb: 8, hart: true },
+      { deg: 120, orb: 8, hart: false },
+      { deg: 180, orb: 8, hart: true },
+    ];
+    // Aspektlinien enden am Rand der Mitte: Maske statt deckender Fläche, so bleibt die Mitte durchsichtig wie im PDF
+    const maske = el('mask', { id: `rx${nr}-mitte` }, defs);
+    el('rect', { x: -470, y: -470, width: 940, height: 940, fill: '#fff' }, maske);
+    el('circle', { r: R.hub, fill: '#000' }, maske);
+    const aspGroup = el('g', { mask: `url(#rx${nr}-mitte)` }, svg);
+    const paare: { a: number; b: number; el: Element }[] = [];
+    for (let a = 0; a < PLANETEN.length; a++)
+      for (let b = a + 1; b < PLANETEN.length; b++) paare.push({ a, b, el: el('line', { stroke: C, opacity: 0 }, aspGroup) });
+
+    const planetGroup = el('g', {}, svg);
+    PLANETEN.forEach((p) => {
+      p.text = txt(planetGroup, 'rx-glyph rx-planet' + (p.gross ? ' gross' : ''), p.g + VS);
+      p.dot = el('circle', { r: 3, fill: C }, planetGroup);
+    });
+
+    /* Mitte mit Hausnummern, liegt über den Aspektlinien */
+    const hub = el('g', {}, svg);
+    el('circle', { r: R.hub, stroke: C, 'stroke-width': 0.9, 'data-w': 0.9, fill: 'none' }, hub);
+    el('circle', { r: R.hub - 26, stroke: C, 'stroke-width': 0.5, 'data-w': 0.5, fill: 'none' }, hub);
+    CUSPS.forEach((o, i) => {
+      line(hub, R.hub, 180 + o, R.hub - 26, 180 + o, 0.5);
+      const next = i === 11 ? 360 : CUSPS[i + 1];
+      const p = pt(R.hub - 13, 180 + (o + next) / 2);
+      const t = txt(hub, 'rx-haus', String(i + 1));
+      t.setAttribute('x', p[0].toFixed(2));
+      t.setAttribute('y', p[1].toFixed(2));
+    });
+
+    const ASC0 = 160, ASC_V = 1.0;
+
+    /* Linienstärke je Ansicht: Faktor aus --rx-dick, wechselt beim Umschalten mit */
+    let strich = 1;
+    const setzeStrich = () => {
+      strich = parseFloat(getComputedStyle(host).getPropertyValue('--rx-dick')) || 1;
+      host.querySelectorAll('[data-w]').forEach((e) =>
+        e.setAttribute('stroke-width', (Number(e.getAttribute('data-w')) * strich).toFixed(2)),
+      );
+    };
+
+    function render(t: number) {
+      const rot = 180 - (ASC0 + ASC_V * t);
+      const scr = (lon: number) => norm(lon + rot);
+
+      zodiac.setAttribute('transform', 'rotate(' + (-rot).toFixed(3) + ')');
+      namen.forEach((n) => {
+        const oben = klemm(0.5 + Math.sin((scr(n.mid) * Math.PI) / 180) * 14);
+        n.top.setAttribute('opacity', oben.toFixed(3));
+        n.bot.setAttribute('opacity', (1 - oben).toFixed(3));
+      });
+      zeichen.forEach((z, i) => {
+        const p = pt(R.band - 25, scr(i * 30 + 15));
+        z.setAttribute('x', p[0].toFixed(2));
+        z.setAttribute('y', p[1].toFixed(2));
+      });
+
+      const sonne = PLANETEN[0].lon! + PLANETEN[0].v! * t;
+      PLANETEN.forEach((p) => {
+        p.cur = norm(p.sonne ? sonne + p.amp! * Math.sin(t * p.fq! + p.ph!) : p.lon! + p.v! * t);
+        p.a = scr(p.cur);
+        const g = pt(SPUR, p.a), d = pt(R.asp + 2, p.a), q = pt(R.asp, p.a);
+        p.text!.setAttribute('x', g[0].toFixed(2));
+        p.text!.setAttribute('y', g[1].toFixed(2));
+        p.dot!.setAttribute('cx', d[0].toFixed(2));
+        p.dot!.setAttribute('cy', d[1].toFixed(2));
+        p.ix = q[0];
+        p.iy = q[1];
+      });
+
+      paare.forEach((pr) => {
+        const A = PLANETEN[pr.a], B = PLANETEN[pr.b];
+        const d = abst(A.cur!, B.cur!);
+        let best: (typeof ASPEKTE)[number] | null = null, s = 0;
+        ASPEKTE.forEach((as) => {
+          const v = 1 - Math.abs(d - as.deg) / as.orb;
+          if (v > s) { s = v; best = as; }
+        });
+        if (best) {
+          pr.el.setAttribute('x1', A.ix!.toFixed(2));
+          pr.el.setAttribute('y1', A.iy!.toFixed(2));
+          pr.el.setAttribute('x2', B.ix!.toFixed(2));
+          pr.el.setAttribute('y2', B.iy!.toFixed(2));
+          pr.el.setAttribute('stroke-width', ((0.55 + 0.55 * s) * strich).toFixed(2));
+          if ((best as (typeof ASPEKTE)[number]).hart) pr.el.setAttribute('stroke-dasharray', '5 3.5');
+          else pr.el.removeAttribute('stroke-dasharray');
+          pr.el.setAttribute('opacity', klemm(s * 2.5).toFixed(3));
+        } else {
+          pr.el.setAttribute('opacity', '0');
+        }
+      });
+    }
+
+    /* Läuft nur, solange das Rad sichtbar ist. Bei "Bewegung reduzieren" steht es still. */
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let t = 0, last: number | null = null, laeuft = false, raf = 0;
+    const loop = (ts: number) => {
+      if (last !== null) t += (Math.min(ts - last, 100) / 1000) * SPEED;
+      last = ts;
+      render(t);
+      raf = requestAnimationFrame(loop);
+    };
+    const start = () => { if (laeuft || still) return; laeuft = true; last = null; raf = requestAnimationFrame(loop); };
+    const stop = () => { laeuft = false; cancelAnimationFrame(raf); };
+
+    setzeStrich();
+    render(0);
+    document.addEventListener('themechange', () => {
+      setzeStrich();
+      render(t);
+    });
+    new IntersectionObserver((e) => (e[0].isIntersecting ? start() : stop())).observe(host);
+  });
+</script>
+
+<style>
+  /* Farben wie in den Horoskop-PDFs */
+  .radix {
+    --rx-gold: #86662a; /* Linien, etwas dunkler als auf dem Deckblatt, damit sie auf Weiß tragen */
+    --rx-text: #5e4413; /* Schrift und Zeichen, dunkles Gold für gute Lesbarkeit */
+    --rx-dick: 1.6; /* Linienstärke: Faktor gegenüber der dunklen Fassung */
+    --rx-schnitt: 500; /* Schriftstärke */
+    --rx-disk: transparent; /* wie im Testhoroskop: das Rad liegt direkt auf dem Papier */
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    color: var(--rx-gold);
+  }
+  :global(:root[data-theme='dark']) .radix {
+    --rx-gold: #e0c27e;
+    --rx-text: #e0c27e;
+    --rx-dick: 1;
+    --rx-schnitt: 400;
+    --rx-disk: rgb(7 16 42 / 0.5);
+  }
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-theme='light'])) .radix {
+      --rx-gold: #e0c27e;
+      --rx-text: #e0c27e;
+      --rx-dick: 1;
+      --rx-schnitt: 400;
+      --rx-disk: rgb(7 16 42 / 0.5);
+    }
+  }
+  .radix :global(svg) {
+    width: 100%;
+    height: 100%;
+    display: block;
+    overflow: visible;
+  }
+  .radix :global(text) {
+    fill: var(--rx-text);
+    font-weight: var(--rx-schnitt);
+    text-anchor: middle;
+    dominant-baseline: central;
+    user-select: none;
+    font-family: 'STIX Two Text', 'Noto Sans Symbols', 'Noto Sans Symbols 2', 'Segoe UI Symbol', 'Apple Symbols', serif;
+  }
+  .radix :global(.rx-glyph) {
+    font-family: 'Noto Sans Symbols', 'Noto Sans Symbols 2', 'STIX Two Text', 'Segoe UI Symbol', 'Apple Symbols', serif;
+  }
+  .radix :global(.rx-name) {
+    font-size: 16px;
+    letter-spacing: 4.2px;
+    dominant-baseline: auto;
+  }
+  .radix :global(.rx-achse) {
+    font-size: 13px;
+    letter-spacing: 2.4px;
+  }
+  .radix :global(.rx-haus) {
+    font-size: 17px;
+  }
+  .radix :global(.rx-zeichen) {
+    font-size: 24px;
+  }
+  .radix :global(.rx-planet) {
+    font-size: 29px;
+  }
+  .radix :global(.rx-planet.gross) {
+    font-size: 32px;
+  }
+</style>

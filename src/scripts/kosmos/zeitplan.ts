@@ -1,17 +1,17 @@
 // Zeitplan der Endlosschleife: Sonnensystem → Radix → Sonnensystem, ohne Anfang und Ende.
 
-/* Dauer eines Durchlaufs in Sekunden und Einstieg: im Sonnensystem, 1,5 s vor der Verwandlung.
+/* Dauer eines Durchlaufs in Sekunden und Einstieg: im Sonnensystem, 0,5 s vor der Verwandlung.
    So sieht man beim Öffnen gleich, wie aus dem Sonnensystem die Radix wird. Die Uhr läuft erst,
    wenn das Rad im Bild ist, weiter unten auf einer Seite beginnt der Effekt also beim Hinscrollen. */
 export const T = 40;
-export const EINSTIEG = 8.5;
+export const EINSTIEG = 3.5;
 
 /* Tempo der Modellzeit in Erdumläufen pro Sekunde. In der Radix wandert die Sonne 0,5° pro Sekunde. */
 export const TEMPO_RADIX = 0.5 / 360;
 export const TEMPO_SONNENSYSTEM = 6 * TEMPO_RADIX;
 
-/* Abschnitte in Sekunden: rauf von 10 bis 14, runter von 36 bis 40 */
-const RAUF = 10, RADIX = 14, RUNTER = 36, DAUER = 4;
+/* Abschnitte in Sekunden: kurzes Sonnensystem, rauf von 4 bis 8, lange Radix, runter von 36 bis 40 */
+const RAUF = 4, RADIX = 8, RUNTER = 36, DAUER = 4;
 
 /* smootherstep: Tempo und Beschleunigung an den Rändern null, so findet das Auge keinen Knick */
 export function glatt(x: number): number {

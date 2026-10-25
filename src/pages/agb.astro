@@ -1,0 +1,118 @@
+---
+import Rechtstext from '../layouts/Rechtstext.astro';
+import Anbieter from '../components/recht/Anbieter.astro';
+import { anbieter, delivery, site } from '../site';
+import { routes } from '../i18n';
+---
+
+<Rechtstext titel="Allgemeine Geschäftsbedingungen" pfad="/agb" beschreibung="Allgemeine Geschäftsbedingungen für den Kauf eines persönlichen Geburtshoroskops als PDF bei Horoskop-Geschenk.de.">
+  <p class="nebentext">Stand: {anbieter.stand.de}</p>
+
+  <h2>1. Geltungsbereich und Anbieter</h2>
+  <p>
+    Diese Bedingungen gelten für alle Bestellungen über die Website horoskop-geschenk.de. Vertragspartner ist:
+  </p>
+  <Anbieter lang="de" />
+  <p>Abweichende Bedingungen des Kunden gelten nicht.</p>
+
+  <h2>2. Was du kaufst</h2>
+  <p>
+    Du kaufst ein persönliches Geburtshoroskop als PDF-Datei mit {site.pages} Seiten, davon über {site.pagesIndividual} individuell berechnet und geschrieben (je nach Geburtsbild eine Seite mehr oder weniger), wahlweise in einer hellen,
+    einer dunklen oder beiden Gestaltungen. Es wird aus Vorname, Geburtsdatum, Geburtszeit und Geburtsort berechnet.
+    Die Texte werden auf Grundlage dieser Berechnung nach festen Regeln der Deutung automatisiert erstellt.
+  </p>
+  <p>
+    Astrologie ist ein Deutungssystem und keine Wissenschaft. Das Horoskop sagt keine Ereignisse voraus und ersetzt
+    keine medizinische, psychologische, rechtliche oder finanzielle Beratung. Für Entscheidungen, die du auf
+    Grundlage des Horoskops triffst, bist du selbst verantwortlich.
+  </p>
+
+  <h2>3. Bestellung und Vertragsschluss</h2>
+  <p>
+    Die Darstellung auf der Website ist noch kein verbindliches Angebot. Du legst ein oder mehrere Horoskope in den
+    Warenkorb, prüfst dort alle Angaben und kannst sie jederzeit ändern oder entfernen. Mit einem Klick auf
+    „Zahlungspflichtig bestellen“ gibst du ein verbindliches Angebot ab. Der Vertrag kommt zustande, sobald die
+    Zahlung erfolgreich abgeschlossen ist.
+  </p>
+  <p>
+    Direkt danach bekommst du eine Bestellbestätigung per E-Mail. Sie enthält den Inhalt deiner Bestellung, diese
+    Bedingungen, die Widerrufsbelehrung und deine Zustimmung zum Beginn der Erstellung. Den Vertragstext speichern
+    wir darüber hinaus nicht; bitte bewahre die E-Mail auf. Vertragssprachen sind Deutsch und Englisch.
+  </p>
+
+  <h2>4. Preise und Bezahlung</h2>
+  <p>
+    Ein Horoskop kostet {site.priceLabel.de}, beide Gestaltungen zusammen kosten {site.bothPriceLabel.de}. Alle
+    Preise sind Endpreise. <span class="platzhalter">{anbieter.steuer}</span> Bezahlt wird im Voraus über unseren
+    Zahlungsdienstleister Stripe, mit Karte, PayPal, Apple Pay oder den dort angebotenen Verfahren.
+  </p>
+  <p>
+    Gutscheincodes werden beim Bezahlen geprüft und abgezogen. Sie sind nicht in bar auszahlbar und können nur
+    einmal eingelöst werden, soweit beim Gutschein nichts anderes steht.
+  </p>
+
+  <h2>5. Lieferung</h2>
+  <p>
+    Das Horoskop kommt als PDF per E-Mail an die Adresse, die du bei der Bestellung angibst, in der Regel innerhalb
+    von {delivery.duration('de')} nach Zahlungseingang. Bitte gib eine Adresse an, unter der du erreichbar bist, und
+    schau auch im Spam-Ordner nach. Kommt nichts an, melde dich bei uns, dann schicken wir es erneut.
+  </p>
+
+  <h2>6. Deine Angaben</h2>
+  <p>
+    Das Horoskop beruht auf den Angaben, die du machst. Für ihre Richtigkeit bist du verantwortlich. Ohne
+    Geburtszeit lassen sich Aszendent und Häuser nicht bestimmen; das Horoskop fällt dann weniger umfangreich aus,
+    der Preis bleibt gleich. Hat sich ein Tippfehler eingeschlichen, melde dich innerhalb von 30 Tagen nach der
+    Lieferung, dann erstellen wir das Horoskop einmal kostenlos neu.
+  </p>
+
+  <h2>7. Horoskope als Geschenk</h2>
+  <p>
+    Bestellst du ein Horoskop für einen anderen Menschen, gibst du dessen Daten ein. Du versicherst, dass du diese
+    Daten für das Geschenk verwenden darfst, etwa weil die Person sie dir genannt hat oder sie dir als nahestehender
+    Mensch bekannt sind. Wie wir mit den Daten umgehen, steht in der{' '}
+    <a href={routes.datenschutz.de}>Datenschutzerklärung</a>.
+  </p>
+
+  <h2>8. Widerrufsrecht</h2>
+  <p>
+    Als Verbraucher hast du ein Widerrufsrecht nach der <a href={routes.widerruf.de}>Widerrufsbelehrung</a>. Es
+    erlischt vorzeitig, wenn du bei der Bestellung ausdrücklich zustimmst, dass wir sofort mit der Erstellung
+    beginnen, und bestätigst, dass du damit dein Widerrufsrecht verlierst (§ 356 Abs. 5 BGB).
+  </p>
+
+  <h2>9. Nutzung</h2>
+  <p>
+    Das Horoskop ist für die private Nutzung bestimmt. Du darfst es ausdrucken, verschenken und an die Person
+    weitergeben, für die es erstellt ist. Eine gewerbliche Nutzung, der Weiterverkauf und die Veröffentlichung von
+    Texten oder Gestaltung sind nicht erlaubt. Die Rechte an Texten und Gestaltung bleiben bei uns.
+  </p>
+
+  <h2>10. Mängel</h2>
+  <p>
+    Es gelten die gesetzlichen Rechte bei Mängeln digitaler Produkte (§§ 327 ff. BGB). Ist eine Datei fehlerhaft,
+    unvollständig oder nicht lesbar, melde dich bei uns, dann liefern wir eine einwandfreie Fassung. Dass dir eine
+    astrologische Deutung inhaltlich nicht zusagt, ist kein Mangel.
+  </p>
+
+  <h2>11. Haftung</h2>
+  <p>
+    Wir haften unbeschränkt bei Vorsatz und grober Fahrlässigkeit, bei Verletzung von Leben, Körper oder Gesundheit
+    sowie nach dem Produkthaftungsgesetz. Bei leichter Fahrlässigkeit haften wir nur, wenn wir eine wesentliche
+    Vertragspflicht verletzen, also eine Pflicht, deren Erfüllung den Vertrag erst möglich macht und auf die du
+    vertrauen darfst. In diesem Fall ist die Haftung auf den vorhersehbaren, vertragstypischen Schaden begrenzt.
+  </p>
+
+  <h2>12. Streitbeilegung</h2>
+  <p>
+    Wir sind nicht verpflichtet und nicht bereit, an Streitbeilegungsverfahren vor einer
+    Verbraucherschlichtungsstelle teilzunehmen. Bei Fragen oder Problemen schreib uns einfach, wir finden eine
+    Lösung.
+  </p>
+
+  <h2>13. Schlussbestimmungen</h2>
+  <p>
+    Es gilt deutsches Recht unter Ausschluss des UN-Kaufrechts. Bist du Verbraucher, bleiben die zwingenden
+    Verbraucherschutzvorschriften des Staates, in dem du deinen gewöhnlichen Aufenthalt hast, unberührt.
+  </p>
+</Rechtstext>

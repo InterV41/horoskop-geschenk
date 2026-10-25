@@ -1,0 +1,19 @@
+---
+import Rechtstext from '../layouts/Rechtstext.astro';
+import Anbieter from '../components/recht/Anbieter.astro';
+import { anbieter } from '../site';
+---
+
+<Rechtstext titel="Impressum" pfad="/impressum" beschreibung="Impressum von Horoskop-Geschenk.de mit Angaben zum Anbieter.">
+  <h2>Angaben nach § 5 DDG</h2>
+  <Anbieter lang="de" />
+
+  <h2>Umsatzsteuer</h2>
+  <p><span class="platzhalter">{anbieter.steuer}</span></p>
+
+  <h2>Verbraucherstreitbeilegung</h2>
+  <p>
+    Wir sind nicht verpflichtet und nicht bereit, an Streitbeilegungsverfahren vor einer
+    Verbraucherschlichtungsstelle teilzunehmen.
+  </p>
+</Rechtstext>

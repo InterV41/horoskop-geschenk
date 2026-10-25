@@ -1,38 +1,37 @@
-/* Bewegung und Material der ganzen Seite: Überschriften gleiten herein, Papierstruktur im hellen Modus,
-   weiche Seitenwechsel. Das Script für die Überschriften steht in Base.astro. */
+/* Bewegung der ganzen Seite: die Start-Überschrift leuchtet beim Laden einmal kurz auf, weiche Seitenwechsel. */
 
-/* Überschriften gleiten beim Erscheinen sanft herein: von unten aus einer Maske, langer weicher Ausklang.
-   Greift nur, wenn das Script die Klasse gesetzt hat; ohne JavaScript bleibt alles sichtbar. */
-:root.einblenden :is(h1, h2):not(.ist-da) {
-  opacity: 0;
-  transform: translateY(0.45em);
-  clip-path: inset(0 0 100% 0);
+/* Start-Überschrift: steht sofort da und leuchtet einmal kurz und sanft auf */
+.start__text h1 {
+  animation: leuchten 1.6s ease-out 0.2s both;
 }
-:root.einblenden :is(h1, h2) {
-  transition:
-    opacity 1.1s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 1.1s cubic-bezier(0.16, 1, 0.3, 1),
-    clip-path 1.1s cubic-bezier(0.16, 1, 0.3, 1);
+@keyframes leuchten {
+  0%,
+  100% {
+    text-shadow: 0 0 0 transparent;
+  }
+  40% {
+    text-shadow: 0 0 14px var(--leuchten, rgb(201 169 97 / 0.6));
+  }
 }
-:root.einblenden :is(h1, h2).ist-da {
-  clip-path: inset(0 0 -20% 0);
-}
-
-/* Papier: im hellen Modus eine leichte, warme Papierstruktur über der Seite */
-:root:not([data-theme='dark']) body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 2147483000;
-  pointer-events: none;
-  opacity: 0.35;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9 0.75' numOctaves='3' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.36 0 0 0 0 0.2 0 0 0 1.4 -0.35'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
+:root[data-theme='dark'] {
+  --leuchten: rgb(255 226 160 / 0.75);
 }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) body::after {
-    content: none;
+  :root:not([data-theme='light']) {
+    --leuchten: rgb(255 226 160 / 0.75);
   }
+}
+
+/* Heller Modus: einheitlich weißer Hintergrund, ohne Papierstruktur und ohne Lichtflächen hinter den Abschnitten */
+/* Vorname in der hellen Ansicht in Gold (6,2:1 auf Weiß), abgesetzt von der nachtblauen Überschrift.
+   Der Platzhalter „Vorname …“ im selben Gold, etwas zurückgenommen. */
+:root:not([data-theme='dark']) #start-name {
+  color: var(--akzent);
+  caret-color: var(--akzent);
+}
+:root:not([data-theme='dark']) #start-name::placeholder {
+  color: var(--akzent);
+  opacity: 0.85;
 }
 
 /* Weiche Seitenwechsel: der Browser blendet zwischen den Seiten über (ohne JavaScript, in
@@ -56,10 +55,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :root.einblenden :is(h1, h2):not(.ist-da) {
-    opacity: 1;
-    transform: none;
-    clip-path: none;
+  .start__text h1 {
+    animation: none;
   }
   @view-transition {
     navigation: none;

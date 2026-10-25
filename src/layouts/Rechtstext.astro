@@ -1,0 +1,56 @@
+---
+// Rahmen für Impressum, Datenschutz, AGB und Widerruf, in beiden Sprachen
+import Base from './Base.astro';
+import { site } from '../site';
+
+interface Props {
+  titel: string;
+  pfad: string;
+  beschreibung: string;
+}
+const { titel, pfad, beschreibung } = Astro.props;
+---
+
+<Base title={`${titel} | ${site.name}`} description={beschreibung} breadcrumbs={[{ name: titel, path: pfad }]}>
+  <section class="abschnitt wrap">
+    <div class="prosa rechtstext">
+      <h1>{titel}</h1>
+      <slot />
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* Rechtstexte im Stil der übrigen Seiten: schmale Spalte an der linken Inhaltskante, Überschrift mit Goldstrich, ruhiger Rhythmus */
+  .rechtstext h1 {
+    margin-bottom: var(--s-16);
+  }
+  .rechtstext h1::after {
+    content: '';
+    display: block;
+    width: 48px;
+    height: 1px;
+    margin: var(--s-24) 0 0;
+    background: var(--gold);
+  }
+  .rechtstext :global(h1 + .nebentext) {
+    margin-bottom: var(--s-32);
+  }
+  .rechtstext :global(h2) {
+    margin-top: var(--s-64);
+    padding-top: var(--s-24);
+    border-top: 1px solid var(--linie);
+  }
+  .rechtstext :global(h3) {
+    margin-top: var(--s-32);
+    color: var(--akzent);
+  }
+  .rechtstext :global(ol li),
+  .rechtstext :global(ul li) {
+    padding-left: var(--s-4);
+  }
+  .rechtstext :global(ol li + li),
+  .rechtstext :global(ul li + li) {
+    margin-top: var(--s-12);
+  }
+</style>

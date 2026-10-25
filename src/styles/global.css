@@ -1,33 +1,148 @@
-/* Farbwerte und Schriften aus dem Moodboard (Stand 22.09.2026) */
+/* Folio: Gestaltungssystem für PDF und Webseite */
+
+/* Ziffern und Euro-Zeichen in der Titelschrift kommen aus der EB Garamond: Die Ziffern der Cormorant
+   sind zu fein und schlecht lesbar. unicode-range sorgt dafür, dass nur diese Zeichen ersetzt werden. */
+@font-face {
+  font-family: 'Titelziffern';
+  src: url('/fonts/ziffern-400.woff2') format('woff2');
+  font-weight: 300 450;
+  font-display: swap;
+  unicode-range: U+0030-0039, U+20AC;
+}
+@font-face {
+  font-family: 'Titelziffern';
+  src: url('/fonts/ziffern-500.woff2') format('woff2');
+  font-weight: 451 550;
+  font-display: swap;
+  unicode-range: U+0030-0039, U+20AC;
+}
+@font-face {
+  font-family: 'Titelziffern';
+  src: url('/fonts/ziffern-600.woff2') format('woff2');
+  font-weight: 551 800;
+  font-display: swap;
+  unicode-range: U+0030-0039, U+20AC;
+}
+
 :root {
-  --font-display: 'Cormorant Garamond', Georgia, serif;
-  --font-body: 'EB Garamond', Georgia, serif;
+  --font-titel: 'Titelziffern', 'Cormorant Garamond', Georgia, serif;
+  --font-text: 'EB Garamond', Georgia, serif;
 
-  --paper: #f7f2e8;
-  --surface: #efe6d3;
-  --ink: #2a2520;
-  --ink-2: #5b5246;
-  --accent: #7a5d20;
-  --line: #d8cbb1;
-  --btn-bg: var(--ink);
-  --btn-fg: var(--paper);
-  --stars: rgb(122 93 32 / 0.25);
+  /* Hell */
+  /* Hell wie das Testhoroskop: reines Weiß, Gold als einziger Akzent */
+  --papier: #ffffff; /* Seitenhintergrund */
+  --flaeche: #faf8f4; /* abgesetzte Blöcke, nur ein Hauch Ton */
+  --flaeche-dezent: #f4efe4; /* Leseprobe und Testleser auf der Startseite */
+  /* Karten und Rahmen wie die Menüleiste: leicht durchsichtiges Milchglas */
+  --karte: rgb(244 239 228 / 0.18);
+  --karte-rand: color-mix(in srgb, #b39149 30%, transparent);
+  --karte-licht: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 6px 20px rgb(122 93 32 / 0.06);
+  --karte-blur: blur(8px) saturate(1.2);
+  --tinte: #2a2520; /* Fließtext, Überschriften */
+  --tinte2: #5b5246; /* Nebentext, Fußzeile */
+  --akzent: #7a5d20; /* Links, kleine Schrift in Gold, 5,5:1 */
+  --gold: #b39149; /* Linien, Radix, große Flächen; wie im hellen PDF */
+  --linie: #e7e0d3; /* Trennlinien, leicht golden; wie im hellen PDF */
+  --titel: #2b4380; /* Überschriften und Name in der hellen Ansicht in hellerem Nachtblau, 9,5:1 */
+  --feldrand: #a8833c; /* Formularfelder in hellem Gold, 3,5:1 auf Weiß */
+  --auswahl: #a8833c; /* gewählte Optionen, Häkchen */
+  --knopf: #b39149; /* Gold wie im hellen PDF */
+  --knopftext: #2a2520; /* 5,2:1 auf Gold */
+  --marke-zeichen: var(--akzent); /* Radix vor dem Namen in der Kopfzeile */
+  --himmel: none;
+  --sterne: none;
+  --sterne-fern: url('/stars-light-fern.svg'); /* Hell: feine goldene Sterne auf allen Seiten */
+  --sterne-nah: url('/stars-light-nah.svg');
+  --sterne-deckkraft: 1;
 
-  --wrap: 1100px;
+  /* Schriftgrade: PDF-Skala 8 / 9.5 / 11 / 13.5 / 17 / 26 / 36 pt,
+     am Bildschirm um 17/11 vergrößert, damit Fließtext 17 px hat */
+  --t-8: 0.78rem;
+  --t-9: 0.92rem;
+  --t-11: 1.0625rem;
+  --t-13: 1.3rem;
+  --t-17: 1.64rem;
+  --t-26: 2.5rem;
+  --t-36: 3.48rem;
+  --zeilenabstand: 1.55;
+
+  /* Abstände nur aus dieser Skala */
+  --s-4: 4px;
+  --s-8: 8px;
+  --s-12: 12px;
+  --s-16: 16px;
+  --s-24: 24px;
+  --s-32: 32px;
+  --s-48: 48px;
+  --s-64: 64px;
+
+  --zeile: 38em; /* rund 72 Zeichen */
+  --breite: 1120px;
   color-scheme: light;
 }
 
 :root[data-theme='dark'] {
-  --paper: #0d1430;
-  --surface: #151e42;
-  --ink: #eee7d7;
-  --ink-2: #b9b2a2;
-  --accent: #d6b56e;
-  --line: #2b3560;
-  --btn-bg: var(--accent);
-  --btn-fg: #0d1430;
-  --stars: rgb(255 255 255 / 0.55);
+  --papier: #07102a; /* Grundton wie im PDF */
+  --flaeche: #151e42;
+  --flaeche-dezent: color-mix(in srgb, #151e42 35%, transparent);
+  --karte: rgb(255 255 255 / 0.025);
+  --karte-rand: rgb(255 255 255 / 0.13);
+  --karte-licht: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 8px 24px rgb(0 0 0 / 0.16);
+  --tinte: #eee7d7;
+  --tinte2: #b9b2a2; /* 8,9:1 */
+  --akzent: #b8914a; /* 6,4:1 */
+  --gold: #b8914a;
+  --linie: #2b3560;
+  --feldrand: #6b77a8; /* 3,7:1 */
+  --auswahl: #b8914a;
+  --knopf: #b8914a;
+  --knopftext: #07102a;
+  --titel: #eee7d7;
+  --marke-zeichen: color-mix(in srgb, var(--akzent) 62%, var(--papier)); /* im Dunkeln gedämpft */
+  --himmel: radial-gradient(120% 60% at 50% 0%, #101c48 0%, transparent 70%), linear-gradient(180deg, #08122e 0%, #060e26 100%);
+  --sterne: url('/stars-dark.svg');
+  --sterne-fern: url('/stars-dark-fern.svg');
+  --sterne-nah: url('/stars-dark-nah.svg');
+  --sterne-deckkraft: 0.9;
   color-scheme: dark;
+}
+
+/* Hell: Schrift überall halbfett, damit sie auf Weiß kräftig genug wirkt. Was ohnehin fetter gesetzt ist, bleibt so. */
+/* Heller Modus: Schrift durchgehend halbfett, auf Weiß liest sie sich so ruhiger als die dünnen Schnitte */
+:root[data-theme='light'] body,
+:root[data-theme='light'] input,
+:root[data-theme='light'] button,
+:root[data-theme='light'] textarea {
+  font-weight: 600;
+}
+
+/* Ohne JavaScript greift die Systemeinstellung direkt */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --papier: #07102a;
+    --flaeche: #151e42;
+    --flaeche-dezent: color-mix(in srgb, #151e42 35%, transparent);
+    --karte: rgb(255 255 255 / 0.025);
+    --karte-rand: rgb(255 255 255 / 0.13);
+    --karte-licht: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 8px 24px rgb(0 0 0 / 0.16);
+    --tinte: #eee7d7;
+    --tinte2: #b9b2a2;
+    --akzent: #b8914a;
+    --gold: #b8914a;
+    --linie: #2b3560;
+    --feldrand: #6b77a8;
+    --auswahl: #b8914a;
+    --knopf: #b8914a;
+    --knopftext: #07102a;
+    --titel: #eee7d7;
+    --marke-zeichen: color-mix(in srgb, var(--akzent) 62%, var(--papier));
+    --himmel: radial-gradient(120% 60% at 50% 0%, #101c48 0%, transparent 70%), linear-gradient(180deg, #08122e 0%, #060e26 100%);
+    --sterne: url('/stars-dark.svg');
+    --sterne-fern: url('/stars-dark-fern.svg');
+    --sterne-nah: url('/stars-dark-nah.svg');
+    --sterne-deckkraft: 0.9;
+    color-scheme: dark;
+  }
 }
 
 *,
@@ -38,97 +153,348 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
+  position: relative;
   margin: 0;
-  background-color: var(--paper);
-  background-image:
-    radial-gradient(1.2px 1.2px at 12% 18%, var(--stars) 50%, transparent 51%),
-    radial-gradient(1px 1px at 68% 9%, var(--stars) 50%, transparent 51%),
-    radial-gradient(1.4px 1.4px at 84% 42%, var(--stars) 50%, transparent 51%),
-    radial-gradient(1px 1px at 33% 61%, var(--stars) 50%, transparent 51%),
-    radial-gradient(1.2px 1.2px at 52% 88%, var(--stars) 50%, transparent 51%),
-    radial-gradient(1px 1px at 92% 77%, var(--stars) 50%, transparent 51%),
-    radial-gradient(1px 1px at 5% 92%, var(--stars) 50%, transparent 51%);
-  background-size: 640px 640px;
-  color: var(--ink);
-  font-family: var(--font-body);
-  font-size: 1.125rem;
-  line-height: 1.6;
+  /* Zahlen in voller Höhe statt Mediävalziffern, damit Preise und Daten gut lesbar sind */
+  font-variant-numeric: lining-nums;
+  background-color: var(--papier);
+  background-image: var(--himmel);
+  background-attachment: fixed;
+  color: var(--tinte);
+  font-family: var(--font-text);
+  font-size: var(--t-11);
+  line-height: var(--zeilenabstand);
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.3s, color 0.3s;
+}
+
+/* Dezenter Himmel in zwei Tiefen: ferne, feine Sterne ziehen beim Scrollen langsam mit, nähere etwas
+   schneller. Beide bleiben langsamer als die Seite, so wirkt es wie Tiefe. Bewegt wird nur per transform
+   (Skript in Base.astro), das rechnet die Grafikkarte, ohne neu zu zeichnen. */
+.himmel-raum {
+  /* so hoch wie die Seite und mit ihr scrollend; trägt die Maske mit den Aussparungen um Texte */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+.himmel {
+  /* bleibt im Bild stehen, die Sternebenen darin verschiebt das Skript */
+  position: sticky;
+  top: 0;
+  height: 100lvh;
+  overflow: hidden;
+  opacity: var(--sterne-deckkraft);
+  contain: strict;
+}
+.himmel__fern,
+.himmel__nah {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(100% + 1200px); /* eine Kachel Vorrat, damit beim Verschieben nie eine Lücke entsteht */
+  background-size: 1200px 1200px;
+  will-change: transform;
+}
+.himmel__fern {
+  background-image: var(--sterne-fern);
+}
+.himmel__nah {
+  background-image: var(--sterne-nah);
+  background-position: 380px 520px; /* versetzt, damit sich die Kacheln nicht decken */
 }
 
 h1,
 h2,
 h3 {
-  font-family: var(--font-display);
+  font-family: var(--font-titel);
   font-weight: 400;
-  line-height: 1.1;
+  line-height: 1.12;
   margin: 0;
+  text-wrap: balance;
 }
-
+/* Hell: Überschriften fett, damit sie sich vom halbfetten Text abheben; Seiten, die noch fetter setzen, behalten das */
+:where(:root[data-theme='light']) h1,
+:where(:root[data-theme='light']) h2,
+:where(:root[data-theme='light']) h3 {
+  font-weight: 700;
+}
+h1 {
+  font-size: var(--t-36);
+  color: var(--titel);
+}
+h2 {
+  font-size: var(--t-26);
+  color: var(--titel);
+}
+/* Feine Goldlinie unter Abschnittsüberschriften, nicht im Fließtext */
+.abschnitt h2:not(.prosa h2, .etikett, figcaption h2, li h2, .info__titel, .zeitstrahl__titel)::after {
+  content: '';
+  display: block;
+  width: 48px;
+  height: 1px;
+  margin-top: var(--s-16);
+  background: var(--gold);
+}
+.mitte h2::after,
+h2.mitte::after {
+  margin-inline: auto;
+}
+h3 {
+  font-size: var(--t-17);
+}
+p {
+  margin: 0;
+  text-wrap: pretty;
+}
 a {
   color: inherit;
+  text-underline-offset: 3px;
+}
+img,
+svg {
+  max-width: 100%;
 }
 
 .wrap {
-  max-width: var(--wrap);
+  max-width: var(--breite);
   margin-inline: auto;
-  padding-inline: clamp(16px, 5vw, 72px);
+  padding-inline: var(--s-24);
+}
+@media (min-width: 900px) {
+  .wrap {
+    padding-inline: var(--s-48);
+  }
 }
 
-.eyebrow {
-  font-family: var(--font-body);
-  font-size: 0.72rem;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin: 0 0 0.9rem;
+/* Abschnitt: 64 px oben und unten, zwischen zwei Inhalten also 128 px */
+.abschnitt {
+  padding-block: var(--s-64);
+}
+/* dezente Fläche: der Himmel scheint leicht durch */
+.abschnitt--flaeche {
+  background: var(--flaeche-dezent);
+  border-block: 1px solid color-mix(in srgb, var(--gold) 15%, transparent);
 }
 
-.btn {
+.mitte {
+  text-align: center;
+}
+.lesetext {
+  max-width: var(--zeile);
+}
+.mitte .lesetext {
+  margin-inline: auto;
+}
+
+/* Etikett: kursive Titelschrift statt Versalien */
+.etikett {
+  font-family: var(--font-titel);
+  font-style: italic;
+  font-size: var(--t-13);
+  color: var(--akzent);
+  margin-bottom: var(--s-8);
+}
+.nebentext {
+  color: var(--tinte2);
+}
+.klein {
+  font-size: var(--t-9);
+}
+
+.knopf {
+  /* Knöpfe wie die Menüleiste: Milchglas-Pille, weiße fette Schrift, beim Überfahren golden */
+  --glas: rgb(255 255 255 / 0.06);
+  --glas-rand: rgb(255 255 255 / 0.18);
+  --glas-licht: inset 0 1px 0 rgb(255 255 255 / 0.12);
+  --glas-schatten: 0 8px 24px rgb(0 0 0 / 0.18);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.8rem 1.8rem;
-  font-family: var(--font-display);
-  font-size: 1.15rem;
-  letter-spacing: 0.03em;
+  gap: var(--s-8);
+  min-height: 52px;
+  padding: var(--s-12) var(--s-32);
+  border: 1px solid var(--glas-rand);
+  border-radius: 999px;
+  background: var(--glas);
+  box-shadow: var(--glas-licht), var(--glas-schatten);
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  color: var(--tinte);
+  font-family: var(--font-text);
+  font-size: var(--t-11);
+  font-weight: 700;
+  line-height: 1.2;
   text-decoration: none;
-  border: 1px solid var(--btn-bg);
-  background: var(--btn-bg);
-  color: var(--btn-fg);
   cursor: pointer;
-  transition: opacity 0.2s, background 0.2s;
+  transition: color 0.2s, border-color 0.2s;
+}
+:root[data-theme='light'] .knopf {
+  --glas: rgb(255 255 255 / 0.5);
+  --glas-rand: rgb(255 255 255 / 0.95);
+  --glas-licht: inset 0 1px 0 rgb(255 255 255 / 0.9);
+  --glas-schatten: 0 6px 20px rgb(122 93 32 / 0.12);
+  border-color: color-mix(in srgb, var(--gold) 55%, transparent);
+}
+.knopf:hover {
+  color: var(--akzent);
+  border-color: color-mix(in srgb, var(--gold) 60%, transparent);
+}
+.knopf:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+/* Hauptaktion: gleiche Glaspille, aber in Gold hervorgehoben, mit sanftem Goldschein */
+.knopf--gold {
+  color: var(--akzent);
+  border-color: color-mix(in srgb, var(--gold) 75%, transparent);
+  transition: color 0.3s, border-color 0.3s, text-shadow 0.3s;
+}
+/* Heller Modus: Hauptknopf im Blau der Überschriften */
+:root[data-theme='light'] .knopf--gold {
+  color: var(--titel);
+  border-color: var(--titel);
+}
+/* Beim Überfahren kein Leuchten um den Knopf, nur die Schrift blitzt kurz golden auf */
+.knopf--gold:hover {
+  border-color: var(--gold);
+  color: #f3dfb0;
+  text-shadow: 0 0 8px color-mix(in srgb, var(--gold) 55%, transparent);
+}
+:root[data-theme='light'] .knopf--gold:hover {
+  color: var(--titel);
+  border-color: var(--titel);
+  text-shadow: 0 0 6px color-mix(in srgb, var(--gold) 45%, transparent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .knopf--gold:hover {
+    animation: schrift-blitz 0.7s ease-out;
+  }
+}
+@keyframes schrift-blitz {
+  35% {
+    text-shadow:
+      0 0 12px color-mix(in srgb, var(--gold) 95%, transparent),
+      0 0 26px color-mix(in srgb, var(--gold) 70%, transparent);
+  }
+}
+.knopf--gross {
+  min-height: 64px;
+  padding: var(--s-16) var(--s-48);
+  font-size: var(--t-13);
+}
+@media (max-width: 420px) {
+  .knopf--gross {
+    padding-inline: var(--s-24);
+  }
+}
+/* Nebenaktionen: gleiche Pille, etwas leiser */
+.knopf--rand {
+  min-height: 44px;
+  padding: var(--s-8) var(--s-24);
+  color: var(--tinte2);
 }
 
-.btn:hover {
-  opacity: 0.88;
+/* Abgerundeter Rahmen wie die Karten auf der FAQ-Seite, überall gleich */
+:root {
+  --rahmen-radius: 28px;
+  --feld-radius: 14px;
+}
+.rahmen {
+  border: 1px solid var(--karte-rand);
+  border-radius: var(--rahmen-radius);
+  background: var(--karte);
+  box-shadow: var(--karte-licht);
+  backdrop-filter: var(--karte-blur);
+  -webkit-backdrop-filter: var(--karte-blur);
 }
 
-.btn--ghost {
-  background: transparent;
-  color: var(--accent);
-  border-color: var(--accent);
-}
-
-.btn--ghost:hover {
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-  opacity: 1;
+.textlink {
+  color: var(--akzent);
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--akzent);
   outline-offset: 3px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Fließtext aus Markdown (Ratgeber, Rechtstexte) */
+.prosa {
+  max-width: var(--zeile);
+}
+.prosa > * + * {
+  margin-top: var(--s-16);
+}
+.prosa h2 {
+  margin-top: var(--s-48);
+}
+.prosa h3 {
+  font-size: var(--t-13);
+  margin-top: var(--s-32);
+}
+.prosa ul,
+.prosa ol {
+  padding-left: var(--s-24);
+}
+.prosa li + li {
+  margin-top: var(--s-8);
+}
+.prosa a {
+  color: var(--akzent);
+}
+
+/* Markiert Inhalte, die vor dem Start ersetzt werden müssen */
+.platzhalter {
+  border: 1px dashed var(--akzent);
+  border-radius: 14px;
+  padding: var(--s-16);
+  color: var(--tinte2);
+  font-size: var(--t-9);
+}
+
+@media (max-width: 640px) {
+  h1 {
+    font-size: var(--t-26);
+  }
+  h2 {
+    font-size: var(--t-17);
+  }
+  h3 {
+    font-size: var(--t-13);
+  }
+  .abschnitt {
+    padding-block: var(--s-48);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
-  * {
+  *,
+  *::before,
+  *::after {
     transition: none !important;
   }
 }

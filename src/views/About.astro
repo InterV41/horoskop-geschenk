@@ -1,0 +1,153 @@
+---
+import Base from '../layouts/Base.astro';
+import { site } from '../site';
+import { langFromPath, routes } from '../i18n';
+
+const lang = langFromPath(Astro.url.pathname);
+const T = {
+  de: {
+    title: 'Über Horoskop-Geschenk.de: persönliche Geburtshoroskope als PDF',
+    description: 'Horoskop-Geschenk.de erstellt persönliche Geburtshoroskope als PDF, berechnet aus Geburtsdatum, Geburtszeit und Geburtsort und für einen Menschen geschrieben.',
+    crumb: 'About',
+    h1: 'Über Horoskop-Geschenk.de',
+    einleitung: `Horoskop-Geschenk.de erstellt persönliche Geburtshoroskope als PDF. Jedes wird aus Geburtsdatum, Geburtszeit und Geburtsort berechnet und auf ${site.pages} Seiten für genau diesen Menschen geschrieben, wahlweise in heller oder dunkler Gestaltung.`,
+    wer: 'Wer dahinter steht',
+    platzhalter: '[Kurz vorstellen: wer hinter Horoskop-Geschenk.de steht und warum]',
+    karten: [
+      { titel: 'Wie es berechnet wird', text: 'Vom Augenblick der Geburt zur Radix, Schritt für Schritt erklärt.', href: `${routes.produkt.de}#h-berechnung`, weiter: 'Zur Berechnung' },
+      { titel: 'Geschichte der Astrologie', text: 'Von den Sternuhren Ägyptens bis zum heutigen Geburtshoroskop.', href: routes.geschichte.de, weiter: 'Zur Geschichte' },
+      { titel: 'Häufige Fragen', text: 'Antworten zu Geburtszeit, Lieferzeit und PDF.', href: routes.fragen.de, weiter: 'Zu den Fragen' },
+      { titel: 'Kontakt', text: 'Deine Frage war nicht dabei? Schreib uns eine Mail.', href: `${routes.fragen.de}#kontakt`, weiter: 'Zum Kontakt' },
+    ],
+  },
+  en: {
+    title: 'About Horoskop-Geschenk.de: personal birth charts as PDF',
+    description: 'Horoskop-Geschenk.de creates personal birth charts as PDF, calculated from date, time and place of birth and written for one person.',
+    crumb: 'About',
+    h1: 'About Horoskop-Geschenk.de',
+    einleitung: `Horoskop-Geschenk.de creates personal birth charts as PDF. Each one is calculated from the date, time and place of birth and written over ${site.pages} pages for exactly this person, in a light or dark design.`,
+    wer: 'Who is behind it',
+    platzhalter: '[Briefly introduce who is behind Horoskop-Geschenk.de and why]',
+    karten: [
+      { titel: 'How it is calculated', text: 'From the moment of birth to the radix, explained step by step.', href: `${routes.produkt.en}#h-berechnung`, weiter: 'See the calculation' },
+      { titel: 'History of astrology', text: 'From the star clocks of Egypt to today’s birth chart.', href: routes.geschichte.en, weiter: 'Read the history' },
+      { titel: 'FAQ', text: 'Answers about birth time, delivery and the PDF.', href: routes.fragen.en, weiter: 'Go to the FAQ' },
+      { titel: 'Contact', text: 'Your question was not answered? Send us an email.', href: `${routes.fragen.en}#kontakt`, weiter: 'Get in touch' },
+    ],
+  },
+};
+const t = T[lang];
+---
+
+<Base
+  title={t.title}
+  description={t.description}
+  breadcrumbs={[{ name: t.crumb, path: routes.about[lang] }]}
+>
+  <section class="abschnitt wrap">
+    <header class="kopf">
+      <h1 class="titel">{t.h1}</h1>
+      <p class="einleitung">{t.einleitung}</p>
+    </header>
+    <div class="inhalt">
+      <section class="karte" aria-labelledby="wer">
+        <h2 id="wer" class="karte__titel">{t.wer}</h2>
+        <p class="platzhalter">{t.platzhalter}</p>
+      </section>
+      <div class="raster">
+        {t.karten.map((k) => (
+          <a class="karte karte--link" href={k.href}>
+            <h2 class="karte__titel">{k.titel}</h2>
+            <p>{k.text}</p>
+            <span class="karte__weiter">{k.weiter} →</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* Kopf wie auf den anderen Seiten: linksbündig mit kurzem Goldstrich */
+  .titel {
+    color: var(--titel);
+    font-weight: 700;
+  }
+  .titel::after {
+    content: '';
+    display: block;
+    width: 48px;
+    height: 1px;
+    margin: var(--s-24) 0 0;
+    background: var(--gold);
+  }
+  .einleitung {
+    max-width: 34em;
+    margin: var(--s-24) 0 0;
+    font-size: var(--t-13);
+    line-height: 1.45;
+    color: var(--tinte2);
+  }
+  .inhalt {
+    margin: var(--s-48) 0 0;
+    max-width: 52rem;
+    display: grid;
+    gap: var(--s-24);
+  }
+  .karte {
+    padding: var(--s-32);
+    border: 1px solid var(--karte-rand);
+    border-radius: var(--rahmen-radius);
+    background: var(--karte);
+    box-shadow: var(--karte-licht);
+    backdrop-filter: var(--karte-blur);
+    -webkit-backdrop-filter: var(--karte-blur);
+  }
+  .karte__titel {
+    margin: 0 0 var(--s-12);
+    font-family: var(--font-titel);
+    font-size: var(--t-13);
+    font-weight: 700;
+    color: var(--titel);
+    transition: color 0.2s;
+  }
+  .karte p {
+    margin: 0;
+  }
+  .raster {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--s-24);
+  }
+  .karte--link {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-8);
+    color: var(--tinte);
+    text-decoration: none;
+    transition: border-color 0.2s;
+  }
+  .karte--link .karte__titel {
+    margin: 0;
+  }
+  .karte__weiter {
+    margin-top: auto;
+    padding-top: var(--s-8);
+    color: var(--akzent);
+    font-weight: 700;
+  }
+  .karte--link:hover {
+    border-color: color-mix(in srgb, var(--gold) 60%, transparent);
+  }
+  .karte--link:hover .karte__titel {
+    color: var(--akzent);
+  }
+  @media (max-width: 639px) {
+    .raster {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .karte {
+      padding: var(--s-24);
+    }
+  }
+</style>

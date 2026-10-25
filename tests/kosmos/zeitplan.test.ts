@@ -7,14 +7,14 @@ describe('zeitplan', () => {
     expect(glatt(0.5)).toBeCloseTo(0.5); expect(glatt(1)).toBe(1); expect(glatt(2)).toBe(1);
   });
   it('folgt der Ablauftabelle', () => {
-    expect(phase(0)).toBe(0); expect(phase(9.99)).toBe(0);
-    expect(phase(12)).toBeCloseTo(0.5); expect(phase(14)).toBe(1);
+    expect(phase(0)).toBe(0); expect(phase(3.99)).toBe(0);
+    expect(phase(6)).toBeCloseTo(0.5); expect(phase(8)).toBe(1);
     expect(phase(25)).toBe(1); expect(phase(38)).toBeCloseTo(0.5); expect(phase(40)).toBe(0);
   });
   it('beginnt beim Laden im Sonnensystem und verwandelt sich gleich sichtbar in die Radix', () => {
-    for (let t = 0; t <= 1.4; t += 0.1) expect(phase(EINSTIEG + t)).toBe(0);
-    expect(phase(EINSTIEG + 3.5)).toBeGreaterThan(0.3);
-    for (let t = 5.5; t <= 20; t += 0.5) expect(phase(EINSTIEG + t)).toBe(1);
+    for (let t = 0; t <= 0.4; t += 0.1) expect(phase(EINSTIEG + t)).toBe(0);
+    expect(phase(EINSTIEG + 2.5)).toBeGreaterThan(0.3);
+    for (let t = 4.5; t <= 30; t += 0.5) expect(phase(EINSTIEG + t)).toBe(1);
   });
   it('ist periodisch', () => {
     for (const x of [0, 3, 11.3, 20, 37.7]) {
@@ -26,7 +26,7 @@ describe('zeitplan', () => {
     const h = 0.001; let max = 0;
     for (let x = 0; x < 2 * T; x += h) max = Math.max(max, Math.abs(phase(x + h) - phase(x)));
     expect(max).toBeLessThan((1.875 / 4) * h * 1.01); // höchste Steigung von smootherstep über 4 s
-    for (const rand of [10, 14, 36, 40]) {
+    for (const rand of [4, 8, 36, 40]) {
       expect(Math.abs(phase(rand + 1e-4) - phase(rand - 1e-4))).toBeLessThan(1e-9);
     }
   });

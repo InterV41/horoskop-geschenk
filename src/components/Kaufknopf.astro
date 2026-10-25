@@ -1,0 +1,33 @@
+---
+import { site, delivery } from '../site';
+import { langFromPath, routes } from '../i18n';
+
+interface Props {
+  hinweis?: boolean;
+}
+const { hinweis = true } = Astro.props;
+const lang = langFromPath(Astro.url.pathname);
+const t = {
+  de: { knopf: 'Horoskop bestellen', hinweis: `Innerhalb von ${delivery.duration('de')}.` },
+  en: { knopf: 'Order your horoscope', hinweis: `Within ${delivery.duration('en')}.` },
+}[lang];
+---
+
+<div class="kauf">
+  <a class="knopf knopf--gold knopf--gross" href={routes.bestellen[lang]}>{t.knopf} · {site.priceLabel[lang]}</a>
+  {hinweis ? (
+    <p class="nebentext klein kauf__hinweis">
+      {t.hinweis}{site.vatNote[lang] && ` ${site.vatNote[lang]}.`}
+    </p>
+  ) : (
+    // Ohne Hinweiszeile bleibt die Preisangabe zur Umsatzsteuer trotzdem stehen, sobald sie gesetzt ist
+    site.vatNote[lang] && <p class="nebentext klein kauf__hinweis">{site.vatNote[lang]}.</p>
+  )}
+</div>
+
+<style>
+  .kauf__hinweis {
+    margin-top: var(--s-12);
+    font-weight: 700;
+  }
+</style>

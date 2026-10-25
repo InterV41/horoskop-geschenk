@@ -1,0 +1,31 @@
+/* Farben der Szene wie auf der Startseite (KosmosRadix.astro), hier fest je Fassung statt nach Seitenmodus */
+.flug-hell .radix {
+  --rx-gold: #9a7a33;
+  --rx-text: #96762f;
+  --rx-dick: 1.6;
+  --rx-schnitt: 500;
+  --rx-disk: #fefcf8;
+  --kx-nabe: #ffffff;
+  --kx-schatten: #5a4a35;
+  --kx-hof: #e8a93c;
+  --kx-hof-o: 0.55;
+  --kx-hof2: #e3a347;
+  --kx-hof2-o: 0.22;
+}
+.flug-dunkel .radix {
+  --rx-gold: #e0c27e;
+  --rx-text: #e0c27e;
+  --rx-dick: 1;
+  --rx-schnitt: 400;
+  --rx-disk: rgb(7 16 42 / 0.5);
+  --kx-nabe: transparent;
+  --kx-schatten: #0a0f22;
+  --kx-hof: #ffcf6e;
+  --kx-hof-o: 0.65;
+  --kx-hof2: #e0a240;
+  --kx-hof2-o: 0.24;
+}
+.flug-szene {
+  position: absolute;
+  transform-origin: 50% 50%;
+}

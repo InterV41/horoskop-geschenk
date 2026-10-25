@@ -1,0 +1,144 @@
+---
+// Platzhalter für Horoskope, die noch entstehen: kurz erklärt, was kommt, mit Weg zum Geburtshoroskop.
+// Nicht in Suchmaschinen, bis das Produkt fertig ist.
+import Base from '../layouts/Base.astro';
+import { langFromPath, routes } from '../i18n';
+import { anbieter } from '../site';
+import PartnerFilm from '../components/PartnerFilm.astro';
+import Aufleuchten from '../components/Aufleuchten.astro';
+
+interface Props {
+  art: 'partner' | 'kinder';
+}
+const { art } = Astro.props;
+const lang = langFromPath(Astro.url.pathname);
+
+const T = {
+  partner: {
+    de: {
+      titel: 'Partnerschaftshoroskop',
+      text: 'Zwei Geburtsbilder nebeneinander: Das Partnerschaftshoroskop zeigt, wo sich zwei Menschen ergänzen, wo sie sich reiben und was sie miteinander verbindet. Berechnet aus den Geburtsdaten beider Partner.',
+    },
+    en: {
+      titel: 'Partnership horoscope',
+      text: 'Two birth charts side by side: the partnership horoscope shows where two people complement each other, where they create friction and what connects them. Calculated from the birth data of both partners.',
+    },
+  },
+  kinder: {
+    de: {
+      titel: 'Kinderhoroskop',
+      text: 'Das Geburtsbild eines Kindes, behutsam und für Eltern geschrieben: Temperament, Begabungen und was dieses Kind braucht, um sich gut zu entfalten. Ein Geschenk zur Geburt, zur Taufe oder zum ersten Geburtstag.',
+    },
+    en: {
+      titel: 'Child horoscope',
+      text: 'A child’s birth chart, written with care for parents: temperament, talents and what this child needs to flourish. A gift for a birth, a christening or a first birthday.',
+    },
+  },
+}[art][lang];
+const t = {
+  de: {
+    marke: 'Demnächst',
+    hinweis: 'Daran arbeiten wir gerade. Wenn du benachrichtigt werden möchtest, sobald es fertig ist, schreib uns eine kurze Mail.',
+    mail: 'Benachrichtigen lassen',
+    betreff: `Bitte benachrichtigen: ${T.titel}`,
+    zurueck: 'Schon jetzt verfügbar: das Geburtshoroskop',
+  },
+  en: {
+    marke: 'Coming soon',
+    hinweis: 'We are working on it. If you would like to be notified when it is ready, send us a short email.',
+    mail: 'Get notified',
+    betreff: `Please notify me: ${T.titel}`,
+    zurueck: 'Available now: the birth chart',
+  },
+}[lang];
+---
+
+<Base title={`${T.titel} | ${t.marke}`} description={T.text.slice(0, 150)} noindex breadcrumbs={[{ name: T.titel, path: routes[art][lang] }]}>
+  {art === 'partner' ? (
+    <>
+      <section class="abschnitt wrap mitte demnaechst demnaechst--kopf">
+        <p class="demnaechst__marke">{t.marke}</p>
+        <h1>{T.titel}</h1>
+      </section>
+      <PartnerFilm />
+      <section class="abschnitt wrap mitte demnaechst demnaechst--fuss">
+        <Aufleuchten class="lesetext einleitung" text={T.text} />
+        <p class="lesetext nebentext">{t.hinweis}</p>
+        <div class="demnaechst__aktionen">
+          <a class="knopf knopf--gold knopf--gross" href={`mailto:${anbieter.email}?subject=${encodeURIComponent(t.betreff)}`}>{t.mail}</a>
+          <a class="textlink" href={routes.produkt[lang]}>{t.zurueck} →</a>
+        </div>
+      </section>
+    </>
+  ) : (
+    <section class="abschnitt wrap mitte demnaechst">
+      <p class="demnaechst__marke">{t.marke}</p>
+      <h1>{T.titel}</h1>
+      <p class="lesetext einleitung">{T.text}</p>
+      <p class="lesetext nebentext">{t.hinweis}</p>
+      <div class="demnaechst__aktionen">
+        <a class="knopf knopf--gold knopf--gross" href={`mailto:${anbieter.email}?subject=${encodeURIComponent(t.betreff)}`}>{t.mail}</a>
+        <a class="textlink" href={routes.produkt[lang]}>{t.zurueck} →</a>
+      </div>
+    </section>
+  )}
+</Base>
+
+<style>
+  /* Partnerseite: oben nur Marke und Titel, unten Text und Aktionen, dazwischen der Film */
+  .demnaechst--kopf,
+  .demnaechst--fuss {
+    min-height: 0;
+  }
+  .demnaechst {
+    min-height: 60vh;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: var(--s-16);
+  }
+  /* „Demnächst“ als kleine Glaspille über der Überschrift */
+  .demnaechst__marke {
+    padding: 6px var(--s-16);
+    border: 1px solid color-mix(in srgb, var(--gold) 60%, transparent);
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.05);
+    color: var(--akzent);
+    font-size: var(--t-9);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .demnaechst h1 {
+    color: var(--titel);
+    font-weight: 700;
+    /* „Partnerschaftshoroskop“ ist auf schmalen Handys breiter als der Bildschirm */
+    hyphens: auto;
+    overflow-wrap: break-word;
+    max-width: 100%;
+  }
+  .demnaechst h1::after {
+    content: '';
+    display: block;
+    width: 48px;
+    height: 1px;
+    margin: var(--s-24) auto 0;
+    background: var(--gold);
+  }
+  .demnaechst .lesetext {
+    margin-inline: auto;
+  }
+  .einleitung {
+    font-size: var(--t-13);
+    line-height: 1.45;
+  }
+  .demnaechst__aktionen {
+    display: grid;
+    justify-items: center;
+    gap: var(--s-24);
+    margin-top: var(--s-24);
+  }
+  .demnaechst__aktionen .textlink {
+    font-weight: 700;
+  }
+</style>

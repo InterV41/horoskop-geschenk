@@ -1,0 +1,103 @@
+---
+import { site, legal } from '../site';
+import { langFromPath } from '../i18n';
+
+const lang = langFromPath(Astro.url.pathname);
+const t = {
+  de: { recht: 'Rechtliches' },
+  en: { recht: 'Legal' },
+}[lang];
+---
+
+<footer class="fuss">
+  {/* Eine schlanke Zeile: Marke und Rechtliches */}
+  <div class="wrap fuss__zeile">
+    <p class="fuss__marke">{site.name} <span class="fuss__jahr">© {new Date().getFullYear()}</span></p>
+    <nav aria-label={t.recht}>
+      <ul>
+        {legal(lang).map((item) => <li><a href={item.href}>{item.label}</a></li>)}
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+<style>
+  .fuss {
+    border-top: 1px solid var(--linie);
+    padding-block: var(--s-24) var(--s-32);
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+  }
+  /* So breit wie die Kopfzeile, damit alles auf eine Zeile passt */
+  .fuss__zeile {
+    max-width: 1440px;
+  }
+  .fuss__zeile {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s-8) var(--s-24);
+  }
+  .fuss__marke {
+    margin: 0;
+    font-family: var(--font-titel);
+    font-size: var(--t-11);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--tinte);
+  }
+  .fuss__jahr {
+    margin-left: var(--s-4);
+    font-family: var(--font-text);
+    font-size: 0.78rem;
+    font-weight: inherit;
+    color: var(--tinte2);
+  }
+  .fuss ul {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  /* Feine Goldpunkte zwischen den Links */
+  .fuss li + li::before {
+    content: '·';
+    margin-inline: 6px;
+    color: var(--gold);
+  }
+  .fuss a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    color: var(--tinte2);
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .fuss a:hover {
+    color: var(--akzent);
+  }
+
+  @media (max-width: 640px) {
+    .fuss__zeile,
+    .fuss ul {
+      justify-content: center;
+    }
+    .fuss__zeile {
+      flex-direction: column;
+      gap: var(--s-4);
+    }
+  }
+  /* Handy: Links brechen um, deshalb Abstand statt Punkt, damit keine Zeile mit einem Punkt beginnt */
+  @media (max-width: 720px) {
+    .fuss ul {
+      column-gap: var(--s-16);
+    }
+    .fuss li + li::before {
+      content: none;
+    }
+  }
+</style>

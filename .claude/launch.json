@@ -1,0 +1,16 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "astro",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "/Users/Valentin/Desktop/Claude Projects/Astro/Horoskop-Geschenk.de/horoskop-geschenk",
+        "run",
+        "dev"
+      ],
+      "port": 4321
+    }
+  ]
+}

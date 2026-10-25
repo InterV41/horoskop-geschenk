@@ -1,0 +1,716 @@
+---
+import Base from '../layouts/Base.astro';
+import Abbildung from '../components/Abbildung.astro';
+import Zeitstrahl from '../components/Zeitstrahl.astro';
+import { site } from '../site';
+import { langFromPath, routes } from '../i18n';
+
+const lang = langFromPath(Astro.url.pathname);
+const T = {
+  de: {
+    // Ursprünglich laut Auftrag „von Babylon“; seit der Ägypten-Abschnitt vorne steht „von Ägypten“
+    title: 'Die Geschichte der Astrologie: von Ägypten bis zum heutigen Geburtshoroskop',
+    h1: 'Die Geschichte der Astrologie',
+    description: 'Von den Sternuhren Ägyptens über die Tierkreiszeichen Babylons bis zu den Grundlagen, auf denen das heutige Geburtshoroskop berechnet wird.',
+    crumb: 'Geschichte der Astrologie',
+    kapitel: 'Kapitel',
+    kapitelListe: [
+      ['aegypten', 'Ägypten'], ['babylon', 'Babylon'], ['tierkreis', 'Tierkreis'], ['griechenland', 'Griechenland'],
+      ['mittelalter', 'Mittelalter'], ['kepler', 'Kepler'], ['gegenwart', '20. Jahrhundert'], ['jung', 'C. G. Jung'],
+      ['sprache', 'Sprache'], ['berechnung', 'Berechnung'], ['einordnung', 'Einordnung'],
+    ],
+    einleitung: 'Die Wurzeln der Astrologie reichen über viertausend Jahre zurück. In Ägypten diente der Sternenhimmel als Uhr, in Mesopotamien, dem Gebiet zwischen Euphrat und Tigris im heutigen Irak, begann man, die Sterne zu deuten. Von dort führt eine durchgehende Linie bis zu dem Geburtshoroskop, das heute aus Datum, Uhrzeit und Ort einer Geburt erstellt wird.',
+  },
+  en: {
+    title: 'The History of Astrology: from Egypt to today’s birth chart',
+    h1: 'The history of astrology',
+    description: 'From the star clocks of Egypt and the zodiac signs of Babylon to the foundations on which today’s birth chart is calculated.',
+    crumb: 'History of astrology',
+    kapitel: 'Chapters',
+    kapitelListe: [
+      ['aegypten', 'Egypt'], ['babylon', 'Babylon'], ['tierkreis', 'Zodiac'], ['griechenland', 'Greece'],
+      ['mittelalter', 'Middle Ages'], ['kepler', 'Kepler'], ['gegenwart', '20th century'], ['jung', 'C. G. Jung'],
+      ['sprache', 'Language'], ['berechnung', 'Calculation'], ['einordnung', 'Perspective'],
+    ],
+    einleitung: 'The roots of astrology reach back more than four thousand years. In Egypt the starry sky served as a clock; in Mesopotamia, the region between the Euphrates and the Tigris in present-day Iraq, people began to read meaning into the stars. From there, a continuous line leads to the birth chart that is created today from the date, time and place of a birth.',
+  },
+};
+const t = T[lang];
+
+const artikel = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: t.h1,
+  description: t.description,
+  inLanguage: lang,
+  publisher: { '@type': 'Organization', name: site.brand, url: site.url },
+};
+---
+
+<Base
+  title={t.title}
+  description={t.description}
+  breadcrumbs={[{ name: t.crumb, path: routes.geschichte[lang] }]}
+  jsonLd={[artikel]}
+>
+  <article class="abschnitt geschichte">
+    <header class="wrap kopf">
+      <h1 class="titel">{t.h1}</h1>
+      <p class="einleitung">{t.einleitung}</p>
+    </header>
+    {/* Nur am Handy und Tablet: Orientierung über die Kapitel, weil der Zeitstrahl dort fehlt */}
+    <nav class="wrap kapitelleiste" aria-label={t.kapitel}>
+      <ul>
+        {t.kapitelListe.map(([id, name]) => (
+          <li><a href={`#${id}`}>{name}</a></li>
+        ))}
+      </ul>
+    </nav>
+    <div class="wrap geschichte__raster">
+      <div class="epoche epoche--titel">
+        <div class="epoche__zeit"><Zeitstrahl /></div>
+      </div>
+    {lang === 'de' ? (
+  <Fragment>
+    <div class="epochen">
+      <section class="epoche" aria-labelledby="aegypten">
+        <div class="epoche__zeit"><Zeitstrahl ziel="aegypten" /></div>
+        <div class="epoche__text prosa">
+        <h2 id="aegypten">Sternuhren und Dekane in Ägypten</h2>
+        <p>
+          Schon um 2100 vor Christus nutzten ägyptische Priester den Sternenhimmel als Uhr. Sie teilten ihn in 36
+          Sterngruppen, die Dekane, von denen jede etwa zehn Tage lang kurz vor Sonnenaufgang am Osthimmel aufging. Auf
+          den Innenseiten von Sargdeckeln sind diese Sternuhren als Tabellen erhalten. Aus den zwölf Dekanen, die in
+          einer Nacht nacheinander aufgingen, ging die Einteilung der Nacht in zwölf Stunden hervor und damit unser Tag
+          mit vierundzwanzig Stunden.
+        </p>
+
+        <Abbildung datei="hathor-tempel-dendera-saeulenhalle" ausschnitt="50% 38%" alt="Blick nach oben in die Säulenhalle des Hathor-Tempels von Dendera: Säulen mit dem Gesicht der Göttin Hathor, darüber eine bemalte Decke mit Geiern mit ausgebreiteten Flügeln und Hieroglyphen" unterschrift="Die Säulenhalle des Hathor-Tempels von Dendera. Die Kapitelle zeigen das Gesicht der Göttin Hathor, an der Decke breiten Geier ihre Flügel aus. In derselben Halle sind Himmelsgöttin, Dekane und Tierkreiszeichen an die Decke gemalt. Foto: Diego F. Parra, Pexels-Lizenz. Quelle: Pexels" zuerst />
+        <p>
+          Astrologie im heutigen Sinn war das noch nicht, die Deutung der Sterne kam aus Babylon. In hellenistischer
+          Zeit flossen beide Traditionen zusammen. Der Tierkreis von Dendera zeigt das: Er verbindet die babylonischen
+          Zeichen mit den ägyptischen Dekanen.
+        </p>
+
+        <Abbildung datei="tierkreis-von-dendera-louvre" alt="Rundes Steinrelief des Tierkreises von Dendera mit den zwölf Zeichen" unterschrift="Der Tierkreis von Dendera, um 50 v. Chr., heute im Louvre. [Fotograf und Lizenz ergänzen]" />
+        </div>
+      </section>
+      <section class="epoche" aria-labelledby="babylon">
+        <div class="epoche__zeit"><Zeitstrahl ziel="babylon" /></div>
+        <div class="epoche__text prosa">
+        <h2 id="babylon">Himmelsbeobachtung im Auftrag des Palastes in Babylon</h2>
+        <p>
+          Ab etwa 2000 vor Christus hielten babylonische Priester systematisch fest, was sie am Nachthimmel sahen.
+          Mondfinsternisse, enge Begegnungen von Planeten, das erste Wiedererscheinen der Venus am Morgenhimmel.
+          Daneben vermerkten sie Ereignisse im Land, etwa Überschwemmungen oder einen Herrscherwechsel. Aus diesen
+          Notizen wuchs über Jahrhunderte die Omenserie Enuma Anu Enlil, rund siebzig Keilschrifttafeln mit mehreren
+          tausend Einträgen. Die Deutungen galten dem König und dem Reich, nicht einzelnen Personen.
+        </p>
+
+        <Abbildung datei="babylonische-keilschrifttafel-astronomie" ausschnitt="50% 55%" alt="Babylonische Keilschrifttafel mit astronomischen Aufzeichnungen" unterschrift="Keilschrifttafel mit Himmelsbeobachtungen aus Mesopotamien. [Sammlung, Inventarnummer, Lizenz ergänzen]" />
+        </div>
+      </section>
+      <section class="epoche" aria-labelledby="tierkreis">
+        <div class="epoche__zeit"><Zeitstrahl ziel="tierkreis" /></div>
+        <div class="epoche__text prosa">
+        <h2 id="tierkreis">Die Entstehung der Tierkreiszeichen</h2>
+        <p>
+          Um 450 vor Christus teilten babylonische Gelehrte die Ekliptik in zwölf gleich große Abschnitte von je
+          dreißig Grad. Ekliptik bezeichnet die Bahn, auf der die Sonne im Lauf eines Jahres über den Himmel zu wandern
+          scheint. Jeder Abschnitt erhielt den Namen des Sternbilds, das in dieser Region lag, vom Widder bis zu den
+          Fischen. Die zwölf Tierkreiszeichen sind damit kein Abbild der Sternbilder, sondern ein Maßsystem für
+          Positionsangaben.
+        </p>
+        <p>
+          Aus dem Jahr 410 vor Christus stammt die älteste bekannte Tafel mit einem Horoskop für ein einzelnes Kind. Ab
+          diesem Zeitpunkt lässt sich die persönliche Astrologie belegen.
+        </p>
+        </div>
+      </section>
+      <section class="epoche" aria-labelledby="griechenland">
+        <div class="epoche__zeit"><Zeitstrahl ziel="griechenland" /></div>
+        <div class="epoche__text prosa">
+        <h2 id="griechenland">Aszendent, Häuser und Aspekte aus Griechenland</h2>
+        <p>
+          Nach den Feldzügen Alexanders gelangte das babylonische Material nach Ägypten und Griechenland. In Alexandria
+          entstand daraus das System, mit dem die westliche Astrologie bis heute arbeitet. Hinzu kamen der Aszendent,
+          also das Tierkreiszeichen, das in der Geburtsminute im Osten über den Horizont steigt, die zwölf Häuser als
+          Einteilung in Lebensbereiche und die Aspekte, die Winkelabstände zwischen den Planeten.
+        </p>
+
+        <Abbildung datei="geburtshoroskop-nero-sibly" ausschnitt="50% 45%" alt="Kupferstich: Geburtshoroskop für Kaiser Nero, in der Mitte sein Profil mit Lorbeerkranz, ringsum die zwölf Häuser mit Tierkreiszeichen und Planeten" unterschrift="Geburtshoroskop für Kaiser Nero nach Girolamo Cardano, aus Ebenezer Sibly, A new and complete illustration of the celestial science of astrology. Kupferstich, um 1790. Public Domain Mark. Quelle: Wellcome Collection" />
+        <p>
+          Claudius Ptolemäus fasste diesen Stand um 150 nach Christus in seiner Tetrabiblos zusammen. Das Werk blieb
+          etwa anderthalb Jahrtausende das Standardwerk der Disziplin.
+        </p>
+
+        <Abbildung datei="ptolemaeus-holzschnitt-1564" ausschnitt="50% 40%" alt="Holzschnitt: Ptolemäus misst mit einem Quadranten die Höhe der Sterne, neben ihm eine Armillarsphäre" unterschrift="Ptolemäus mit Quadrant und Armillarsphäre. Holzschnitt aus einer italienischen Ausgabe seiner Schriften, Venedig 1564. Gemeinfrei. Quelle: Wikimedia Commons" />
+        </div>
+      </section>
+      <section class="epoche" aria-labelledby="mittelalter">
+        <div class="epoche__zeit"><Zeitstrahl ziel="mittelalter" /></div>
+        <div class="epoche__text prosa">
+        <h2 id="mittelalter">Arabische Überlieferung und europäisches Mittelalter</h2>
+        <p>
+          Nach dem Ende des Weströmischen Reiches wurde das Wissen vor allem im arabischen Raum weitergeführt. In Bagdad
+          übersetzte man die griechischen Texte und verbesserte die Berechnung der Planetenstände. Abu Maʿschar aus
+          Balch, gestorben 886, verfasste Schriften, die später in Europa gelesen wurden.
+        </p>
+        <p>
+          Über Spanien kam das Material zurück. Im 12. Jahrhundert übertrugen Gelehrte in Toledo die arabischen
+          Handschriften ins Lateinische. In der Folge gehörten Astrologen zum Personal größerer Höfe, Bologna richtete
+          einen Lehrstuhl ein und Ärzte berücksichtigten die Mondstellung bei Eingriffen wie dem Aderlass.
+        </p>
+
+        <Abbildung datei="horoskop-handschrift-iskandar" alt="Handgezeichnetes Horoskopdiagramm aus einer persischen Handschrift" unterschrift="Horoskop aus dem Geburtsbuch des Iskandar (Kitab-i viladat-i Iskandar). CC BY 4.0. Quelle: Wellcome Collection" />
+
+        <Abbildung datei="geburt-mit-astrologen-holzschnitt" ausschnitt="50% 40%" alt="Holzschnitt: Hebammen helfen bei einer Geburt, im Hintergrund lesen zwei Astrologen den Sternenhimmel und zeichnen das Horoskop" unterschrift="Eine Frau bringt mit Hilfe einer Hebamme und zweier Helferinnen ein Kind zur Welt, im Hintergrund beobachten zwei Männer die Sterne und stellen das Horoskop. Holzschnitt, vermutlich 1583. Public Domain Mark. Quelle: Wellcome Collection" />
+        </div>
+      </section>
+      <section class="epoche" aria-labelledby="kepler">
+        <div class="epoche__zeit"><Zeitstrahl ziel="kepler" /></div>
+        <div class="epoche__text prosa">
+        <h2 id="kepler">Kepler und die Trennung der Fächer</h2>
+        <p>
+          Bis ins 17. Jahrhundert waren Astronomie und Astrologie dasselbe Fach. Johannes Kepler, der die Gesetze der
+          Planetenbewegung formulierte, erstellte am Prager Hof Horoskope für Kaiser Rudolf II. und für Wallenstein. Die
+          Trennung vollzog sich im Zuge der neuzeitlichen Naturwissenschaft, die sich auf messbare Größen beschränkte.
+          Die 1666 gegründete Pariser Akademie der Wissenschaften nahm die Astrologie nicht in ihr Programm auf.
+        </p>
+
+        <p>
+          Wie selbstverständlich der Tierkreis damals zum Alltag gehörte, zeigt die Uhr am Torre dell’Orologio auf dem
+          Markusplatz in Venedig, fertiggestellt 1499. Ihr Zifferblatt zeigt neben den vierundzwanzig Stunden auch den
+          Stand der Sonne im Tierkreis und die Phase des Mondes.
+        </p>
+
+        <Abbildung datei="ancient-clock-torre-dellorologio" alt="Zifferblatt der Uhr am Torre dell’Orologio in Venedig: blaues Feld mit goldenen Tierkreiszeichen, Sonne und Mond, umgeben von einem Ring mit römischen Stundenzahlen" unterschrift="Die astronomische Uhr am Torre dell’Orologio in Venedig, Ende des 15. Jahrhunderts. Stunden, Tierkreis, Sonne und Mond auf einem Zifferblatt. Foto: Ildigo, Pixabay-Inhaltslizenz. Quelle: Pixabay" />
+
+        <Abbildung datei="johannes-kepler-portraet-1610" ausschnitt="50% 15%" alt="Linienstich: Johannes Kepler mit Halskrause und Vollbart" unterschrift="Johannes Kepler. Linienstich von N. Dietz. Public Domain Mark. Quelle: Wellcome Collection" />
+        </div>
+      </section>
+      <section class="epoche" aria-labelledby="gegenwart">
+        <div class="epoche__zeit"><Zeitstrahl ziel="gegenwart" /></div>
+        <div class="epoche__text prosa">
+        <h2 id="gegenwart">Das 20. Jahrhundert</h2>
+        <p>
+          Das Zeitungshoroskop nach Sonnenzeichen geht auf den 24. August 1930 zurück. Der Sunday Express
+          veröffentlichte ein Horoskop des Astrologen R. H. Naylor zur Geburt von Prinzessin Margaret und machte daraus
+          wegen der Resonanz eine feste Rubrik. Zur gleichen Zeit entstand eine ganz andere Strömung, die vom
+          Psychiater C. G. Jung ausging.
+        </p>
+        </div>
+      </section>
+      <section class="epoche" aria-labelledby="jung">
+        <div class="epoche__zeit"><Zeitstrahl ziel="jung" /></div>
+        <div class="epoche__text prosa">
+        <h2 id="jung">C. G. Jung und das Horoskop als Bild der Seele</h2>
+        <p>
+          Kein Denker hat die moderne Astrologie so geprägt wie der Schweizer Psychiater Carl Gustav Jung (1875 bis
+          1961), der Begründer der analytischen Psychologie. Über Jahrzehnte beschäftigte er sich mit Horoskopen, nicht
+          als Wahrsagerei, sondern als Teil seiner Arbeit an den Bildern, die in Mythen, Träumen und Märchen immer
+          wiederkehren. Diese Urbilder nannte er Archetypen. In den Planeten und Tierkreiszeichen sah er eine der
+          ältesten Sammlungen solcher Bilder.
+        </p>
+
+        <Abbildung datei="carl-gustav-jung-1935" ausschnitt="50% 35%" alt="Fotografie: Carl Gustav Jung mit Brille und Pfeife, im Freien vor dunklem Laub" unterschrift="Carl Gustav Jung, um 1935. ETH-Bibliothek Zürich, Bildarchiv, Portr_14163. Public Domain Mark. Quelle: Wikimedia Commons" />
+
+        <p>
+          1930 sprach Jung in seiner Gedenkrede auf den Sinologen Richard Wilhelm einen Gedanken aus, der bis heute
+          zitiert wird: Was in einem bestimmten Augenblick geboren wird, trägt die Qualität dieses Augenblicks. Das
+          Horoskop hält genau diesen Augenblick fest. In einem Brief an den indischen Astrologen B. V. Raman schrieb er
+          1947, er beschäftige sich seit mehr als dreißig Jahren mit Astrologie. In schwierigen Fällen lasse er ein
+          Horoskop erstellen, um einen weiteren Blickwinkel zu gewinnen.
+        </p>
+        <p>
+          Wie aber sollen ferne Planeten mit einem Menschen zusammenhängen? Jung suchte die Antwort nicht in einer
+          Kraft, die von den Sternen ausgeht. 1952 veröffentlichte er, gemeinsam mit dem Physiker Wolfgang Pauli, seine
+          Schrift über Synchronizität. Er beschrieb damit sinnvolle Zusammenhänge zwischen Ereignissen, die nicht auf
+          Ursache und Wirkung beruhen. Ein Horoskop bewirkt demnach nichts, es spiegelt etwas. Für die Schrift wertete
+          Jung auch die Horoskope von Ehepaaren aus. Die Ergebnisse hielt er selbst für statistisch nicht
+          aussagekräftig.
+        </p>
+        <p>
+          Seine Sicht hat die Astrologie verändert. Seit Dane Rudhyar 1936 „The Astrology of Personality“
+          veröffentlichte, versteht die psychologische Astrologie das Geburtshoroskop als Beschreibung von Anlagen und
+          inneren Spannungen, nicht als Vorhersage von Ereignissen. Auf dieser Haltung beruhen auch die Texte bei
+          {site.name}.
+        </p>
+        </div>
+      </section>
+      <section class="epoche" aria-labelledby="sprache">
+        <div class="epoche__zeit"><Zeitstrahl ziel="sprache" /></div>
+        <div class="epoche__text prosa">
+        <h2 id="sprache">Spuren in der Sprache</h2>
+        <p>
+          Einige Begriffe stammen aus der astrologischen Tradition. Die Wochentage sind nach Himmelskörpern benannt, der
+          Montag nach dem Mond, der Samstag nach Saturn. Influenza geht auf den angenommenen Einfluss der Gestirne
+          zurück, Desaster auf einen ungünstigen Stern.
+        </p>
+        </div>
+      </section>
+      <section class="epoche" aria-labelledby="berechnung">
+        <div class="epoche__zeit"><Zeitstrahl ziel="berechnung" /></div>
+        <div class="epoche__text prosa">
+        <h2 id="berechnung">Grundlagen der Berechnung</h2>
+        <p>
+          Ein Geburtshoroskop, fachsprachlich Radix, beruht auf Geburtsdatum, Geburtszeit und Geburtsort. Datum und
+          Uhrzeit ergeben die Positionen von Sonne, Mond und Planeten entlang der Ekliptik in Grad innerhalb der zwölf
+          Zeichen. Ort und Minute bestimmen zusätzlich den Aszendenten und damit die Lage der Häuser. Berechnet wurde
+          das jahrhundertelang anhand der Ephemeriden, Tabellenwerken mit den Planetenständen für jeden Tag des Jahres.
+        </p>
+        <p>
+          Die westliche Astrologie verwendet den tropischen Tierkreis, der am Frühlingspunkt ausgerichtet ist, also an
+          dem Moment, in dem die Sonne im März den Himmelsäquator kreuzt. Durch die langsame Taumelbewegung der
+          Erdachse hat sich dieser Punkt gegenüber den Sternbildern um etwa 24 Grad verschoben. Die indische Astrologie
+          rechnet sternbezogen und kommt deshalb für dieselbe Person häufig auf ein anderes Zeichen.
+        </p>
+
+        <Abbildung datei="ephemeriden-tabelle-historisch" ausschnitt="50% 30%" alt="Kalenderblatt für September mit Namenstagen, dem täglichen Mondstand im Tierkreis und Wetterangaben" unterschrift="Kalenderblatt aus dem „Allmanach auff das 1581 jar“ von Petrus Slovacius, gedruckt in Breslau 1580, mit dem täglichen Stand des Mondes im Tierkreis. Public Domain Mark. Quelle: Wellcome Collection" />
+        </div>
+      </section>
+      <section class="epoche" aria-labelledby="einordnung">
+        <div class="epoche__zeit"><Zeitstrahl ziel="einordnung" /></div>
+        <div class="epoche__text prosa rahmen einordnung">
+        <h2 id="einordnung">Einordnung</h2>
+        <p>
+          Ein Wirkungszusammenhang zwischen Planetenstellungen und menschlichem Leben ist naturwissenschaftlich nicht
+          nachgewiesen. Als Kulturtechnik ist die Astrologie dagegen durchgehend seit vier Jahrtausenden belegt. Das
+          Geburtshoroskop bildet bis heute die Grundlage ihrer Deutungspraxis.
+        </p>
+        <p class="rechtlich">
+          <strong>Rechtlicher Hinweis:</strong> Ein Horoskop ist keine medizinische, psychologische oder therapeutische
+          Leistung. Es stellt keine Diagnose und ersetzt weder eine ärztliche oder psychotherapeutische Behandlung noch
+          eine Rechts- oder Finanzberatung. Es dient der Unterhaltung und Selbstreflexion.
+        </p>
+        <p>
+          Nach diesen Grundlagen entsteht bei {site.name} ein{' '}
+          <a href={routes.produkt.de}>persönliches Geburtshoroskop als PDF</a>.
+        </p>
+        </div>
+      </section>
+    </div>
+  </Fragment>
+    ) : (
+  <Fragment>
+    <div class="epochen">
+      <section class="epoche" aria-labelledby="aegypten">
+        <div class="epoche__zeit"><Zeitstrahl ziel="aegypten" /></div>
+        <div class="epoche__text prosa">
+        <h2 id="aegypten">Star clocks and decans in Egypt</h2>
+        <p>
+          As early as 2100 BC, Egyptian priests used the starry sky as a clock. They divided it into 36 groups of
+          stars, the decans, each of which rose on the eastern horizon shortly before sunrise for about ten days. These
+          star clocks survive as tables on the inside of coffin lids. The twelve decans that rose one after another
+          during a night gave rise to the division of the night into twelve hours, and with it our day of twenty-four
+          hours.
+        </p>
+
+        <Abbildung datei="hathor-tempel-dendera-saeulenhalle" ausschnitt="50% 38%" alt="Looking up into the hypostyle hall of the Temple of Hathor at Dendera: columns bearing the face of the goddess Hathor, above them a painted ceiling with vultures spreading their wings and hieroglyphs" unterschrift="The hypostyle hall of the Temple of Hathor at Dendera. The capitals show the face of the goddess Hathor; on the ceiling, vultures spread their wings. In the same hall, the sky goddess, the decans and the zodiac signs are painted on the ceiling. Photo: Diego F. Parra, Pexels License. Source: Pexels" zuerst />
+        <p>
+          This was not yet astrology in today's sense; reading meaning into the stars came from Babylon. In the
+          Hellenistic period the two traditions merged. The Dendera zodiac shows this: it combines the Babylonian
+          signs with the Egyptian decans.
+        </p>
+
+        <Abbildung datei="tierkreis-von-dendera-louvre" alt="Round stone relief of the Dendera zodiac with the twelve signs" unterschrift="The Dendera zodiac, c. 50 BC, now in the Louvre. [Add photographer and licence]" />
+        </div>
+      </section>
+      <section class="epoche" aria-labelledby="babylon">
+        <div class="epoche__zeit"><Zeitstrahl ziel="babylon" /></div>
+        <div class="epoche__text prosa">
+        <h2 id="babylon">Observing the sky for the palace in Babylon</h2>
+        <p>
+          From around 2000 BC, Babylonian priests systematically recorded what they saw in the night sky. Lunar
+          eclipses, close encounters of planets, the first reappearance of Venus in the morning sky. Alongside, they
+          noted events in the land, such as floods or a change of ruler. Over centuries, these notes grew into the omen
+          series Enuma Anu Enlil, around seventy cuneiform tablets with several thousand entries. The interpretations
+          concerned the king and the realm, not individual people.
+        </p>
+
+        <Abbildung datei="babylonische-keilschrifttafel-astronomie" ausschnitt="50% 55%" alt="Babylonian cuneiform tablet with astronomical records" unterschrift="Cuneiform tablet with observations of the sky from Mesopotamia. [Add collection, inventory number, licence]" />
+        </div>
+      </section>
+      <section class="epoche" aria-labelledby="tierkreis">
+        <div class="epoche__zeit"><Zeitstrahl ziel="tierkreis" /></div>
+        <div class="epoche__text prosa">
+        <h2 id="tierkreis">The origin of the zodiac signs</h2>
+        <p>
+          Around 450 BC, Babylonian scholars divided the ecliptic into twelve equal sections of thirty degrees each.
+          The ecliptic is the path along which the sun appears to travel across the sky over the course of a year. Each
+          section was named after the constellation that lay in that region, from Aries to Pisces. The twelve zodiac
+          signs are therefore not a picture of the constellations but a system of measurement for stating positions.
+        </p>
+        <p>
+          The oldest known tablet with a horoscope for an individual child dates from 410 BC. From this point on,
+          personal astrology can be documented.
+        </p>
+        </div>
+      </section>
+      <section class="epoche" aria-labelledby="griechenland">
+        <div class="epoche__zeit"><Zeitstrahl ziel="griechenland" /></div>
+        <div class="epoche__text prosa">
+        <h2 id="griechenland">Ascendant, houses and aspects from Greece</h2>
+        <p>
+          After the campaigns of Alexander, the Babylonian material reached Egypt and Greece. In Alexandria it became
+          the system that Western astrology still works with today. Added to it were the ascendant, the zodiac sign
+          rising over the eastern horizon in the minute of birth, the twelve houses as a division into areas of life,
+          and the aspects, the angular distances between the planets.
+        </p>
+
+        <Abbildung datei="geburtshoroskop-nero-sibly" ausschnitt="50% 45%" alt="Copperplate engraving: birth chart for Emperor Nero, his laurel-crowned profile in the centre, surrounded by the twelve houses with zodiac signs and planets" unterschrift="Birth chart for Emperor Nero after Girolamo Cardano, from Ebenezer Sibly, A new and complete illustration of the celestial science of astrology. Copperplate engraving, c. 1790. Public Domain Mark. Source: Wellcome Collection" />
+        <p>
+          Claudius Ptolemy summarised this state of knowledge around AD 150 in his Tetrabiblos. The work remained the
+          standard reference of the discipline for about one and a half thousand years.
+        </p>
+
+        <Abbildung datei="ptolemaeus-holzschnitt-1564" ausschnitt="50% 40%" alt="Woodcut: Ptolemy measures the altitude of the stars with a quadrant, an armillary sphere beside him" unterschrift="Ptolemy with quadrant and armillary sphere. Woodcut from an Italian edition of his writings, Venice 1564. Public domain. Source: Wikimedia Commons" />
+        </div>
+      </section>
+      <section class="epoche" aria-labelledby="mittelalter">
+        <div class="epoche__zeit"><Zeitstrahl ziel="mittelalter" /></div>
+        <div class="epoche__text prosa">
+        <h2 id="mittelalter">Arabic tradition and the European Middle Ages</h2>
+        <p>
+          After the end of the Western Roman Empire, the knowledge was carried forward above all in the Arabic world.
+          In Baghdad the Greek texts were translated and the calculation of planetary positions was improved. Abu
+          Maʿshar of Balkh, who died in 886, wrote works that were later read in Europe.
+        </p>
+        <p>
+          The material returned by way of Spain. In the 12th century, scholars in Toledo translated the Arabic
+          manuscripts into Latin. As a result, astrologers became part of the staff of larger courts, Bologna
+          established a chair and physicians took the position of the moon into account for procedures such as
+          bloodletting.
+        </p>
+
+        <Abbildung datei="horoskop-handschrift-iskandar" alt="Hand-drawn horoscope diagram from a Persian manuscript" unterschrift="Horoscope from the Book of Birth of Iskandar (Kitab-i viladat-i Iskandar). CC BY 4.0. Source: Wellcome Collection" />
+
+        <Abbildung datei="geburt-mit-astrologen-holzschnitt" ausschnitt="50% 40%" alt="Woodcut: midwives assist at a birth while two astrologers read the night sky and draw the horoscope in the background" unterschrift="A seated woman giving birth aided by a midwife and two other attendants, in the background two men are looking at the stars and plotting a horoscope. Woodcut, 1583 (?). Public Domain Mark. Source: Wellcome Collection" />
+        </div>
+      </section>
+      <section class="epoche" aria-labelledby="kepler">
+        <div class="epoche__zeit"><Zeitstrahl ziel="kepler" /></div>
+        <div class="epoche__text prosa">
+        <h2 id="kepler">Kepler and the separation of the disciplines</h2>
+        <p>
+          Until the 17th century, astronomy and astrology were the same subject. Johannes Kepler, who formulated the
+          laws of planetary motion, cast horoscopes at the court in Prague for Emperor Rudolf II and for Wallenstein.
+          The separation came with modern natural science, which confined itself to measurable quantities. The Paris
+          Academy of Sciences, founded in 1666, did not include astrology in its programme.
+        </p>
+
+        <p>
+          How naturally the zodiac belonged to everyday life at the time is shown by the clock on the Torre
+          dell’Orologio on St Mark’s Square in Venice, completed in 1499. Besides the twenty-four hours, its dial shows
+          the position of the sun in the zodiac and the phase of the moon.
+        </p>
+
+        <Abbildung datei="ancient-clock-torre-dellorologio" alt="Dial of the clock on the Torre dell’Orologio in Venice: a blue field with golden zodiac signs, sun and moon, surrounded by a ring of Roman hour numerals" unterschrift="The astronomical clock on the Torre dell’Orologio in Venice, late 15th century. Hours, zodiac, sun and moon on a single dial. Photo: Ildigo, Pixabay Content License. Source: Pixabay" />
+
+        <Abbildung datei="johannes-kepler-portraet-1610" ausschnitt="50% 15%" alt="Line engraving: Johannes Kepler with ruff and full beard" unterschrift="Johannes Kepler. Line engraving by N. Dietz. Public Domain Mark. Source: Wellcome Collection" />
+        </div>
+      </section>
+      <section class="epoche" aria-labelledby="gegenwart">
+        <div class="epoche__zeit"><Zeitstrahl ziel="gegenwart" /></div>
+        <div class="epoche__text prosa">
+        <h2 id="gegenwart">The 20th century</h2>
+        <p>
+          The newspaper horoscope by sun sign goes back to 24 August 1930. The Sunday Express published a horoscope by
+          the astrologer R. H. Naylor on the birth of Princess Margaret and, because of the response, turned it into a
+          regular column. At the same time, a very different current emerged, starting from the
+          psychiatrist C. G. Jung.
+        </p>
+        </div>
+      </section>
+      <section class="epoche" aria-labelledby="jung">
+        <div class="epoche__zeit"><Zeitstrahl ziel="jung" /></div>
+        <div class="epoche__text prosa">
+        <h2 id="jung">C. G. Jung and the horoscope as an image of the psyche</h2>
+        <p>
+          No thinker shaped modern astrology as much as the Swiss psychiatrist Carl Gustav Jung (1875 to 1961), the
+          founder of analytical psychology. For decades he studied horoscopes, not as fortune-telling, but as part of
+          his work on the images that recur in myths, dreams and fairy tales. He called these primordial images
+          archetypes. In the planets and zodiac signs he saw one of the oldest collections of such images.
+        </p>
+
+        <Abbildung datei="carl-gustav-jung-1935" ausschnitt="50% 35%" alt="Photograph: Carl Gustav Jung with glasses and pipe, outdoors in front of dark foliage" unterschrift="Carl Gustav Jung, c. 1935. ETH Library Zurich, Image Archive, Portr_14163. Public Domain Mark. Source: Wikimedia Commons" />
+
+        <p>
+          In 1930, in his memorial address for the sinologist Richard Wilhelm, Jung expressed a thought that is still
+          quoted today: whatever is born at a particular moment carries the quality of that moment. The horoscope
+          captures exactly this moment. In a letter to the Indian astrologer B. V. Raman in 1947, he wrote that he had
+          been interested in astrology for more than thirty years. In difficult cases he had a horoscope cast to gain a
+          further point of view.
+        </p>
+        <p>
+          But how could distant planets be connected with a person? Jung did not look for the answer in a force
+          emanating from the stars. In 1952, together with the physicist Wolfgang Pauli, he published his essay on
+          synchronicity. With it he described meaningful connections between events that do not rest on cause and
+          effect. A horoscope therefore causes nothing; it mirrors something. For the essay Jung also analysed the
+          horoscopes of married couples. He himself considered the results statistically inconclusive.
+        </p>
+        <p>
+          His view changed astrology. Since Dane Rudhyar published “The Astrology of Personality” in 1936,
+          psychological astrology has understood the birth chart as a description of dispositions and inner tensions,
+          not as a prediction of events. The texts at {site.name} rest on this approach too.
+        </p>
+        </div>
+      </section>
+      <section class="epoche" aria-labelledby="sprache">
+        <div class="epoche__zeit"><Zeitstrahl ziel="sprache" /></div>
+        <div class="epoche__text prosa">
+        <h2 id="sprache">Traces in language</h2>
+        <p>
+          Some words come from the astrological tradition. The days of the week are named after celestial bodies,
+          Monday after the moon, Saturday after Saturn. Influenza goes back to the supposed influence of the stars,
+          disaster to an unfavourable star.
+        </p>
+        </div>
+      </section>
+      <section class="epoche" aria-labelledby="berechnung">
+        <div class="epoche__zeit"><Zeitstrahl ziel="berechnung" /></div>
+        <div class="epoche__text prosa">
+        <h2 id="berechnung">Basics of the calculation</h2>
+        <p>
+          A birth chart, technically called the radix, is based on the date, time and place of birth. Date and time
+          give the positions of the sun, moon and planets along the ecliptic, in degrees within the twelve signs. Place
+          and minute also determine the ascendant and thus the position of the houses. For centuries this was
+          calculated using ephemerides, tables with the planetary positions for every day of the year.
+        </p>
+        <p>
+          Western astrology uses the tropical zodiac, which is aligned with the vernal equinox point, the moment in
+          March when the sun crosses the celestial equator. Because of the slow wobble of the Earth's axis, this point
+          has shifted by about 24 degrees relative to the constellations. Indian astrology calculates relative to the
+          stars and therefore often arrives at a different sign for the same person.
+        </p>
+
+        <Abbildung datei="ephemeriden-tabelle-historisch" ausschnitt="50% 30%" alt="Calendar page for September with saints’ days, the daily position of the moon in the zodiac and weather notes" unterschrift="Calendar page from the “Allmanach auff das 1581 jar” by Petrus Slovacius, printed in Breslau in 1580, with the daily position of the moon in the zodiac. Public Domain Mark. Source: Wellcome Collection" />
+        </div>
+      </section>
+      <section class="epoche" aria-labelledby="einordnung">
+        <div class="epoche__zeit"><Zeitstrahl ziel="einordnung" /></div>
+        <div class="epoche__text prosa rahmen einordnung">
+        <h2 id="einordnung">Perspective</h2>
+        <p>
+          A causal connection between planetary positions and human life has not been demonstrated scientifically. As
+          a cultural practice, however, astrology has been documented continuously for four millennia. The birth chart
+          remains the basis of its practice of interpretation to this day.
+        </p>
+        <p class="rechtlich">
+          <strong>Legal note:</strong> A horoscope is not a medical, psychological or therapeutic service. It does not
+          provide a diagnosis and is no substitute for medical or psychotherapeutic treatment, nor for legal or
+          financial advice. It is intended for entertainment and self-reflection.
+        </p>
+        <p>
+          Following these principles, {site.name} creates a{' '}
+          <a href={routes.produkt.en}>personal birth chart as a PDF</a>.
+        </p>
+        </div>
+      </section>
+    </div>
+  </Fragment>
+    )}
+    </div>
+  </article>
+</Base>
+
+<style>
+  /* Kopf: linksbündig, Goldstrich, viel Luft */
+  .kopf {
+    margin-bottom: var(--s-64);
+  }
+  .titel {
+    max-width: 18em;
+  }
+  .titel::after {
+    content: '';
+    display: block;
+    width: 48px;
+    height: 1px;
+    margin: var(--s-24) 0 0;
+    background: var(--gold);
+  }
+  .kapitelleiste {
+    display: none;
+  }
+  .einleitung {
+    max-width: 34em;
+    margin: var(--s-24) 0 0;
+    font-size: var(--t-13);
+    line-height: 1.45;
+    color: var(--tinte2);
+  }
+
+  /* Jede Epoche eine Zeile: links ihre Stationen im Zeitstrahl, rechts Text und Bild dazu.
+     Die Goldlinie läuft durch alle Zeilen, die Stationen bleiben neben ihrem Text stehen. */
+  .epoche {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 21rem) minmax(0, 1fr);
+    column-gap: var(--s-64);
+    padding-bottom: var(--s-64);
+  }
+  .epoche::before {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: color-mix(in srgb, var(--gold) 60%, transparent);
+  }
+  /* Beim Titel beginnt die Linie erst unter der Schrift, egal wie viele Zeilen er hat */
+  .epoche--titel::before {
+    top: auto;
+    bottom: 0;
+    height: var(--s-24);
+  }
+  .epoche--titel {
+    padding-bottom: var(--s-48);
+  }
+  .epochen > .epoche:last-child::before {
+    bottom: auto;
+    height: var(--s-48);
+  }
+  .epoche__zeit {
+    position: sticky;
+    top: 112px;
+    align-self: start;
+  }
+  .epoche--titel .epoche__zeit {
+    position: static;
+  }
+  .epoche__text {
+    max-width: var(--zeile);
+  }
+  .epoche__text :global(h2) {
+    margin-top: 0;
+    scroll-margin-top: 104px;
+  }
+  /* Zwischenüberschriften mit dem kurzen Goldstrich der Startseite */
+  .epoche__text :global(h2::after) {
+    content: '';
+    display: block;
+    width: 48px;
+    height: 1px;
+    margin-top: var(--s-16);
+    background: var(--gold);
+  }
+
+  /* Einordnung am Schluss: im abgerundeten Rahmen */
+  .einordnung {
+    padding: var(--s-32) var(--s-48);
+  }
+  .einordnung :global(.rechtlich) {
+    margin-top: var(--s-16);
+    padding-top: var(--s-16);
+    border-top: 1px solid var(--linie);
+    color: var(--tinte2);
+  }
+  .einordnung :global(.rechtlich strong) {
+    color: var(--akzent);
+  }
+
+  /* Handy und Tablet: kein Zeitstrahl. Erst der Text der Epoche, darunter ihre Jahreszahlen als kleine Daten-Karte */
+  @media (max-width: 1000px) {
+    .kopf {
+      margin-bottom: var(--s-24);
+    }
+    .kapitelleiste ul {
+      display: flex;
+      gap: var(--s-8);
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-block: var(--s-4);
+      margin: 0 0 var(--s-32);
+      list-style: none;
+    }
+    .kapitelleiste ul::-webkit-scrollbar {
+      display: none;
+    }
+    .kapitelleiste a {
+      display: block;
+      padding: 6px 14px;
+      border: 1px solid var(--karte-rand);
+      border-radius: 999px;
+      background: var(--karte);
+      box-shadow: var(--karte-licht);
+      backdrop-filter: var(--karte-blur);
+      -webkit-backdrop-filter: var(--karte-blur);
+      font-size: var(--t-9);
+      font-weight: 700;
+      white-space: nowrap;
+      color: var(--tinte);
+      text-decoration: none;
+    }
+    .kapitelleiste {
+      display: block;
+    }
+    .einleitung {
+      font-size: var(--t-11);
+      line-height: 1.6;
+    }
+    .epoche {
+      grid-template-columns: minmax(0, 1fr);
+      row-gap: var(--s-24);
+      padding-bottom: var(--s-64);
+    }
+    .epoche::before,
+    .epoche--titel {
+      display: none;
+    }
+    .epoche__text {
+      order: 1;
+    }
+    .epoche__zeit {
+      order: 2;
+      position: static;
+      padding: var(--s-8) var(--s-24);
+      border: 1px solid var(--karte-rand);
+      border-radius: 22px;
+      background: var(--karte);
+      box-shadow: var(--karte-licht);
+      backdrop-filter: var(--karte-blur);
+      -webkit-backdrop-filter: var(--karte-blur);
+    }
+    .epoche__zeit :global(.zeitstrahl__liste) {
+      padding: 0;
+    }
+    .epoche__zeit :global(.zeitstrahl__station) {
+      padding-block: var(--s-16);
+    }
+    .epoche__zeit :global(.zeitstrahl__station + .zeitstrahl__station) {
+      border-top: 1px solid var(--linie);
+    }
+    .epoche__zeit :global(.zeitstrahl__station::before) {
+      display: none;
+    }
+    .epoche__zeit :global(.zeitstrahl__datum) {
+      font-size: var(--t-13);
+      font-weight: 700;
+      margin-bottom: var(--s-4);
+    }
+    .epoche__zeit :global(.zeitstrahl__text) {
+      font-size: var(--t-9);
+      font-weight: 500;
+      color: var(--tinte);
+    }
+    /* Epochen ohne eigene Jahreszahlen (z. B. die Einordnung) bekommen keine leere Karte */
+    .epoche__zeit:not(:has(li)) {
+      display: none;
+    }
+    .einordnung {
+      order: 1;
+      padding: var(--s-24);
+    }
+  }
+  @media (max-width: 520px) {
+    .einordnung {
+      padding: var(--s-24) var(--s-16);
+      border-radius: 22px;
+    }
+    .epoche__zeit {
+      padding-inline: var(--s-16);
+    }
+  }
+</style>

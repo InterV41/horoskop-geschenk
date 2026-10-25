@@ -1,0 +1,370 @@
+---
+import Base from '../layouts/Base.astro';
+import '../styles/formular.css';
+import { site, delivery } from '../site';
+import { langFromPath, routes } from '../i18n';
+
+const lang = langFromPath(Astro.url.pathname);
+const T = {
+  de: {
+    title: `Warenkorb | ${site.name}`,
+    description: 'Dein Warenkorb mit den gewählten Geburtshoroskopen.',
+    h1: 'Warenkorb',
+    leer: 'Dein Warenkorb ist leer.',
+    leerKnopf: 'Horoskop bestellen',
+    weiteres: '+ Weiteres Horoskop hinzufügen',
+    entfernen: 'Entfernen',
+    zeitUnbekannt: 'Geburtszeit unbekannt',
+    uhr: 'Uhr',
+    fassung: { hell: 'Helle Fassung', dunkel: 'Dunkle Fassung', beide: 'Beide Fassungen' },
+    summe: 'Summe',
+    lokal: 'Deine Angaben bleiben bis zur Bestellung nur in deinem Browser und werden nach drei Tagen ohne Bestellung gelöscht.',
+    wohin: 'Wohin sollen wir die Horoskope schicken?',
+    mail: 'Deine E-Mail-Adresse', eMail: 'Bitte prüf die E-Mail-Adresse.',
+    gutschein: 'Gutscheincode einlösen', gutscheinFeld: 'Gutscheincode', einloesen: 'Einlösen',
+    eGutschein: 'Ein Gutscheincode besteht aus Buchstaben, Ziffern und Bindestrichen.',
+    gutscheinOk: 'Der Code {code} wird beim Bezahlen geprüft und abgezogen.',
+    agbVor: 'Ich habe die', agbLink: 'AGB', agbMitte: 'und die', widerrufLink: 'Widerrufsbelehrung', agbNach: 'gelesen und akzeptiere die AGB.',
+    eAgb: 'Bitte bestätige die AGB.',
+    widerruf: 'Ich stimme ausdrücklich zu, dass ihr vor Ablauf der Widerrufsfrist mit der Erstellung meines Horoskops beginnt. Mir ist bekannt, dass ich dadurch mein Widerrufsrecht verliere.',
+    eWiderruf: 'Ohne diese Zustimmung kann die Erstellung nicht beginnen.',
+    news: 'Ja, ich möchte gelegentlich über Neuigkeiten und Angebote per E-Mail informiert werden. Freiwillig, jederzeit abbestellbar.',
+    lieferung: `Als PDF per E-Mail, in der Regel innerhalb von ${delivery.duration('de')}.`,
+    absenden: 'Zahlungspflichtig bestellen',
+    zahlung: 'Bezahlen mit Karte, PayPal oder Apple Pay. Es gelten die', agb: 'AGB', daten: ', Hinweise zu deinen Daten in der', datenschutz: 'Datenschutzerklärung',
+    bald: 'Die Bezahlung wird gerade eingerichtet. Bestellungen sind in Kürze möglich.',
+  },
+  en: {
+    title: `Cart | ${site.name}`,
+    description: 'Your cart with the chosen birth charts.',
+    h1: 'Cart',
+    leer: 'Your cart is empty.',
+    leerKnopf: 'Order your horoscope',
+    weiteres: '+ Add another horoscope',
+    entfernen: 'Remove',
+    zeitUnbekannt: 'Birth time unknown',
+    uhr: '',
+    fassung: { hell: 'Light edition', dunkel: 'Dark edition', beide: 'Both editions' },
+    summe: 'Total',
+    lokal: 'Your details stay only in your browser until you order and are deleted after three days without an order.',
+    wohin: 'Where should we send the horoscopes?',
+    mail: 'Your email address', eMail: 'Please check the email address.',
+    gutschein: 'Redeem voucher code', gutscheinFeld: 'Voucher code', einloesen: 'Redeem',
+    eGutschein: 'A voucher code consists of letters, digits and hyphens.',
+    gutscheinOk: 'The code {code} will be checked and deducted at checkout.',
+    agbVor: 'I have read the', agbLink: 'terms', agbMitte: 'and the', widerrufLink: 'withdrawal policy', agbNach: 'and accept the terms.',
+    eAgb: 'Please confirm the terms.',
+    widerruf: 'I expressly agree that you begin creating my horoscope before the withdrawal period expires. I am aware that I thereby lose my right of withdrawal.',
+    eWiderruf: 'Without this consent, creation cannot begin.',
+    news: 'Yes, I would like to receive occasional news and offers by email. Voluntary, unsubscribe at any time.',
+    lieferung: `As a PDF by email, usually within ${delivery.duration('en')}.`,
+    absenden: 'Order with obligation to pay',
+    zahlung: 'Pay by card, PayPal or Apple Pay. Our', agb: 'terms', daten: ' apply, information about your data is in the', datenschutz: 'privacy policy',
+    bald: 'Payment is currently being set up. Orders will be possible shortly.',
+  },
+};
+const t = T[lang];
+---
+
+<Base title={t.title} description={t.description} noindex breadcrumbs={[{ name: t.h1, path: routes.warenkorb[lang] }]}>
+  <section class="abschnitt wrap korb">
+    <h1 class="korb__titel">{t.h1}</h1>
+
+    <div
+      class="korb__inhalt"
+      data-korb
+      data-lang={lang}
+      data-t={JSON.stringify({ entfernen: t.entfernen, zeitUnbekannt: t.zeitUnbekannt, uhr: t.uhr, fassung: t.fassung })}
+      data-preise={JSON.stringify({ grund: site.price, aufpreis: site.bothSurcharge })}
+    >
+      <div class="korb__leer" data-leer hidden>
+        <p class="lesetext nebentext">{t.leer}</p>
+        <a class="knopf" href={routes.bestellen[lang]}>{t.leerKnopf}</a>
+      </div>
+
+      <div data-voll hidden>
+        <ul class="korb__liste rahmen" data-liste></ul>
+        <a class="textlink korb__weiteres" href={routes.bestellen[lang]}>{t.weiteres}</a>
+        <p class="korb__summe"><span>{t.summe}</span> <strong data-summe></strong></p>
+        <p class="nebentext klein">{t.lieferung}</p>
+        <p class="nebentext klein">{t.lokal}</p>
+
+        <form class="formular korb__kasse" id="kasse" novalidate data-gutschein-ok={t.gutscheinOk}>
+          <fieldset>
+            <legend>{t.wohin}</legend>
+            <div class="feld">
+              <label for="f-mail">{t.mail}</label>
+              <input id="f-mail" name="email" type="email" required autocomplete="email" inputmode="email" />
+              <p class="feld__fehler" id="e-mail" hidden>{t.eMail}</p>
+            </div>
+          </fieldset>
+
+          <details class="gutschein">
+            <summary>{t.gutschein}</summary>
+            <div class="gutschein__zeile">
+              <div class="feld">
+                <label for="f-gutschein">{t.gutscheinFeld}</label>
+                <input id="f-gutschein" name="gutschein" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="30" />
+              </div>
+              <button class="knopf knopf--rand gutschein__knopf" type="button" id="gutschein-einloesen">{t.einloesen}</button>
+            </div>
+            <p class="feld__fehler" id="e-gutschein" hidden>{t.eGutschein}</p>
+            <p class="hinweis" id="hinweis-gutschein" role="status" hidden></p>
+          </details>
+
+          <div class="abschluss">
+            <label class="haken">
+              <input type="checkbox" id="f-agb" name="agb" required />
+              <span>
+                {t.agbVor} <a class="textlink" href={routes.agb[lang]} target="_blank">{t.agbLink}</a> {t.agbMitte}{' '}
+                <a class="textlink" href={routes.widerruf[lang]} target="_blank">{t.widerrufLink}</a> {t.agbNach}
+              </span>
+            </label>
+            <p class="feld__fehler" id="e-agb" hidden>{t.eAgb}</p>
+            <label class="haken">
+              <input type="checkbox" id="f-widerruf" name="widerruf_verzicht" required />
+              <span>{t.widerruf}</span>
+            </label>
+            <p class="feld__fehler" id="e-widerruf" hidden>{t.eWiderruf}</p>
+            <label class="haken haken--frei">
+              <input type="checkbox" id="f-news" name="neuigkeiten" />
+              <span>{t.news}</span>
+            </label>
+            <button class="knopf knopf--voll knopf--gold" type="submit">{t.absenden} · <span data-summe></span></button>
+            <p class="nebentext klein mitte">
+              {t.zahlung} <a class="textlink" href={routes.agb[lang]}>{t.agb}</a>{t.daten}{' '}
+              <a class="textlink" href={routes.datenschutz[lang]}>{t.datenschutz}</a>.
+            </p>
+            <p class="hinweis" id="hinweis-absenden" role="status" hidden>{t.bald}</p>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { lesen, entfernen, summe, preisVon, euro, type Posten } from '../scripts/warenkorb';
+  const korb = document.querySelector<HTMLElement>('[data-korb]')!;
+  const lang = korb.dataset.lang ?? 'de';
+  const t = JSON.parse(korb.dataset.t!);
+  const preise = JSON.parse(korb.dataset.preise!);
+  const liste = korb.querySelector<HTMLUListElement>('[data-liste]')!;
+  const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+
+  const datum = (iso: string) =>
+    new Intl.DateTimeFormat(lang === 'en' ? 'en-GB' : 'de-DE', { day: 'numeric', month: 'long', year: 'numeric' }).format(
+      new Date(`${iso}T12:00:00`),
+    );
+  const zeile = (p: Posten) => {
+    const li = document.createElement('li');
+    li.className = 'korb__posten';
+    const name = document.createElement('p');
+    name.className = 'korb__name';
+    name.textContent = p.vorname;
+    const daten = document.createElement('p');
+    daten.className = 'nebentext';
+    const zeit = p.zeit ? `${p.zeit}${t.uhr ? ' ' + t.uhr : ''}` : t.zeitUnbekannt;
+    daten.textContent = `${datum(p.datum)}, ${zeit}, ${p.ort}`;
+    const fassung = document.createElement('p');
+    fassung.className = 'korb__fassung';
+    fassung.textContent = t.fassung[p.fassung];
+    const rechts = document.createElement('div');
+    rechts.className = 'korb__rechts';
+    const preis = document.createElement('p');
+    preis.className = 'korb__preis';
+    preis.textContent = euro(preisVon(p, preise), lang);
+    const weg = document.createElement('button');
+    weg.type = 'button';
+    weg.className = 'korb__weg';
+    weg.textContent = t.entfernen;
+    weg.setAttribute('aria-label', `${t.entfernen}: ${p.vorname}`);
+    weg.addEventListener('click', () => entfernen(p.id));
+    const links = document.createElement('div');
+    links.append(name, daten, fassung);
+    rechts.append(preis, weg);
+    li.append(links, rechts);
+    return li;
+  };
+  const zeigen = () => {
+    const posten = lesen();
+    korb.querySelector<HTMLElement>('[data-leer]')!.hidden = posten.length > 0;
+    korb.querySelector<HTMLElement>('[data-voll]')!.hidden = posten.length === 0;
+    liste.replaceChildren(...posten.map(zeile));
+    korb.querySelectorAll('[data-summe]').forEach((el) => (el.textContent = euro(summe(posten, preise), lang)));
+  };
+  document.addEventListener('warenkorb', zeigen);
+  zeigen();
+
+  // Kasse: E-Mail, Gutschein, Zustimmung
+  const kasse = $<HTMLFormElement>('kasse');
+  function setFehler(id: string, an: boolean, feld?: HTMLElement) {
+    $(id).hidden = !an;
+    feld?.setAttribute('aria-invalid', String(an));
+    if (feld) feld.setAttribute('aria-describedby', an ? id : '');
+  }
+  const mail = $<HTMLInputElement>('f-mail');
+  const agb = $<HTMLInputElement>('f-agb');
+  const widerruf = $<HTMLInputElement>('f-widerruf');
+  // Neuigkeiten bleiben freiwillig und werden nicht geprüft; Versand erst nach Bestätigung per Link (Double-Opt-in)
+  const regeln: [string, HTMLInputElement, () => boolean][] = [
+    ['e-mail', mail, () => mail.validity.valid && mail.value !== ''],
+    ['e-agb', agb, () => agb.checked],
+    ['e-widerruf', widerruf, () => widerruf.checked],
+  ];
+  regeln.forEach(([id, feld, ok]) => {
+    feld.addEventListener('blur', () => setTimeout(() => feld.value !== '' && setFehler(id, !ok(), feld), 120));
+    feld.addEventListener(feld.type === 'checkbox' ? 'change' : 'input', () => ok() && setFehler(id, false, feld));
+  });
+
+  // Gutschein: Stripe prüft den Code beim Bezahlen (Promotion Codes). Sobald es die Serverfunktion
+  // /api/gutschein gibt, wird er hier schon vorab geprüft und der neue Preis angezeigt.
+  const gutschein = $<HTMLInputElement>('f-gutschein');
+  const gutscheinHinweis = $('hinweis-gutschein');
+  const gutscheinGueltigeForm = (c: string) => /^[A-Z0-9-]{3,30}$/.test(c);
+  gutschein.addEventListener('input', () => {
+    gutschein.value = gutschein.value.toUpperCase().replace(/\s/g, '');
+    setFehler('e-gutschein', false, gutschein);
+    gutscheinHinweis.hidden = true;
+  });
+  $('gutschein-einloesen').addEventListener('click', () => {
+    const code = gutschein.value.trim();
+    if (!gutscheinGueltigeForm(code)) {
+      setFehler('e-gutschein', true, gutschein);
+      return gutschein.focus();
+    }
+    gutscheinHinweis.textContent = (kasse.dataset.gutscheinOk ?? '').replace('{code}', code);
+    gutscheinHinweis.hidden = false;
+  });
+  gutschein.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      $('gutschein-einloesen').click();
+    }
+  });
+
+  kasse.addEventListener('submit', (e) => {
+    e.preventDefault();
+    let erstes: HTMLElement | null = null;
+    regeln.forEach(([id, feld, ok]) => {
+      const fehler = !ok();
+      setFehler(id, fehler, feld);
+      if (fehler && !erstes) erstes = feld;
+    });
+    if (erstes) return (erstes as HTMLElement).focus();
+    if (gutschein.value && !gutscheinGueltigeForm(gutschein.value)) {
+      (gutschein.closest('details') as HTMLDetailsElement).open = true;
+      setFehler('e-gutschein', true, gutschein);
+      return gutschein.focus();
+    }
+    // Phase 1: Stripe Checkout ist noch nicht angebunden. Daten werden nirgendwohin gesendet.
+    $('hinweis-absenden').hidden = false;
+  });
+</script>
+
+<style>
+  .korb {
+    max-width: 760px;
+  }
+  .korb__titel {
+    text-align: center;
+  }
+  .korb__titel::after {
+    content: '';
+    display: block;
+    width: 48px;
+    height: 1px;
+    margin: var(--s-24) auto 0;
+    background: var(--gold);
+  }
+  .korb__inhalt {
+    margin-top: var(--s-48);
+  }
+  .korb__leer[hidden] {
+    display: none;
+  }
+  .korb__leer {
+    display: grid;
+    justify-items: center;
+    gap: var(--s-24);
+    text-align: center;
+  }
+  /* Posten im abgerundeten Rahmen wie die übrigen Karten */
+  .korb__liste {
+    list-style: none;
+    margin: 0;
+    padding: var(--s-8) var(--s-24);
+  }
+  .korb__liste :global(.korb__posten) {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--s-24);
+    padding-block: var(--s-24);
+    border-bottom: 1px solid var(--linie);
+  }
+  .korb__liste :global(.korb__posten:last-child) {
+    border-bottom: 0;
+  }
+  .korb__liste :global(.korb__name) {
+    font-family: var(--font-titel);
+    font-size: var(--t-17);
+    color: var(--titel);
+    line-height: 1.2;
+    margin-bottom: var(--s-4);
+  }
+  .korb__liste :global(.korb__fassung) {
+    margin-top: var(--s-4);
+    font-family: var(--font-titel);
+    font-style: italic;
+    color: var(--akzent);
+  }
+  .korb__liste :global(.korb__rechts) {
+    display: grid;
+    justify-items: end;
+    align-content: start;
+    gap: var(--s-4);
+    flex: none;
+  }
+  .korb__liste :global(.korb__preis) {
+    font-family: var(--font-titel);
+    font-size: var(--t-13);
+  }
+  .korb__liste :global(.korb__weg) {
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    font-size: var(--t-9);
+    color: var(--akzent);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .korb__weiteres {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin-top: var(--s-12);
+  }
+  .korb__summe {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-top: var(--s-24);
+    padding-top: var(--s-16);
+    border-top: 1px solid var(--gold);
+    font-family: var(--font-titel);
+    font-size: var(--t-17);
+  }
+  .korb__summe strong {
+    font-weight: 500;
+  }
+  .korb__kasse {
+    margin-top: var(--s-32);
+  }
+  /* freiwilliges Häkchen etwas leiser */
+  .korb__kasse :global(.haken--frei) {
+    color: var(--tinte2);
+    font-size: var(--t-9);
+  }
+</style>

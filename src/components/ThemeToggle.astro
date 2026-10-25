@@ -1,0 +1,146 @@
+---
+// Umschalter Light Mode / Dark Mode. Der Knopf zeigt, wohin er wechselt: in Dunkel „Light Mode“ mit Sonne,
+// in Hell „Dark Mode“ mit Mond. Gleiche Wörter in beiden Sprachen, damit die Kopfzeile gleich breit bleibt.
+import { langFromPath } from '../i18n';
+
+interface Props {
+  nurSymbol?: boolean; // runder Knopf ohne Text, für die Kopfzeile auf Handy und Tablet
+}
+const { nurSymbol = false } = Astro.props;
+const t = {
+  de: { hell: 'Light Mode', dunkel: 'Dark Mode', wechseln: 'Zu {ziel} wechseln' },
+  en: { hell: 'Light Mode', dunkel: 'Dark Mode', wechseln: 'Switch to {ziel}' },
+}[langFromPath(Astro.url.pathname)];
+---
+
+<button
+  class:list={['ansicht', { 'ansicht--symbol': nurSymbol }]}
+  type="button"
+  data-theme-toggle
+  data-t={JSON.stringify(t)}
+>
+  <!-- Symbole aus „Claude Projects/Astro/Buttons“: Sonne als Linienzeichnung, Mond gefüllt -->
+  <svg class="ansicht__symbol ansicht__sonne" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="3.6" />
+    <path d="M17.8 12h4M12 17.8v4M6.2 12h-4M12 6.2v-4M16.1 16.1l2.83 2.83M7.9 16.1l-2.83 2.83M7.9 7.9 5.07 5.07M16.1 7.9l2.83-2.83M17.73 14.37l1.48.61M14.37 17.73l.61 1.48M9.63 17.73l-.61 1.48M6.27 14.37l-1.48.61M6.27 9.63l-1.48-.61M9.63 6.27l-.61-1.48M14.37 6.27l.61-1.48M17.73 9.63l1.48-.61" />
+  </svg>
+  <svg class="ansicht__symbol ansicht__mond" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M20 14.6A8.2 8.2 0 1 1 9.4 4a8.6 8.6 0 0 0 10.6 10.6z" />
+  </svg>
+  <span class="ansicht__text" data-theme-name>{t.hell}</span>
+</button>
+
+<script>
+  const root = document.documentElement;
+  const sync = () => {
+    const dark = root.dataset.theme === 'dark';
+    document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]').forEach((btn) => {
+      const t = JSON.parse(btn.dataset.t!);
+      const ziel = dark ? t.hell : t.dunkel;
+      btn.setAttribute('aria-label', t.wechseln.replace('{ziel}', ziel));
+      btn.setAttribute('title', t.wechseln.replace('{ziel}', ziel));
+      const el = btn.querySelector('[data-theme-name]');
+      if (el) el.textContent = ziel;
+    });
+  };
+  document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]').forEach((btn) =>
+    btn.addEventListener('click', () => {
+      const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+      root.dataset.theme = next;
+      try {
+        sessionStorage.setItem('theme', next);
+      } catch {}
+      sync();
+      document.dispatchEvent(new CustomEvent('themechange'));
+    }),
+  );
+  document.addEventListener('themechange', sync);
+  sync();
+</script>
+
+<style>
+  /* Schlanke Pille wie der Bestellen-Knopf, Goldrand, ein Symbol und ein Wort */
+  .ansicht {
+    flex: none;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--s-8);
+    min-height: 44px;
+    padding: var(--s-8) var(--s-16);
+    border: 1px solid color-mix(in srgb, var(--gold) 70%, transparent);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--tinte);
+    font-family: var(--font-titel);
+    font-size: var(--t-11);
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+  }
+  .ansicht:hover {
+    border-color: var(--gold);
+    background: color-mix(in srgb, var(--gold) 12%, transparent);
+  }
+  .ansicht__symbol {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: var(--gold);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform 0.4s ease;
+  }
+  .ansicht__sonne {
+    stroke-width: 1.4;
+  }
+  .ansicht__mond path {
+    fill: var(--gold);
+    stroke: none;
+  }
+  /* In Hell steht der Mond dunkel, wie die dunkle Fassung, in die er umschaltet */
+  :global(:root:not([data-theme='dark'])) .ansicht__mond path {
+    fill: #07102a;
+  }
+  .ansicht:hover .ansicht__symbol {
+    transform: rotate(20deg);
+  }
+  /* In Dunkel zeigt der Knopf die Sonne (Wechsel zu Light Mode), in Hell den Mond */
+  :global(:root[data-theme='dark']) .ansicht__mond,
+  :global(:root:not([data-theme='dark'])) .ansicht__sonne {
+    display: none;
+  }
+  /* Nur das Symbol, ohne Kreis drumherum; die Klickfläche bleibt 44 × 44 px */
+  .ansicht--symbol {
+    width: 44px;
+    padding: 0;
+    border-color: transparent;
+    background: transparent;
+  }
+  .ansicht--symbol:hover {
+    border-color: transparent;
+    background: transparent;
+  }
+  /* Als Symbol in der Kopfzeile: in Schriftfarbe statt Gold */
+  .ansicht--symbol .ansicht__symbol {
+    stroke: var(--tinte);
+  }
+  .ansicht--symbol .ansicht__mond path {
+    fill: var(--tinte);
+  }
+  .ansicht--symbol:focus-visible {
+    outline: 2px solid var(--akzent);
+    outline-offset: 2px;
+  }
+  .ansicht--symbol .ansicht__text {
+    display: none;
+  }
+  /* In der Kopfzeile deutlich größer */
+  .ansicht--symbol .ansicht__symbol {
+    width: 34px;
+    height: 34px;
+  }
+</style>

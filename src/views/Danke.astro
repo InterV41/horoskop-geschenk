@@ -1,0 +1,28 @@
+---
+import Base from '../layouts/Base.astro';
+import { site, delivery } from '../site';
+import { langFromPath, routes } from '../i18n';
+
+const lang = langFromPath(Astro.url.pathname);
+const t = {
+  de: { title: 'Danke für deine Bestellung', h1: 'Danke für deine Bestellung.', bezahlt: 'Die Zahlung ist eingegangen.', spam: 'Schau bitte auch im Spam-Ordner nach.', start: 'Zur Startseite', desc: 'Bestellbestätigung' },
+  en: { title: 'Thank you for your order', h1: 'Thank you for your order.', bezahlt: 'Your payment has been received.', spam: 'Please also check your spam folder.', start: 'Back to the home page', desc: 'Order confirmation' },
+}[lang];
+---
+
+<Base title={`${t.title} | ${site.name}`} description={t.desc} noindex>
+  <section class="abschnitt wrap mitte">
+    <h1>{t.h1}</h1>
+    <p class="lesetext nebentext abstand-16">{t.bezahlt} {delivery.sentence(lang)} {t.spam}</p>
+    <p class="abstand-32"><a class="textlink" href={routes.start[lang]}>{t.start}</a></p>
+  </section>
+</Base>
+
+<style>
+  .abstand-16 {
+    margin-top: var(--s-16);
+  }
+  .abstand-32 {
+    margin-top: var(--s-32);
+  }
+</style>

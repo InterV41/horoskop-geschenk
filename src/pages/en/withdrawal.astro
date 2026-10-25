@@ -1,0 +1,102 @@
+---
+import Rechtstext from '../../layouts/Rechtstext.astro';
+import Anbieter from '../../components/recht/Anbieter.astro';
+import WiderrufFunktion from '../../components/recht/WiderrufFunktion.astro';
+import { anbieter } from '../../site';
+---
+
+<Rechtstext titel="Right of withdrawal for consumers" pfad="/en/withdrawal" beschreibung="Withdrawal policy, early expiry of the right of withdrawal for digital content, model withdrawal form and withdrawal function.">
+  <p class="nebentext">Last updated: {anbieter.stand.en}</p>
+  <p>
+    Consumers have a right of withdrawal as set out below. A consumer is any natural person who concludes a legal
+    transaction for purposes that are predominantly outside their trade, business or profession.
+  </p>
+
+  <h2>Withdrawal policy</h2>
+  <h3>Right of withdrawal</h3>
+  <p>You have the right to withdraw from this contract within fourteen days without giving any reason.</p>
+  <p>The withdrawal period is fourteen days from the day the contract is concluded.</p>
+  <p>To exercise your right of withdrawal, you must inform us</p>
+  <Anbieter lang="en" mitTelefon />
+  <p>
+    of your decision to withdraw from this contract by an unequivocal statement (for example an email). You may use
+    the model withdrawal form below, but it is not obligatory.
+  </p>
+  <p>
+    You can also withdraw from the contract using the <a href="#vertrag-widerrufen">“Withdraw from contract”</a>
+    button, which you will find at the end of this page. You can reach this page via the “Withdrawal” link in the
+    footer of every page of our shop. If you use this option, we will send you a
+    confirmation of receipt of your withdrawal by email without delay.
+  </p>
+  <p>
+    To meet the withdrawal deadline, it is sufficient for you to send your communication concerning your exercise of
+    the right of withdrawal before the withdrawal period has expired.
+  </p>
+  <h3>Effects of withdrawal</h3>
+  <p>
+    If you withdraw from this contract, we shall reimburse to you all payments received from you without undue delay
+    and in any event not later than fourteen days from the day on which we are informed about your decision to
+    withdraw from this contract. We will carry out such reimbursement using the same means of payment as you used for
+    the initial transaction, unless you have expressly agreed otherwise; in any event, you will not incur any fees as
+    a result of such reimbursement.
+  </p>
+  <p class="ende">End of the withdrawal policy</p>
+
+  <h2>Early expiry of the right of withdrawal</h2>
+  <p>
+    For a contract for the supply of digital content not on a tangible medium, the right of withdrawal expires when
+    we have begun performance of the contract after you have
+  </p>
+  <ol>
+    <li>expressly consented to us beginning performance of the contract before the withdrawal period expires,</li>
+    <li>acknowledged that by giving this consent you lose your right of withdrawal once performance of the contract begins, and</li>
+    <li>received from us a confirmation of the contract on a durable medium (usually by email) recording your consent and acknowledgement (section 356 (5) German Civil Code).</li>
+  </ol>
+
+  <h2>How your order proceeds</h2>
+  <p>
+    The horoscope is digital content delivered to you as a PDF file. You give your consent and acknowledgement under
+    nos. 1 and 2 when ordering, via a separate checkbox in the cart that is not pre-ticked. We begin creating your
+    horoscope directly after receipt of payment and after we have sent you the order confirmation by email. Your
+    right of withdrawal therefore usually expires a few minutes after the order.
+  </p>
+
+  <h2>Model withdrawal form</h2>
+  <p>(If you want to withdraw from the contract, please complete this form and send it back.)</p>
+  <div class="formularmuster">
+    <p>To</p>
+    <Anbieter lang="en" />
+    <p>I/We (*) hereby give notice that I/We (*) withdraw from my/our (*) contract for the supply of the following digital content (*):</p>
+    <p>Ordered on (*) / received on (*):</p>
+    <p>Name of consumer(s):</p>
+    <p>Address of consumer(s):</p>
+    <p>Signature of consumer(s) (only if this form is notified on paper):</p>
+    <p>Date:</p>
+    <p class="nebentext klein">(*) Delete as appropriate.</p>
+  </div>
+
+  <p class="nebentext klein">This English version is provided for convenience. In case of doubt, the German version applies.</p>
+
+  <WiderrufFunktion lang="en" />
+</Rechtstext>
+
+<style>
+  .ende {
+    font-family: var(--font-titel);
+    font-style: italic;
+    color: var(--akzent);
+  }
+  .formularmuster {
+    padding: var(--s-24);
+    border: 1px solid var(--karte-rand);
+    border-left: 2px solid var(--gold);
+    border-radius: 20px;
+    background: var(--karte);
+    box-shadow: var(--karte-licht);
+    backdrop-filter: var(--karte-blur);
+    -webkit-backdrop-filter: var(--karte-blur);
+  }
+  .formularmuster p + p {
+    margin-top: var(--s-8);
+  }
+</style>

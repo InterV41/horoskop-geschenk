@@ -1,0 +1,563 @@
+---
+import Base from '../layouts/Base.astro';
+import Kaufknopf from '../components/Kaufknopf.astro';
+import KosmosRadix from '../components/KosmosRadix.astro';
+import ZweiFassungen from '../components/ZweiFassungen.astro';
+import { site, delivery } from '../site';
+import { inhalt } from '../data/inhalt';
+import { langFromPath, routes } from '../i18n';
+
+const lang = langFromPath(Astro.url.pathname);
+const { vorspann, teile, anhang } = inhalt[lang];
+const T = {
+  de: {
+    title: 'Geburtshoroskop erstellen lassen: persönlich, als PDF',
+    description: `Geburtshoroskop erstellen lassen: exakt berechnet aus Datum, Uhrzeit und Ort, ${site.pages} Seiten in ${site.chapters} Kapiteln, hell oder dunkel. ${site.priceLabel.de}.`,
+    crumb: 'Das Horoskop',
+    produktName: 'Persönliches Geburtshoroskop',
+    produktText: `Individuell berechnetes Geburtshoroskop als PDF, ${site.umfang.de}, wahlweise in heller oder dunkler Gestaltung.`,
+    h1: 'Geburtshoroskop',
+    einleitung:
+      'Ein Geburtshoroskop ist ein Bild des Himmels im Moment der Geburt. Es zeigt, in welchen Tierkreiszeichen Sonne, Mond und Planeten standen, welches Zeichen gerade am östlichen Horizont aufging und in welchen Winkeln die Planeten zueinander stehen.',
+    einleitungMehrTitel: 'Mehr über das Geburtshoroskop',
+    einleitungMehr: [
+      'Gezeichnet ergibt das die Radix: den Kreis mit den zwölf Tierkreiszeichen, den zwölf Häusern und den Linien zwischen den Planeten. Weil sich der Himmel ständig dreht, sieht dieses Bild für jeden Ort und jede Minute anders aus. Darum ist jedes Geburtshoroskop einmalig.',
+      'Für dein Horoskop werden die Stellungen aus Geburtsdatum, Geburtszeit und Geburtsort genau berechnet. Daraus entsteht ein Text über genau diesen Menschen: Persönlichkeit, Stärken und die Themen, die ihn begleiten.',
+    ],
+    eck: [
+      ['Umfang', `${site.pages} Seiten, ${site.chapters} Kapitel`, `davon über ${site.pagesIndividual} Seiten individuell berechnet und geschrieben. ${site.umfangSchwankung.de}`],
+      ['Fassungen', 'Hell oder dunkel'],
+      ['Format', 'PDF'],
+      ['Lieferzeit', delivery.duration('de')],
+      ['Preis', site.priceLabel.de + (site.vatNote.de ? `, ${site.vatNote.de}` : '')],
+    ],
+    berechnung: 'Wie dein Horoskop berechnet wird',
+    berechnungText: 'Vom Augenblick der Geburt zur Radix, in fünf Schritten.',
+    schritte: [
+      ['I', 'Ort und Zeit', 'Geburtsort und Uhrzeit werden in Längengrad, Breitengrad und Weltzeit umgerechnet, mit der damals gültigen Zeitzone und Sommerzeit.'],
+      ['II', 'Stand der Planeten', 'Für diesen Augenblick wird berechnet, wo Sonne, Mond und die Planeten von Merkur bis Pluto im Tierkreis standen, auf Bruchteile eines Grades genau.'],
+      ['III', 'Aszendent und Häuser', 'Aus Uhrzeit und Ort ergibt sich der Aszendent, das Zeichen am östlichen Horizont, und von ihm aus wird das Geburtsbild in zwölf Häuser geteilt.'],
+      ['IV', 'Aspekte', 'Die Winkel zwischen den Planeten, etwa 0, 60, 90, 120 und 180 Grad, erscheinen als Linien in der Radix und zeigen, welche Kräfte zusammenwirken.'],
+      ['V', 'Deutung', 'Jede Aussage im Text leitet sich nach festen Regeln der astrologischen Deutung aus diesen Stellungen und Winkeln ab.'],
+    ],
+    inhalt: 'Inhalt',
+    inhaltTitel: ['Individuell berechnet', 'Ein Geschenk, das bleibt'],
+    inhaltIntro: [
+      `Kein Horoskop gleicht dem anderen. Jedes wird für einen Menschen, einen Ort und eine Minute neu berechnet, und jedes Kapitel bezieht sich auf die Stellungen genau dieses Geburtsbilds. Von den ${site.pages} Seiten sind über ${site.pagesIndividual} individuell berechnet und geschrieben, der Rest erklärt, was man zum Lesen braucht.`,
+      'Darum eignet es sich so gut als Geschenk: Es ist persönlich, ohne dass man lange suchen muss, und es bleibt. Man kann es ausdrucken und überreichen, per Mail weiterschicken oder in Ruhe am Bildschirm lesen. Das Deckblatt mit dem Geburtsbild lässt sich einrahmen und aufhängen.',
+    ],
+    bloecke: [
+      ['Zum Einstieg', 'Das Deckblatt zeigt das Geburtsbild, fachsprachlich Radix: den Kreis mit Tierkreiszeichen, Planeten und den Linien zwischen ihnen. Danach eine kurze Geschichte der Astrologie und eine Anleitung, wie man das eigene Geburtsbild liest.'],
+      ['Einführung', 'Wie das Horoskop aufgebaut ist und wie sich die Planeten auf die vier Elemente Feuer, Erde, Luft und Wasser verteilen.'],
+      ['Wer du bist', 'Sonne, Mond und Aszendent bilden das Grundgerüst. Hier geht es um Persönlichkeit, Gefühlsleben, den eigenen Schwerpunkt und darum, wie jemand denkt und sich ausdrückt.'],
+      ['Wie du lebst und liebst', 'Liebe und Partnerschaft, Familie und Herkunft, Beruf und die Rolle, die man nach außen einnimmt, und wo Kreativität ihren Platz hat.'],
+      ['Wo du wächst', 'Die Stärken im Einzelnen, die Felder, in denen Entwicklung liegt, das große Lebensthema, Kraftquellen und Grenzen und wo Unterstützung hilft.'],
+      ['Was kommt, was bleibt', 'Was die Gegenwart prägt, was trägt und welche Zeiträume in den kommenden Monaten besonders wichtig werden. Dazu eine Seite mit den stärksten Eigenschaften auf einen Blick.'],
+      ['Zum Nachschlagen', 'Ein Glossar erklärt jeden Fachbegriff, damit man das Horoskop auch ohne Vorwissen versteht.'],
+    ],
+    zeit: 'Wenn die Geburtszeit fehlt',
+    zeitText:
+      'Viele kennen ihre Geburtszeit nicht. Du kannst trotzdem bestellen, zum gleichen Preis. Ohne Uhrzeit lassen sich der Aszendent und die Häuser nicht bestimmen. Der Aszendent ist das Zeichen, das bei der Geburt am östlichen Horizont aufging. Die Häuser teilen das Geburtsbild in zwölf Lebensbereiche. Die Kapitel, die darauf aufbauen, sind dann vorsichtiger formuliert.',
+    zeitLink: 'Mehr dazu in den Fragen zur Geburtszeit',
+    entsteht: 'Noch Fragen?',
+    entstehtText: 'Was im Horoskop steht, wie lange es dauert und was mit deinen Daten passiert, beantworten die',
+    fragenLink: 'Fragen',
+    entstehtEnde: 'offen.',
+    schluss: 'Bereit für ein besonderes Geschenk?',
+    kapitel: ['Kapitel', 'Kapitel'],
+  },
+  en: {
+    title: 'Personal Birth Chart: individually calculated, as a PDF',
+    description: `Have your birth chart created: calculated exactly from date, time and place, ${site.pages} pages in ${site.chapters} chapters, light or dark. ${site.priceLabel.en}.`,
+    crumb: 'The horoscope',
+    produktName: 'Personal birth chart',
+    produktText: `Individually calculated birth chart as a PDF, ${site.umfang.en}, in a light or dark design.`,
+    h1: 'Birth chart',
+    einleitung:
+      'A birth chart is a picture of the sky at the moment of birth. It shows which signs of the zodiac the sun, moon and planets were in, which sign was rising on the eastern horizon and at what angles the planets stand to one another.',
+    einleitungMehrTitel: 'More about the birth chart',
+    einleitungMehr: [
+      'Drawn out, this becomes the radix: the circle with the twelve signs of the zodiac, the twelve houses and the lines between the planets. Because the sky is always turning, this picture looks different for every place and every minute. That is why every birth chart is unique.',
+      'For your horoscope, these positions are calculated precisely from the date, time and place of birth. From this, a text is written about exactly this person: personality, strengths and the themes that accompany them.',
+    ],
+    eck: [
+      ['Length', `${site.pages} pages, ${site.chapters} chapters`, `more than ${site.pagesIndividual} pages of them individually calculated and written. ${site.umfangSchwankung.en}`],
+      ['Editions', 'Light or dark'],
+      ['Format', 'PDF'],
+      ['Delivery', delivery.duration('en')],
+      ['Price', site.priceLabel.en + (site.vatNote.en ? `, ${site.vatNote.en}` : '')],
+    ],
+    berechnung: 'How your horoscope is calculated',
+    berechnungText: 'From the moment of birth to the radix, in five steps.',
+    schritte: [
+      ['I', 'Place and time', 'The place and time of birth are converted into longitude, latitude and Universal Time, using the time zone and daylight saving time in force back then.'],
+      ['II', 'Positions of the planets', 'For this moment, it is calculated where the sun, moon and the planets from Mercury to Pluto stood in the zodiac, accurate to fractions of a degree.'],
+      ['III', 'Ascendant and houses', 'Time and place give the ascendant, the sign rising on the eastern horizon, and from it the natal chart is divided into twelve houses.'],
+      ['IV', 'Aspects', 'The angles between the planets, such as 0, 60, 90, 120 and 180 degrees, appear as lines in the radix and show which forces work together.'],
+      ['V', 'Interpretation', 'Every statement in the text is derived from these positions and angles, following fixed rules of astrological interpretation.'],
+    ],
+    inhalt: 'Contents',
+    inhaltTitel: ['Individually calculated', 'A gift that lasts'],
+    inhaltIntro: [
+      `No two horoscopes are alike. Each one is calculated anew for one person, one place and one minute, and every chapter refers to the positions of exactly this natal chart. Of the ${site.pages} pages, more than ${site.pagesIndividual} are individually calculated and written; the rest explains what you need to read it.`,
+      'That is why it makes such a good gift: it is personal without a long search, and it lasts. You can print it and hand it over, forward it by email or read it at leisure on screen. The cover with the natal chart can be framed and hung up.',
+    ],
+    bloecke: [
+      ['To begin', 'The cover shows the natal chart, called the radix: the circle with zodiac signs, planets and the lines between them. Then a short history of astrology and a guide to reading your own natal chart.'],
+      ['Introduction', 'How the horoscope is structured and how the planets are distributed across the four elements of fire, earth, air and water.'],
+      ['Who you are', 'Sun, moon and ascendant form the foundation. This part is about personality, emotional life, your own focus and how someone thinks and expresses themselves.'],
+      ['How you live and love', 'Love and partnership, family and origins, career and the role you take on in the world, and where creativity has its place.'],
+      ['Where you grow', 'Strengths in detail, the areas where growth lies, the great life theme, sources of strength and limits, and where support helps.'],
+      ['What comes, what stays', 'What shapes the present, what carries you and which periods in the coming months will be particularly important. Plus a page with your strongest traits at a glance.'],
+      ['For reference', 'A glossary explains every technical term, so the horoscope can be understood without prior knowledge.'],
+    ],
+    zeit: 'If the birth time is missing',
+    zeitText:
+      'Many people do not know their birth time. You can still order, at the same price. Without the time, the ascendant and the houses cannot be determined. The ascendant is the sign that was rising on the eastern horizon at birth. The houses divide the natal chart into twelve areas of life. The chapters that build on them are then worded more cautiously.',
+    zeitLink: 'More in the FAQ on birth time',
+    entsteht: 'Any questions?',
+    entstehtText: 'What is in the horoscope, how long it takes and what happens to your data is answered openly in the',
+    fragenLink: 'FAQ',
+    entstehtEnde: '',
+    schluss: 'Ready for a special gift?',
+    kapitel: ['chapter', 'chapters'],
+  },
+};
+const t = T[lang];
+
+const produkt = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: t.produktName,
+  description: t.produktText,
+  brand: { '@type': 'Brand', name: site.brand },
+  offers: {
+    '@type': 'Offer',
+    price: site.price.toFixed(2),
+    priceCurrency: 'EUR',
+    availability: 'https://schema.org/InStock',
+    url: new URL(routes.produkt[lang], site.url).href,
+  },
+};
+---
+
+<Base
+  title={t.title}
+  description={t.description}
+  breadcrumbs={[{ name: t.crumb, path: routes.produkt[lang] }]}
+  jsonLd={[produkt]}
+>
+  {/* Links die Animation, sie bleibt beim Lesen stehen; rechts Titel, Eckdaten und die Rechenschritte */}
+  <section class="abschnitt berechnung">
+    <div class="wrap berechnung__raster">
+      <div class="berechnung__radix">
+        <KosmosRadix scroll scrollStart="#h-berechnung" />
+      </div>
+      <div>
+        <h1>{t.h1}</h1>
+        <p class="lesetext abstand-16 einleitung">{t.einleitung}</p>
+        <details class="mehr">
+          <summary>{t.einleitungMehrTitel}</summary>
+          {t.einleitungMehr.map((absatz) => <p class="lesetext abstand-16 einleitung">{absatz}</p>)}
+        </details>
+        <dl class="eckdaten">
+          {t.eck.map(([dt, dd, zusatz]) => (
+            <div>
+              <dt>{dt}</dt>
+              <dd>{dd}{zusatz && <span class="eckdaten__zusatz">{zusatz}</span>}</dd>
+            </div>
+          ))}
+        </dl>
+        <div class="kauf-oben"><Kaufknopf hinweis={false} /></div>
+
+        <h2 id="h-berechnung" class="berechnung__titel">{t.berechnung}</h2>
+        <p class="lesetext nebentext abstand-16">{t.berechnungText}</p>
+        <ol class="rechenschritte">
+          {t.schritte.map(([nr, titel, text]) => (
+            <li>
+              <span class="rechenschritte__nr" aria-hidden="true">{nr}</span>
+              <div>
+                <h3>{titel}</h3>
+                <p class="nebentext">{text}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <ZweiFassungen />
+
+  <section class="abschnitt" aria-labelledby="h-inhalt">
+    <div class="wrap">
+      <h2 id="h-inhalt">{t.inhalt}</h2>
+      <div class="inhalt__kopf">
+        {t.inhaltIntro.map((absatz, i) => (
+          <div>
+            <h3>{t.inhaltTitel[i]}</h3>
+            <p class="nebentext">{absatz}</p>
+          </div>
+        ))}
+      </div>
+      <div class="inhalt">
+        {[
+          { block: t.bloecke[0], liste: vorspann.map((v) => ({ nr: '', titel: v })) },
+          ...teile.map((teil, i) => ({ block: t.bloecke[i + 1], liste: teil.kapitel, teil: teil.kapitel.length > 1 ? teil.titel : '' })),
+          { block: t.bloecke[t.bloecke.length - 1], liste: anhang.map((a) => ({ nr: '', titel: a })) },
+        ].map((zeile) => (
+          <details class="inhalt__karte">
+            <summary>
+              <div class="inhalt__text">
+                <h3>{zeile.block[0]}</h3>
+                <p class="nebentext inhalt__kurz">{zeile.block[1]}</p>
+              </div>
+              {zeile.liste.some((k) => k.nr) && (
+                <span class="inhalt__anzahl">{zeile.liste.filter((k) => k.nr).length} {t.kapitel[zeile.liste.filter((k) => k.nr).length === 1 ? 0 : 1]}</span>
+              )}
+            </summary>
+            {/* Am Handy steht die Beschreibung erst im aufgeklappten Teil, zugeklappt bleiben nur Titel und Kapitelzahl */}
+            <p class="nebentext inhalt__kurz--offen">{zeile.block[1]}</p>
+            <ol class="verzeichnis">
+              {zeile.liste.map((k) => (
+                <li class:list={{ 'verzeichnis--ohne': !k.nr }}><span class="verzeichnis__nr">{k.nr}</span>{k.titel}</li>
+              ))}
+            </ol>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="abschnitt" aria-labelledby="h-zeit">
+    <div class="wrap zweispaltig">
+      <div>
+        <h2 id="h-zeit">{t.zeit}</h2>
+        <p class="abstand-16">{t.zeitText}</p>
+        <p class="abstand-16"><a class="textlink" href={`${routes.fragen[lang]}#geburtszeit`}>{t.zeitLink}</a></p>
+      </div>
+      <div>
+        <h2>{t.entsteht}</h2>
+        <p class="abstand-16">
+          {t.entstehtText} <a class="textlink" href={routes.fragen[lang]}>{t.fragenLink}</a>{t.entstehtEnde ? ` ${t.entstehtEnde}` : '.'}
+        </p>
+      </div>
+    </div>
+  </section>
+
+  {/* Der Bestellknopf steht ganz am Ende */}
+  <section class="abschnitt mitte">
+    <div class="wrap">
+      <h2>{t.schluss}</h2>
+      <div class="abstand-32"><Kaufknopf hinweis={false} /></div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* Auf dieser Seite sind Bezeichnungen und Links nicht golden, sondern fett in Schriftfarbe.
+     Golden bleiben Kapitel- und Schrittzahlen, Knöpfe, Linien, Bilder und die Radix. */
+  /* Überschriften im Ton der Startseite (in Hell Ocker, in Dunkel hell), fett */
+  h1,
+  h2,
+  h3 {
+    color: var(--titel);
+    font-weight: 700;
+  }
+  .textlink {
+    color: var(--tinte);
+    font-weight: 600;
+    text-decoration-color: var(--gold);
+  }
+  .abstand-16 {
+    margin-top: var(--s-16);
+  }
+  .abstand-32 {
+    margin-top: var(--s-32);
+  }
+  /* Alle Absätze der Einleitung gleich groß und in Schriftfarbe */
+  .einleitung {
+    font-size: var(--t-13);
+    line-height: 1.45;
+    color: var(--tinte);
+  }
+  /* Seitentitel in Gold */
+  .berechnung h1 {
+    color: var(--akzent);
+  }
+  /* Eine Leerzeile mehr zwischen Titel und Text */
+  .berechnung h1 + .einleitung {
+    margin-top: var(--s-32);
+  }
+  /* Weitere Einleitungsabsätze aufklappbar, eigener Marker statt Standarddreieck */
+  .mehr {
+    margin-top: var(--s-16);
+  }
+  .mehr summary {
+    font-weight: 700;
+    color: var(--akzent);
+    cursor: pointer;
+    list-style: none;
+  }
+  .mehr summary::-webkit-details-marker {
+    display: none;
+  }
+  .mehr summary::after {
+    content: ' +';
+  }
+  .mehr[open] summary::after {
+    content: ' \2212';
+  }
+  .mehr summary:focus-visible {
+    outline: 2px solid var(--akzent);
+    outline-offset: 4px;
+  }
+  /* Bestellknopf direkt nach den Eckdaten, linksbündig */
+  .kauf-oben {
+    margin-top: var(--s-32);
+  }
+  /* Eckdaten wie das Kapitelverzeichnis: ohne Fläche und Rahmen, Bezeichnung in Gold, Wert in der Titelschrift */
+  .eckdaten {
+    margin: var(--s-32) 0 0;
+  }
+  .berechnung__titel {
+    margin-top: var(--s-64);
+  }
+  /* Eckdaten und Rechenschritte teilen sich die Spaltenbreite */
+  .eckdaten div {
+    display: grid;
+    grid-template-columns: 7.5em minmax(0, 1fr);
+    gap: var(--s-16);
+    align-items: baseline;
+    padding-block: var(--s-4);
+  }
+  .eckdaten dt {
+    font-family: var(--font-titel);
+    font-size: var(--t-13);
+    color: var(--akzent); /* Bezeichnungen (Umfang, Fassungen …) in Gold */
+    font-weight: 600;
+  }
+  /* Werte komplett fett, damit Ziffern und Buchstaben gleich kräftig wirken */
+  .eckdaten dd {
+    margin: 0;
+    font-family: var(--font-titel);
+    font-size: var(--t-13);
+    font-weight: 700;
+    line-height: 1.3;
+  }
+  .eckdaten__zusatz {
+    font-weight: 500;
+  }
+  .eckdaten__zusatz {
+    display: block;
+    margin-top: var(--s-8);
+    font-family: var(--font-text);
+    font-size: var(--t-9);
+    line-height: 1.45;
+    color: var(--tinte);
+  }
+  @media (max-width: 520px) {
+    .eckdaten div {
+      grid-template-columns: 6em minmax(0, 1fr);
+    }
+  }
+
+  /* Inhalt: oben die Einleitung, darunter je Teil links die Beschreibung, rechts die Kapitel dazu */
+  /* Einleitung in zwei Spalten, im selben Raster wie die Teile darunter */
+  .inhalt__kopf {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--s-64);
+    margin-top: var(--s-32);
+  }
+  .inhalt__kopf h3 {
+    font-size: var(--t-17);
+    margin-bottom: var(--s-8);
+  }
+  .inhalt {
+    display: grid;
+    gap: var(--s-12);
+    margin-top: var(--s-48);
+  }
+  /* Aufklappbare Glaskarte je Teil: zu sieht man Titel, Kurztext und Kapitelzahl, offen die Kapitelliste */
+  .inhalt__karte {
+    padding: var(--s-24) var(--s-32);
+    border: 1px solid var(--karte-rand);
+    border-radius: var(--rahmen-radius);
+    background: var(--karte);
+    box-shadow: var(--karte-licht);
+    backdrop-filter: var(--karte-blur);
+    -webkit-backdrop-filter: var(--karte-blur);
+  }
+  .inhalt__karte summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: var(--s-24);
+    cursor: pointer;
+    list-style: none;
+  }
+  .inhalt__karte summary::-webkit-details-marker {
+    display: none;
+  }
+  .inhalt__karte summary::after {
+    content: '+';
+    grid-column: 3;
+    font-family: var(--font-titel);
+    font-size: var(--t-17);
+    line-height: 1;
+    color: var(--akzent);
+  }
+  .inhalt__karte[open] summary::after {
+    content: '−';
+  }
+  .inhalt__karte summary:focus-visible {
+    outline: 2px solid var(--akzent);
+    outline-offset: 4px;
+    border-radius: var(--rahmen-radius);
+  }
+  .inhalt__anzahl {
+    grid-column: 2;
+    font-family: var(--font-titel);
+    font-size: var(--t-9);
+    color: var(--tinte2);
+    white-space: nowrap;
+  }
+  .inhalt__text h3 {
+    font-size: var(--t-13);
+    color: var(--titel);
+    font-weight: 600;
+    margin-bottom: var(--s-8);
+  }
+  .verzeichnis {
+    list-style: none;
+    margin: var(--s-16) 0 0;
+    padding: 0;
+    font-family: var(--font-titel);
+    font-size: var(--t-13);
+  }
+  .verzeichnis li {
+    padding-block: var(--s-4);
+  }
+  .verzeichnis__nr {
+    display: inline-block;
+    width: 3em;
+    color: var(--akzent);
+  }
+  .verzeichnis--ohne {
+    color: var(--tinte2);
+  }
+
+  /* Wie es berechnet wird: links die Radix der Startseite, rechts die fünf Schritte */
+  .berechnung {
+    position: relative;
+    isolation: isolate;
+    overflow: clip; /* hält die fliegenden Sterne im Abschnitt, ohne das Mitlaufen der Radix zu verhindern */
+  }
+  /* Breiter als der übrige Inhalt, damit die Radix den Platz links ausnutzt */
+  .berechnung__raster {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: var(--s-64);
+    align-items: start;
+    max-width: 1440px;
+  }
+  /* Die Radix bleibt im Blick, während man die Schritte liest. Höchstens so groß wie auf der Startseite
+     (760 px) und nie höher als der Bildschirm unter der Kopfzeile */
+  .berechnung__radix {
+    position: sticky;
+    top: 100px;
+    width: min(100%, 760px, calc(100svh - 130px));
+    margin: 0;
+    justify-self: center;
+  }
+  /* Eckdaten und Rechenschritte teilen sich Spaltenbreite und Zeilenabstand */
+  .rechenschritte {
+    list-style: none;
+    margin: var(--s-32) 0 0;
+    padding: 0;
+    display: grid;
+    gap: var(--s-12);
+  }
+  /* Jeder Schritt eine Glaskarte, etwas kleiner im Radius als die großen Karten */
+  .rechenschritte li {
+    display: grid;
+    grid-template-columns: 7.5em minmax(0, 1fr);
+    gap: var(--s-16);
+    padding: var(--s-16) var(--s-24);
+    border: 1px solid var(--karte-rand);
+    border-radius: 20px;
+    background: var(--karte);
+    box-shadow: var(--karte-licht);
+    backdrop-filter: var(--karte-blur);
+    -webkit-backdrop-filter: var(--karte-blur);
+  }
+  .rechenschritte__nr {
+    font-family: var(--font-titel);
+    font-size: var(--t-17);
+    line-height: 1.2;
+    color: var(--akzent);
+  }
+  .rechenschritte h3 {
+    font-size: var(--t-13);
+    margin-bottom: var(--s-4);
+  }
+
+  .zweispaltig {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--s-64);
+  }
+
+  /* Tablet: Radix über dem Text, Inhalt aber weiter zweispaltig wie am Desktop */
+  @media (max-width: 900px) {
+    .berechnung__raster,
+    .zweispaltig {
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--s-32);
+    }
+    .berechnung__radix {
+      position: relative;
+      top: auto;
+      width: min(100%, 460px);
+    }
+    .inhalt__kopf {
+      gap: var(--s-32);
+    }
+  }
+  /* Handy: alles untereinander, schmale Zahlenspalte, ruhigere Zwischenüberschriften */
+  @media (max-width: 640px) {
+    .inhalt__kopf {
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--s-32);
+    }
+    .inhalt__karte {
+      padding: var(--s-16);
+    }
+    .inhalt__karte summary {
+      gap: var(--s-12);
+    }
+    .inhalt__kopf h3 {
+      font-size: var(--t-13);
+    }
+    .rechenschritte li {
+      grid-template-columns: 2.5em minmax(0, 1fr);
+      gap: var(--s-12);
+    }
+    .verzeichnis__nr {
+      width: 2.5em;
+    }
+  }
+  .inhalt__kurz--offen {
+    display: none;
+  }
+  @media (max-width: 640px) {
+    .inhalt__karte .inhalt__kurz {
+      display: none;
+    }
+    .inhalt__kurz--offen {
+      display: block;
+      margin-top: var(--s-12);
+    }
+  }
+</style>

@@ -1,0 +1,672 @@
+---
+import ThemeToggle from './ThemeToggle.astro';
+import Radixzeichen from './Radixzeichen.astro';
+import Sprachumschalter from './Sprachumschalter.astro';
+import { site, kopfmenue } from '../site';
+import { langFromPath, normPath, routes } from '../i18n';
+
+interface Props {
+  andereSprache: string; // Adresse dieser Seite in der anderen Sprache
+}
+const { andereSprache } = Astro.props;
+const lang = langFromPath(Astro.url.pathname);
+const path = normPath(Astro.url.pathname);
+const [vorStrich, nachStrich] = site.name.split('-');
+const t = {
+  de: { menue: 'Hauptmenü', knopf: 'Menü', bestellen: 'Bestellen', korb: 'Warenkorb', korbAnzahl: 'Warenkorb, {n} Horoskope', korbSumme: '{summe}' },
+  en: { menue: 'Main menu', knopf: 'Menu', bestellen: 'Order', korb: 'Cart', korbAnzahl: 'Cart, {n} horoscopes', korbSumme: '{summe}' },
+}[lang];
+---
+
+<header class="kopf">
+  <div class="wrap kopf__zeile">
+    <div class="kopf__links">
+      <a href={routes.start[lang]} class="marke">
+        <Radixzeichen class="marke__zeichen" />
+        {/* Gerader Bindestrich: der der Titelschrift ist schräg */}
+        <span>{vorStrich}<span class="marke__strich">-</span>{nachStrich}</span>
+      </a>
+    </div>
+    <nav id="hauptmenue" class="menue" aria-label={t.menue}>
+      {/* Tab-Leiste: abgerundete Fläche, aktiver Punkt als goldene Pille */}
+      <ul class="menue__liste">
+        <li class="menue__bestellen"><a href={routes.bestellen[lang]}>{t.bestellen}</a></li>
+        {kopfmenue(lang).map((item) => {
+          // Aktuelle Seite: Start nur exakt, sonst auch Unterseiten (z. B. Artikel unter /fragen/…)
+          const trifft = (pfad: string) => path === pfad || (pfad !== routes.start[lang] && path.startsWith(pfad + '/'));
+          const aktiv = trifft(item.pfad) || (item.unter?.some((u) => trifft(u.pfad)) ?? false);
+          return (
+            <li class:list={[item.unter && 'hat-unter']}>
+              <a href={item.href} class:list={[aktiv && 'ist-aktiv']} aria-current={aktiv && !item.unter ? 'page' : undefined}>
+                {item.label}
+                {item.unter && (
+                  <svg class="pfeil" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" /></svg>
+                )}
+              </a>
+              {item.unter && (
+                <ul class="unter">
+                  {item.unter.map((u) => (
+                    <li><a href={u.href} aria-current={path === u.pfad && u.href === u.pfad ? 'page' : undefined}>{u.label}</a></li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          );
+        })}
+        {/* Desktop: Bestellen als letzter Punkt der Menüleiste, in Gold */}
+        <li class="menue__kauf"><a href={routes.bestellen[lang]} aria-current={path === routes.bestellen[lang] ? 'page' : undefined}>{t.bestellen}</a></li>
+        <li class="menue__sprache">
+          <Sprachumschalter andereSprache={andereSprache} imMenue />
+        </li>
+      </ul>
+    </nav>
+    <div class="kopf__aktionen">
+      {/* Zweite Pille: Warenkorb, Sprache, Hell/Dunkel (auf Tablets auch Bestellen, am Handy der Menüknopf) */}
+      <div class="kopf__pille">
+        <a class="kopf__bestellen" href={routes.bestellen[lang]}>{t.bestellen}</a>
+        <div class="kopf__korb">
+          <a class="korbknopf" href={routes.warenkorb[lang]} aria-label={t.korb} title={t.korb} data-korbknopf data-lang={lang} data-preise={JSON.stringify({ grund: site.price, aufpreis: site.bothSurcharge })} data-t={JSON.stringify({ korb: t.korb, anzahl: t.korbAnzahl, summe: t.korbSumme })}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 8h14l-1.2 11.2a1 1 0 0 1-1 .8H7.2a1 1 0 0 1-1-.8Z" />
+              <path d="M9 10V7a3 3 0 0 1 6 0v3" />
+            </svg>
+            <span class="korbknopf__zahl" data-korbzahl hidden></span>
+          </a>
+          <a class="korbpreis" href={routes.warenkorb[lang]} data-korbpreis hidden tabindex="-1" aria-hidden="true"></a>
+        </div>
+        <div class="kopf__sprache">
+          <Sprachumschalter andereSprache={andereSprache} schalter />
+        </div>
+      <button
+        class="menueknopf"
+        type="button"
+        aria-label={t.knopf}
+        title={t.knopf}
+        aria-expanded="false"
+        aria-controls="hauptmenue"
+      >
+        <span class="menueknopf__striche" aria-hidden="true"></span>
+      </button>
+        {/* Hell/Dunkel immer ganz rechts, auch am Handy */}
+        <div class="kopf__ansicht">
+          <ThemeToggle nurSymbol />
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+  import { lesen, summe, euro } from '../scripts/warenkorb';
+  // Anzahl im Warenkorb-Symbol, aktualisiert sich bei jeder Änderung
+  const zeigeKorb = () => document.querySelectorAll<HTMLAnchorElement>('[data-korbknopf]').forEach(zeigeEinen);
+  const zeigeEinen = (korbknopf: HTMLAnchorElement) => {
+    const n = lesen().length;
+    const zahl = korbknopf.querySelector<HTMLElement>('[data-korbzahl]')!;
+    zahl.hidden = n === 0;
+    zahl.textContent = String(n);
+    korbknopf.classList.toggle('ist-gefuellt', n > 0);
+    const kt = JSON.parse(korbknopf.dataset.t!);
+    // Summe neben dem Symbol
+    const betrag = euro(summe(lesen(), JSON.parse(korbknopf.dataset.preise!)), korbknopf.dataset.lang ?? 'de');
+    const preis = korbknopf.parentElement!.querySelector<HTMLElement>('[data-korbpreis]');
+    if (preis) {
+      preis.hidden = n === 0;
+      preis.textContent = betrag;
+    }
+    const text = n ? `${kt.anzahl.replace('{n}', String(n))}, ${betrag}` : kt.korb;
+    korbknopf.setAttribute('aria-label', text);
+    korbknopf.setAttribute('title', text);
+  };
+  document.addEventListener('warenkorb', zeigeKorb);
+  addEventListener('storage', zeigeKorb);
+  zeigeKorb();
+
+  const knopf = document.querySelector<HTMLButtonElement>('.menueknopf');
+  const menue = document.getElementById('hauptmenue');
+  const setOpen = (open: boolean) => {
+    knopf?.setAttribute('aria-expanded', String(open));
+    menue?.classList.toggle('ist-offen', open);
+  };
+  knopf?.addEventListener('click', () => setOpen(knopf.getAttribute('aria-expanded') !== 'true'));
+  menue?.addEventListener('click', (e) => {
+    if ((e.target as HTMLElement).closest('a')) setOpen(false);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && knopf?.getAttribute('aria-expanded') === 'true') {
+      setOpen(false);
+      knopf.focus();
+    }
+  });
+</script>
+
+<script>
+  // Kopfzeile bekommt beim Scrollen eine Milchglasfläche, damit der Name nicht über unruhigem Inhalt steht
+  const kopf = document.querySelector<HTMLElement>('.kopf');
+  let wartet = false;
+  const pruefe = () => {
+    wartet = false;
+    kopf?.classList.toggle('ist-gescrollt', scrollY > 10);
+  };
+  addEventListener(
+    'scroll',
+    () => {
+      if (!wartet) {
+        wartet = true;
+        requestAnimationFrame(pruefe);
+      }
+    },
+    { passive: true },
+  );
+  pruefe();
+</script>
+
+<style>
+  /* Kopfzeile im Tab-Stil: Marke links, Menü als abgerundete Leiste in der Mitte,
+     rechts eine zweite Pille mit Bestellen, Warenkorb und Hell/Dunkel, daneben DE/EN */
+  /* Milchglas: helle, halbdurchsichtige Fläche, dahinter wird alles weichgezeichnet */
+  /* Die Kopfzeile selbst ist durchsichtig, beim Scrollen bleibt der Hintergrund sichtbar.
+     Nur die Pillen sind leichtes Milchglas. */
+  .kopf {
+    --glas: color-mix(in srgb, var(--papier) 25%, rgb(255 255 255 / 0.05));
+    --glas-rand: rgb(255 255 255 / 0.16);
+    --glas-licht: inset 0 1px 0 rgb(255 255 255 / 0.12);
+    --glas-schatten: 0 8px 24px rgb(0 0 0 / 0.16);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    /* sanfter Verlauf statt Fläche: oben leicht getönt, nach unten ganz durchsichtig */
+    background: linear-gradient(to bottom, color-mix(in srgb, var(--papier) 40%, transparent), transparent);
+    transition: background 0.3s, box-shadow 0.3s;
+  }
+  /* Nach dem Scrollen: Milchglas über die ganze Breite */
+  .kopf.ist-gescrollt {
+    background: color-mix(in srgb, var(--papier) 72%, transparent);
+    backdrop-filter: blur(16px) saturate(1.3);
+    -webkit-backdrop-filter: blur(16px) saturate(1.3);
+    box-shadow: 0 1px 0 var(--karte-rand);
+  }
+  :global(:root[data-theme='light']) .kopf {
+    --glas: rgb(255 255 255 / 0.45);
+    --glas-rand: rgb(255 255 255 / 0.7);
+    --glas-licht: inset 0 1px 0 rgb(255 255 255 / 0.7);
+    --glas-schatten: 0 6px 20px rgb(122 93 32 / 0.1);
+  }
+  .menue__liste,
+  .kopf__pille,
+  .unter {
+    background: var(--glas);
+    border: 1px solid var(--glas-rand);
+    box-shadow: var(--glas-licht), var(--glas-schatten);
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  }
+  /* Marke und DE/EN stehen frei: ein weicher Schein hält sie über jedem Hintergrund lesbar */
+  .marke {
+    text-shadow: 0 0 12px var(--papier), 0 0 4px var(--papier);
+  }
+  .kopf__zeile,
+  .kopf__zeile :global(a),
+  .kopf__zeile :global(.sprache__aktuell),
+  .kopf__zeile :global(.sprache__trenner) {
+    font-weight: 600;
+  }
+  .kopf__zeile {
+    display: grid;
+    grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr);
+    max-width: 1440px;
+    align-items: center;
+    gap: var(--s-24);
+    min-height: 84px;
+  }
+  .kopf__links {
+    justify-self: start;
+    display: flex;
+    align-items: center;
+  }
+  .marke {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-12);
+    --marke-farbe: var(--titel);
+    color: var(--marke-farbe);
+    font-family: var(--font-titel);
+    font-size: var(--t-17);
+    font-weight: 700;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  /* Heller Modus: Name fett (die allgemeine Regel für Links in der Kopfzeile setzt sonst nur halbfett) */
+  :global(:root[data-theme='light']) .kopf__zeile .marke {
+    font-weight: 700;
+  }
+  .marke__strich {
+    position: relative;
+    color: transparent;
+  }
+  .marke__strich::after {
+    content: '';
+    position: absolute;
+    left: 0.06em;
+    right: 0.06em;
+    bottom: 0.47em;
+    height: 0.065em;
+    background: var(--marke-farbe);
+  }
+  /* Bildzeichen: Radix in Haarlinien, in Gold */
+  .marke :global(.marke__zeichen) {
+    width: 44px;
+    height: 44px;
+    color: var(--marke-zeichen);
+  }
+
+  /* Menü: eine abgerundete Leiste */
+  .menue {
+    justify-self: center;
+  }
+  .menue__liste {
+    display: flex;
+    align-items: center;
+    gap: var(--s-4);
+    list-style: none;
+    margin: 0;
+    padding: 5px;
+    border-radius: 999px;
+    font-size: var(--t-11);
+  }
+  .menue__liste > li {
+    position: relative;
+  }
+  .menue__liste a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 0 22px;
+    border-radius: 999px;
+    color: var(--tinte);
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color 0.2s, color 0.2s;
+  }
+  /* Kein Hintergrund beim Überfahren oder auf der aktuellen Seite, nur die Schrift wird golden */
+  .menue__liste a:hover,
+  .menue__liste a.ist-aktiv,
+  .menue__liste a[aria-current='page'] {
+    color: var(--akzent);
+  }
+  .pfeil {
+    width: 12px;
+    height: 12px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform 0.2s;
+  }
+  /* Untermenü von Geburtshoroskop: klappt bei Maus und Tastatur auf */
+  .unter {
+    display: none;
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 220px;
+    list-style: none;
+    margin: 0;
+    padding: 6px;
+    border-radius: 24px;
+  }
+  /* Untermenü braucht mehr Deckkraft, damit die Schrift auf dem Inhalt darunter lesbar bleibt */
+  .unter {
+    background: color-mix(in srgb, var(--papier) 82%, transparent);
+  }
+  .unter::before {
+    content: '';
+    position: absolute;
+    inset: -12px 0 auto;
+    height: 12px;
+  }
+  .hat-unter:hover .unter,
+  .hat-unter:focus-within .unter {
+    display: block;
+  }
+  .hat-unter:hover .pfeil,
+  .hat-unter:focus-within .pfeil {
+    transform: rotate(180deg);
+  }
+  .unter a {
+    display: flex;
+    width: 100%;
+    padding: 0 18px;
+  }
+  .menue__bestellen,
+  .menue__sprache {
+    display: none;
+  }
+
+  /* Rechte Seite */
+  .kopf__aktionen {
+    justify-self: end;
+    display: flex;
+    align-items: center;
+    gap: var(--s-16);
+  }
+  .kopf__pille {
+    display: flex;
+    align-items: center;
+    gap: var(--s-4);
+    padding: 5px;
+    border-radius: 999px;
+  }
+  /* Bestellen in der Pille rechts nur auf Tablets, am Desktop steht es in der Menüleiste */
+  .kopf__bestellen {
+    display: none;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 20px;
+    border-radius: 999px;
+    /* wie die übrigen Menüpunkte: gleiche Schrift, Größe, Dicke und Farbe */
+    font-size: var(--t-11);
+    font-weight: 700;
+    color: var(--tinte);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 0.2s;
+  }
+  .kopf__bestellen:hover {
+    color: var(--akzent);
+  }
+  .kopf__korb {
+    display: flex;
+    align-items: center;
+    gap: var(--s-4);
+  }
+  .kopf__ansicht {
+    display: flex;
+  }
+  .kopf__sprache {
+    display: flex;
+  }
+
+  /* Warenkorb: rundes Symbol ohne Rand in der Pille, goldene Zahl */
+  .korbknopf {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    flex: none;
+    border-radius: 50%;
+    color: var(--tinte);
+    transition: color 0.2s;
+  }
+  /* Golden nur, wenn etwas im Warenkorb liegt */
+  .korbknopf.ist-gefuellt,
+  .korbknopf:hover {
+    color: var(--akzent);
+  }
+  .korbknopf svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+  .korbknopf__zahl {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--knopf);
+    color: var(--knopftext);
+    font-size: 11px;
+    line-height: 18px;
+    text-align: center;
+    font-weight: 600;
+  }
+  .korbpreis {
+    padding-right: 10px;
+    font-family: var(--font-titel);
+    font-size: var(--t-13);
+    font-weight: 700;
+    color: var(--akzent);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .korbpreis[hidden] {
+    display: none;
+  }
+  .menueknopf {
+    display: none;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--tinte);
+    cursor: pointer;
+    place-items: center;
+  }
+  .menueknopf__striche,
+  .menueknopf__striche::before,
+  .menueknopf__striche::after {
+    display: block;
+    width: 16px;
+    height: 1.5px;
+    background: currentColor;
+    transition: transform 0.2s ease-out;
+  }
+  .menueknopf__striche {
+    position: relative;
+  }
+  .menueknopf__striche::before,
+  .menueknopf__striche::after {
+    content: '';
+    position: absolute;
+    left: 0;
+  }
+  .menueknopf__striche::before {
+    top: -5px;
+  }
+  .menueknopf__striche::after {
+    top: 5px;
+  }
+  .menueknopf[aria-expanded='true'] .menueknopf__striche {
+    background: transparent;
+  }
+  .menueknopf[aria-expanded='true'] .menueknopf__striche::before {
+    transform: translateY(5px) rotate(45deg);
+  }
+  .menueknopf[aria-expanded='true'] .menueknopf__striche::after {
+    transform: translateY(-5px) rotate(-45deg);
+  }
+
+  /* Bis 1400 px: etwas engere Pillen */
+  @media (max-width: 1399px) {
+    .menue__liste a {
+      padding: 0 16px;
+    }
+    .kopf__bestellen {
+      padding: 0 14px;
+    }
+  }
+
+  /* Handy und Tablet: Menü klappt über den Knopf aus */
+  @media (max-width: 1079px) {
+    /* Auf kleinen Bildschirmen steht die Marke direkt über dem Text: oben dichter tönen, damit nichts durchscheint */
+    .kopf {
+      background: linear-gradient(to bottom, color-mix(in srgb, var(--papier) 80%, transparent) 60%, color-mix(in srgb, var(--papier) 0%, transparent));
+    }
+    /* Der Verlauf oben hat dieselbe Spezifität, der gescrollte Zustand muss hier erneut greifen */
+    .kopf.ist-gescrollt {
+      background: color-mix(in srgb, var(--papier) 72%, transparent);
+    }
+    .kopf__zeile {
+      grid-template-columns: 1fr auto;
+      min-height: 72px;
+    }
+    .kopf__aktionen {
+      grid-column: 2;
+      gap: var(--s-8);
+    }
+    .menueknopf {
+      display: grid;
+    }
+    .menue__liste .menue__kauf {
+      display: none;
+    }
+    .kopf__bestellen {
+      display: inline-flex;
+    }
+    .menue {
+      display: none;
+      justify-self: stretch;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--papier);
+      border-bottom: 1px solid var(--linie);
+    }
+    .menue.ist-offen {
+      display: block;
+    }
+    .menue__liste {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+      max-width: var(--breite);
+      margin-inline: auto;
+      padding: var(--s-8) var(--s-24) var(--s-16);
+      border: 0;
+      border-radius: 0;
+      background: none;
+      box-shadow: none;
+      backdrop-filter: none;
+    }
+    .menue__liste > li + li {
+      border-top: 1px solid var(--linie);
+    }
+    .menue__liste a {
+      display: flex;
+      min-height: 48px;
+      padding: 0;
+      color: var(--tinte);
+    }
+    /* Untermenü im Ausklappmenü immer sichtbar, eingerückt */
+    .pfeil {
+      display: none;
+    }
+    .unter {
+      display: block;
+      position: static;
+      transform: none;
+      min-width: 0;
+      padding: 0 0 var(--s-8) var(--s-16);
+      border: 0;
+      border-radius: 0;
+      background: none;
+      box-shadow: none;
+      backdrop-filter: none;
+    }
+    .unter::before {
+      display: none;
+    }
+    .unter a {
+      min-height: 44px;
+      padding: 0;
+      color: var(--tinte2);
+    }
+    /* Ausgeklapptes Menü: deckende Fläche statt Glas, damit es ruhig lesbar ist */
+    .menue {
+      background: var(--papier);
+    }
+    .kopf__sprache {
+      display: none;
+    }
+    .menue__liste .menue__sprache {
+      display: block;
+    }
+  }
+
+  /* Handys und kleine Tablets: kleinere Marke, engere Abstände */
+  @media (max-width: 639px) {
+    .kopf__zeile {
+      gap: var(--s-12);
+      min-height: 64px; /* fixierte Kopfzeile am Handy höchstens 64 px */
+    }
+    .marke {
+      font-size: 1.1rem;
+      gap: 6px;
+    }
+    .marke :global(.marke__zeichen) {
+      width: 30px;
+      height: 30px;
+    }
+    .kopf__aktionen {
+      gap: var(--s-8);
+    }
+  }
+
+  /* Tablets: kein Betrag neben dem Warenkorb, die Anzahl am Symbol bleibt. Sonst reicht der Platz neben der Marke nicht. */
+  @media (max-width: 767px) {
+    .korbpreis {
+      display: none;
+    }
+  }
+
+  /* Handys: Bestellen wandert als erster Punkt ins Menü */
+  @media (max-width: 559px) {
+    .kopf__bestellen,
+    .korbpreis {
+      display: none;
+    }
+    .menue__liste .menue__bestellen {
+      display: block;
+    }
+  }
+
+  /* Schmale Handys: Marke mit Zeichen kleiner, damit die Pille rechts neben ihr Platz hat */
+  @media (max-width: 420px) {
+    .kopf__zeile .marke {
+      font-size: 0.93rem;
+    }
+    .marke :global(.marke__zeichen) {
+      width: 26px;
+      height: 26px;
+    }
+  }
+
+  /* Sehr schmale Handys */
+  @media (max-width: 380px) {
+    .kopf__zeile {
+      gap: var(--s-8);
+    }
+    .kopf__aktionen {
+      gap: var(--s-4);
+    }
+    .kopf__pille {
+      padding: 3px;
+    }
+  }
+  @media (max-width: 360px) {
+    .kopf__zeile {
+      padding-inline: var(--s-16);
+    }
+  }
+  /* Sehr kleine Handys (unter 360 px): nur der Name, ohne Bildzeichen */
+  @media (max-width: 359px) {
+    .marke :global(.marke__zeichen) {
+      display: none;
+    }
+  }
+</style>

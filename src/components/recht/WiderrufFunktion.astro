@@ -1,0 +1,109 @@
+---
+// Elektronische Widerrufsfunktion (Art. 11a Verbraucherrechte-Richtlinie, gilt seit 19.06.2026):
+// gut sichtbar beschriftet, zwei Schritte, zum Schluss „Widerruf bestätigen“. Der Eingang muss dem Kunden
+// auf einem dauerhaften Datenträger (E-Mail) bestätigt werden; dafür braucht es die Serverfunktion.
+import '../../styles/formular.css';
+import { anbieter } from '../../site';
+import type { Lang } from '../../i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = {
+  de: {
+    titel: 'Vertrag widerrufen',
+    oeffnen: 'Vertrag hier widerrufen',
+    erklaerung: 'Hiermit widerrufe ich den von mir abgeschlossenen Vertrag über die folgende Bestellung.',
+    name: 'Dein Name (freiwillig)',
+    mail: 'E-Mail-Adresse, mit der du bestellt hast',
+    eMail: 'Bitte gib die E-Mail-Adresse deiner Bestellung an.',
+    bestellung: 'Bestellnummer oder Bestelldatum',
+    eBestellung: 'Bitte gib die Bestellnummer oder das Datum der Bestellung an.',
+    bestaetigen: 'Widerruf bestätigen',
+    bald: `Die Widerrufsfunktion wird gerade eingerichtet. Bis dahin schick deinen Widerruf bitte formlos per E-Mail an ${anbieter.email}. Du bekommst eine Eingangsbestätigung.`,
+  },
+  en: {
+    titel: 'Withdraw from contract',
+    oeffnen: 'Withdraw from contract here',
+    erklaerung: 'I hereby withdraw from the contract I concluded for the following order.',
+    name: 'Your name (optional)',
+    mail: 'Email address you ordered with',
+    eMail: 'Please enter the email address of your order.',
+    bestellung: 'Order number or order date',
+    eBestellung: 'Please enter the order number or the date of the order.',
+    bestaetigen: 'Confirm withdrawal',
+    bald: `The withdrawal function is being set up. Until then, please send your withdrawal informally by email to ${anbieter.email}. You will receive a confirmation of receipt.`,
+  },
+}[lang];
+---
+
+<section class="widerruf-funktion" id="vertrag-widerrufen" aria-labelledby="widerruf-titel">
+  <h2 id="widerruf-titel">{t.titel}</h2>
+  <button class="knopf knopf--rand" type="button" data-widerruf-oeffnen aria-expanded="false" aria-controls="widerruf-formular">{t.oeffnen}</button>
+  <form class="formular widerruf-funktion__formular" id="widerruf-formular" novalidate hidden>
+    <p>{t.erklaerung}</p>
+    <div class="feld">
+      <label for="w-name">{t.name}</label>
+      <input id="w-name" name="name" autocomplete="name" />
+    </div>
+    <div class="feld">
+      <label for="w-mail">{t.mail}</label>
+      <input id="w-mail" name="email" type="email" required autocomplete="email" inputmode="email" />
+      <p class="feld__fehler" id="w-e-mail" hidden>{t.eMail}</p>
+    </div>
+    <div class="feld">
+      <label for="w-bestellung">{t.bestellung}</label>
+      <input id="w-bestellung" name="bestellung" required autocomplete="off" />
+      <p class="feld__fehler" id="w-e-bestellung" hidden>{t.eBestellung}</p>
+    </div>
+    <div class="abschluss">
+      <button class="knopf knopf--voll" type="submit">{t.bestaetigen}</button>
+      <p class="hinweis" id="w-hinweis" role="status" hidden>{t.bald}</p>
+    </div>
+  </form>
+</section>
+
+<script>
+  const oeffnen = document.querySelector<HTMLButtonElement>('[data-widerruf-oeffnen]');
+  const formular = document.getElementById('widerruf-formular') as HTMLFormElement | null;
+  if (oeffnen && formular) {
+    oeffnen.addEventListener('click', () => {
+      formular.hidden = false;
+      oeffnen.setAttribute('aria-expanded', 'true');
+      oeffnen.hidden = true;
+      formular.querySelector<HTMLInputElement>('input')!.focus();
+    });
+    // Direkter Link aus der Fußzeile öffnet das Formular gleich
+    if (location.hash === '#vertrag-widerrufen') oeffnen.click();
+    const pruefe = (id: string, fehler: string, ok: (el: HTMLInputElement) => boolean) => {
+      const el = document.getElementById(id) as HTMLInputElement;
+      const falsch = !ok(el);
+      document.getElementById(fehler)!.hidden = !falsch;
+      el.setAttribute('aria-invalid', String(falsch));
+      return falsch ? el : null;
+    };
+    formular.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const erstes =
+        pruefe('w-mail', 'w-e-mail', (el) => el.value !== '' && el.validity.valid) ??
+        pruefe('w-bestellung', 'w-e-bestellung', (el) => el.value.trim() !== '');
+      pruefe('w-bestellung', 'w-e-bestellung', (el) => el.value.trim() !== '');
+      if (erstes) return erstes.focus();
+      // Phase 1: Serverfunktion fehlt noch. Sie muss den Widerruf speichern und sofort per E-Mail bestätigen.
+      document.getElementById('w-hinweis')!.hidden = false;
+    });
+  }
+</script>
+
+<style>
+  .widerruf-funktion h2 {
+    border-top-color: var(--gold) !important;
+  }
+  .widerruf-funktion__formular {
+    margin-top: var(--s-16);
+  }
+  [hidden] {
+    display: none !important;
+  }
+</style>

@@ -1,0 +1,11 @@
+---
+import View from '../../views/RatgeberArtikel.astro';
+import { artikelListe, slugVon } from '../../data/ratgeber';
+
+export async function getStaticPaths() {
+  return (await artikelListe('de')).map((a) => ({ params: { slug: slugVon(a) }, props: { a } }));
+}
+const { a } = Astro.props;
+---
+
+<View a={a} />

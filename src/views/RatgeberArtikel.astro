@@ -1,0 +1,289 @@
+---
+import { render, type CollectionEntry } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Kaufknopf from '../components/Kaufknopf.astro';
+import { site } from '../site';
+import { gegenstueck, pfadVon } from '../data/ratgeber';
+import { langFromPath, routes } from '../i18n';
+
+interface Props {
+  a: CollectionEntry<'ratgeber'>;
+}
+const { a } = Astro.props;
+const { Content, headings } = await render(a);
+// Inhaltsverzeichnis aus den Zwischenüberschriften, Lesezeit grob aus der Wortzahl
+const kapitel = headings.filter((h) => h.depth === 2);
+const minuten = Math.max(1, Math.round((a.body ?? '').split(/\s+/).length / 200));
+const lang = langFromPath(Astro.url.pathname);
+const andere = await gegenstueck(a);
+const t = {
+  de: { ratgeber: 'FAQ', schluss: 'Ein Geburtshoroskop für einen besonderen Menschen', lesezeit: 'Lesezeit etwa {n} Minuten', inhalt: 'In diesem Artikel', zurueck: 'Zurück zu allen Fragen' },
+  en: { ratgeber: 'FAQ', schluss: 'A birth chart for a special person', lesezeit: 'About {n} minutes to read', inhalt: 'In this article', zurueck: 'Back to all questions' },
+}[lang];
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: a.data.h1,
+  description: a.data.description,
+  datePublished: a.data.published.toISOString().slice(0, 10),
+  inLanguage: lang,
+  publisher: { '@type': 'Organization', name: site.brand, url: site.url },
+};
+---
+
+<Base
+  title={a.data.title}
+  description={a.data.description}
+  breadcrumbs={[
+    { name: t.ratgeber, path: routes.fragen[lang] },
+    { name: a.data.h1, path: pfadVon(a) },
+  ]}
+  jsonLd={[schema]}
+  alternates={lang === 'de' ? { en: andere } : { de: andere }}
+>
+  <article class="abschnitt artikel">
+    <header class="wrap artikel__kopf">
+      <p class="etikett"><a href={routes.fragen[lang]}>← {t.ratgeber}</a></p>
+      <h1 class="titel">{a.data.h1}</h1>
+      <p class="artikel__vorspann">{a.data.teaser}</p>
+      <p class="artikel__lesezeit">{t.lesezeit.replace('{n}', String(minuten))}</p>
+    </header>
+    <div class="wrap artikel__raster">
+      {kapitel.length > 2 && (
+        <nav class="artikel__inhalt" aria-label={t.inhalt}>
+          <p class="artikel__inhalt-titel">{t.inhalt}</p>
+          <ol>
+            {kapitel.map((k, i) => <li><a href={`#${k.slug}`} data-kapitel={k.slug}><span class="artikel__nr">{String(i + 1).padStart(2, '0')}</span>{k.text}</a></li>)}
+          </ol>
+        </nav>
+      )}
+      <div class="prosa artikel__text rahmen">
+        <Content />
+        <p class="artikel__zurueck"><a class="textlink" href={routes.fragen[lang]}>← {t.zurueck}</a></p>
+      </div>
+    </div>
+  </article>
+  <section class="abschnitt mitte">
+    <div class="wrap">
+      <h2>{t.schluss}</h2>
+      <div class="abstand-32"><Kaufknopf /></div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  // Inhaltsverzeichnis: der Abschnitt, in dem man gerade liest, wird golden markiert
+  const links = [...document.querySelectorAll<HTMLAnchorElement>('[data-kapitel]')];
+  if (links.length) {
+    const ziele = links.map((a) => document.getElementById(a.dataset.kapitel!)).filter(Boolean) as HTMLElement[];
+    const markiere = () => {
+      let aktiv = ziele[0];
+      for (const z of ziele) if (z.getBoundingClientRect().top < 160) aktiv = z;
+      links.forEach((a) => a.classList.toggle('ist-aktiv', a.dataset.kapitel === aktiv?.id));
+    };
+    addEventListener('scroll', markiere, { passive: true });
+    markiere();
+  }
+</script>
+
+<style>
+  .abstand-32 {
+    margin-top: var(--s-32);
+  }
+  /* Kopf: linksbündig, Titel in Gold, Vorspann in Schriftfarbe, Lesezeit als kleine Pille */
+  .artikel__kopf {
+    margin-bottom: var(--s-48);
+  }
+  .etikett a {
+    text-decoration: none;
+  }
+  .titel,
+  .artikel__vorspann {
+    max-width: 52rem;
+  }
+  .titel {
+    font-size: var(--t-26);
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--akzent);
+  }
+  .titel::after {
+    content: '';
+    display: block;
+    width: 48px;
+    height: 1px;
+    margin: var(--s-24) 0 0;
+    background: var(--gold);
+  }
+  .artikel__vorspann {
+    margin-top: var(--s-24);
+    font-family: var(--font-titel);
+    font-size: var(--t-13);
+    line-height: 1.45;
+    color: var(--tinte);
+  }
+  .artikel__lesezeit {
+    display: inline-block;
+    margin-top: var(--s-24);
+    padding: 4px var(--s-16);
+    border: 1px solid var(--linie);
+    border-radius: 999px;
+    font-size: var(--t-9);
+    font-weight: 700;
+    color: var(--tinte2);
+  }
+
+  /* Links das Inhaltsverzeichnis als Karte, es bleibt beim Lesen stehen; rechts der Text in einem Rahmen */
+  .artikel__raster {
+    display: grid;
+    grid-template-columns: minmax(0, 16rem) minmax(0, 44rem);
+    justify-content: start;
+    gap: var(--s-48);
+    align-items: start;
+  }
+  .rahmen {
+    border: 1px solid var(--karte-rand);
+    border-radius: 28px;
+    background: var(--karte);
+    box-shadow: var(--karte-licht);
+    backdrop-filter: var(--karte-blur);
+    -webkit-backdrop-filter: var(--karte-blur);
+  }
+  .artikel__inhalt {
+    position: sticky;
+    top: 112px;
+    padding: var(--s-24);
+    border: 1px solid var(--karte-rand);
+    border-radius: 24px;
+    background: var(--karte);
+    box-shadow: var(--karte-licht);
+    backdrop-filter: var(--karte-blur);
+    -webkit-backdrop-filter: var(--karte-blur);
+    font-size: var(--t-9);
+  }
+  .artikel__inhalt-titel {
+    font-family: var(--font-titel);
+    font-size: var(--t-11);
+    font-weight: 700;
+    color: var(--titel);
+    margin-bottom: var(--s-12);
+  }
+  .artikel__inhalt ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .artikel__inhalt li + li {
+    border-top: 1px solid var(--linie);
+  }
+  .artikel__inhalt a {
+    display: flex;
+    gap: var(--s-12);
+    padding-block: var(--s-8);
+    color: var(--tinte);
+    font-weight: 700;
+    line-height: 1.35;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .artikel__nr {
+    flex: none;
+    min-width: 1.6em;
+    font-family: var(--font-titel);
+    color: var(--akzent);
+  }
+  .artikel__inhalt a:hover,
+  .artikel__inhalt a.ist-aktiv {
+    color: var(--akzent);
+  }
+
+  /* Fließtext: etwas größer, ruhiger Zeilenabstand, Zwischenüberschriften fett mit Goldstrich */
+  .artikel__text {
+    padding: var(--s-48);
+    font-size: var(--t-11);
+    line-height: 1.7;
+  }
+  .artikel__text :global(p + p) {
+    margin-top: var(--s-16);
+  }
+  /* Der erste Absatz ist die kurze Antwort: größer gesetzt */
+  .artikel__text :global(> p:first-child) {
+    font-family: var(--font-titel);
+    font-size: var(--t-13);
+    line-height: 1.5;
+    color: var(--tinte);
+  }
+  .artikel__text :global(h2) {
+    margin-top: var(--s-48);
+    padding-top: var(--s-48);
+    border-top: 1px solid var(--linie);
+    font-size: var(--t-17);
+    font-weight: 700;
+    color: var(--titel);
+    scroll-margin-top: 104px;
+  }
+  .artikel__text :global(h2::after) {
+    content: '';
+    display: block;
+    width: 48px;
+    height: 1px;
+    margin-top: var(--s-16);
+    margin-bottom: var(--s-16);
+    background: var(--gold);
+  }
+  .artikel__text :global(h3) {
+    margin-top: var(--s-32);
+    color: var(--akzent);
+  }
+  /* Aufzählungen als kleine Karten, der fette Anfang in Gold */
+  .artikel__text :global(ul) {
+    display: grid;
+    gap: var(--s-12);
+    margin-top: var(--s-24);
+    padding-left: 0;
+    list-style: none;
+  }
+  .artikel__text :global(ul li) {
+    padding: var(--s-16) var(--s-24);
+    border: 1px solid var(--linie);
+    border-left: 2px solid var(--gold);
+    border-radius: 16px;
+    background: rgb(255 255 255 / 0.03);
+  }
+  .artikel__text :global(strong) {
+    font-weight: 700;
+    color: var(--akzent);
+  }
+  .artikel__zurueck {
+    margin-top: var(--s-48) !important;
+    padding-top: var(--s-24);
+    border-top: 1px solid var(--linie);
+    font-weight: 700;
+  }
+
+  @media (max-width: 1000px) {
+    .artikel__raster {
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--s-24);
+    }
+    .artikel__inhalt {
+      position: static;
+    }
+  }
+  @media (max-width: 640px) {
+    .artikel__text {
+      padding: var(--s-24) var(--s-16);
+      border-radius: 22px;
+    }
+    .artikel__text :global(ul li) {
+      padding: var(--s-12) var(--s-16);
+    }
+  }
+  /* Lange Artikeltitel am Handy kleiner, damit sie nicht den ganzen Bildschirm füllen */
+  @media (max-width: 520px) {
+    .titel {
+      font-size: 1.8rem;
+    }
+  }
+</style>

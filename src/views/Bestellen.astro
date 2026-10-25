@@ -1,0 +1,520 @@
+---
+import Base from '../layouts/Base.astro';
+import PersonFelder from '../components/PersonFelder.astro';
+import '../styles/formular.css';
+import { site, delivery } from '../site';
+import { langFromPath, routes } from '../i18n';
+
+const lang = langFromPath(Astro.url.pathname);
+const T = {
+  de: {
+    title: `Geburtshoroskop bestellen | ${site.name}`,
+    description: `Geburtsdaten eingeben und dein persönliches Geburtshoroskop bestellen. ${site.priceLabel.de}, hell oder dunkel, als PDF per Mail.`,
+    crumb: 'Bestellen',
+    h1: 'Horoskop bestellen',
+    umfang: `${site.umfang.de}, als PDF, hell oder dunkel. ${site.umfangSchwankung.de}`,
+    datenschutzTitel: 'Datenschutz',
+    noetig: 'Wir wollen so wenig wie möglich über dich wissen',
+    noetigAbsaetze: [
+      ['Vier Angaben reichen.', 'Für dein Horoskop brauchen wir nur deinen Vornamen, dein Geburtsdatum, die Uhrzeit und den Ort deiner Geburt. Nach deinem Nachnamen fragen wir gar nicht erst, und ein Kundenkonto musst du auch nicht anlegen.'],
+      ['Ein kleiner Tipp.', 'Dein Horoskop kommt per E-Mail zu dir. Steht in deiner Adresse dein Nachname, etwa bei vorname.nachname@…, landet er auf diesem Weg doch bei uns. Wenn dir das wichtig ist, nimm einfach eine Adresse ohne Nachnamen. Dann lässt sich dein Horoskop keiner vollständigen Person zuordnen.'],
+      ['Nach 30 Tagen gelöscht.', 'So lange heben wir deine Geburtsdaten nach der Auslieferung auf. Falls sich ein Zahlendreher eingeschlichen hat, kannst du dich bis dahin melden. Danach gibt es sie bei uns nicht mehr.'],
+      ['Auch für Geschenke.', 'Verschenkst du ein Horoskop, gibst du die Daten eines anderen Menschen ein. Wir gehen damit genauso sorgsam um wie mit deinen.'],
+      ['Kartendaten sehen wir nie.', 'Beim Bezahlen sehen nur die Zahlungsanbieter deinen Namen und deine Zahlungsdaten, das lässt sich leider nicht vermeiden.'],
+    ],
+    zeitFrage: 'Geburtszeit unbekannt?',
+    zeitFrageVorweg: 'Kein Problem.',
+    zeitFrageText: 'Die Uhrzeit steht im Geburtenregister beim Standesamt des Geburtsorts. Ohne sie bestellst du zum gleichen Preis, das Horoskop fällt dann aber etwas weniger umfangreich aus, weil Aszendent und Häuser fehlen.',
+    fuerWen: 'Für wen ist das Horoskop?',
+    vorname: 'Vorname', eVorname: 'Bitte gib einen Vornamen ein.',
+    datum: 'Geburtsdatum', eDatum: 'Bitte gib ein Geburtsdatum ein.',
+    zeit: 'Geburtszeit', ortszeit: '(Ortszeit)', eZeit: 'Bitte gib die Uhrzeit ein oder setz das Häkchen darunter.',
+    zeitUnbekannt: 'Geburtszeit unbekannt',
+    zeitHinweis: 'Ohne Uhrzeit lassen sich Aszendent und Häuser nicht bestimmen. Die Kapitel, die darauf aufbauen, sind dann vorsichtiger formuliert. Das steht auch im Horoskop.',
+    ort: 'Geburtsort', ortBeispiel: 'z. B. München', eOrt: 'Bitte wähle den Geburtsort aus der Liste.',
+    fassung: 'Fassung', hell: 'Hell', dunkel: 'Dunkel', beide: 'Beide', welche: 'Welche Fassung passt?',
+    wohin: 'Wohin sollen wir das Horoskop schicken?',
+    mail: 'Deine E-Mail-Adresse', eMail: 'Bitte prüf die E-Mail-Adresse.',
+    gutschein: 'Gutscheincode einlösen', gutscheinFeld: 'Gutscheincode', einloesen: 'Einlösen',
+    eGutschein: 'Ein Gutscheincode besteht aus Buchstaben, Ziffern und Bindestrichen.',
+    gutscheinOk: 'Der Code {code} wird beim Bezahlen geprüft und abgezogen.',
+    widerruf: 'Ich stimme zu, dass die Erstellung sofort beginnt. Damit verzichte ich auf mein Widerrufsrecht.',
+    eWiderruf: 'Ohne diese Zustimmung kann die Erstellung nicht beginnen.',
+    absenden: 'Zahlungspflichtig bestellen',
+    inWarenkorb: 'In den Warenkorb',
+    produktWahl: 'Welches Horoskop?',
+    produkte: [
+      { wert: 'geburtshoroskop', name: 'Geburtshoroskop', text: 'Persönlichkeit, Stärken und Lebensthemen', frei: true },
+      { wert: 'partnerschaft', name: 'Partnerschaftshoroskop', text: 'Zwei Geburtsbilder im Vergleich', frei: false },
+      { wert: 'kind', name: 'Kinderhoroskop', text: 'Für Eltern geschrieben', frei: false },
+    ],
+    demnaechst: 'Demnächst',
+    weiterePerson: 'Weitere Person', weiteres: 'Weiteres Horoskop', entfernen: 'Entfernen',
+    warenkorbHinweis: 'Im Warenkorb kannst du weitere Horoskope hinzufügen, einen Gutschein einlösen und bezahlen.',
+    zahlung: 'Bezahlen mit Karte, PayPal oder Apple Pay. Es gelten die', agb: 'AGB', daten: ', Hinweise zu deinen Daten in der', datenschutz: 'Datenschutzerklärung',
+    bald: 'Die Bezahlung wird gerade eingerichtet. Bestellungen sind in Kürze möglich.',
+  },
+  en: {
+    title: `Order your birth chart | ${site.name}`,
+    description: `Enter the birth details and order your personal birth chart. ${site.priceLabel.en}, light or dark, as a PDF by email.`,
+    crumb: 'Order',
+    h1: 'Order your horoscope',
+    umfang: `${site.umfang.en}, as a PDF, light or dark. ${site.umfangSchwankung.en}`,
+    datenschutzTitel: 'Privacy',
+    noetig: 'We want to know as little about you as possible',
+    noetigAbsaetze: [
+      ['Four details are enough.', 'For your horoscope we only need your first name, your date of birth, and the time and place of your birth. We do not even ask for your surname, and you do not need to create an account.'],
+      ['A small tip.', 'Your horoscope reaches you by email. If your address contains your surname, as in firstname.surname@…, it reaches us that way after all. If that matters to you, simply use an address without your surname. Then your horoscope cannot be linked to a complete person.'],
+      ['Deleted after 30 days.', 'That is how long we keep your birth details after delivery. If a digit has been mixed up, you can get in touch until then. After that, we no longer have them.'],
+      ['For gifts too.', 'If you give a horoscope as a gift, you enter another person’s details. We treat them with the same care as yours.'],
+      ['We never see your card details.', 'When you pay, only the payment providers see your name and payment details, which unfortunately cannot be avoided.'],
+    ],
+    zeitFrage: 'Birth time unknown?',
+    zeitFrageVorweg: 'No problem.',
+    zeitFrageText: 'The time is usually recorded by the registry office of the place of birth. Without it you order at the same price, but the horoscope is then somewhat less extensive, because the ascendant and houses are missing.',
+    fuerWen: 'Who is the horoscope for?',
+    vorname: 'First name', eVorname: 'Please enter a first name.',
+    datum: 'Date of birth', eDatum: 'Please enter a date of birth.',
+    zeit: 'Time of birth', ortszeit: '(local time)', eZeit: 'Please enter the time or tick the box below.',
+    zeitUnbekannt: 'Birth time unknown',
+    zeitHinweis: 'Without the time, the ascendant and houses cannot be determined. The chapters that build on them are then worded more cautiously. The horoscope says so as well.',
+    ort: 'Place of birth', ortBeispiel: 'e.g. London', eOrt: 'Please choose the place of birth from the list.',
+    fassung: 'Edition', hell: 'Light', dunkel: 'Dark', beide: 'Both', welche: 'Which edition suits?',
+    wohin: 'Where should we send the horoscope?',
+    mail: 'Your email address', eMail: 'Please check the email address.',
+    gutschein: 'Redeem voucher code', gutscheinFeld: 'Voucher code', einloesen: 'Redeem',
+    eGutschein: 'A voucher code consists of letters, digits and hyphens.',
+    gutscheinOk: 'The code {code} will be checked and deducted at checkout.',
+    widerruf: 'I agree that creation begins immediately. I thereby waive my right of withdrawal.',
+    eWiderruf: 'Without this consent, creation cannot begin.',
+    absenden: 'Order with obligation to pay',
+    inWarenkorb: 'Add to cart',
+    produktWahl: 'Which horoscope?',
+    produkte: [
+      { wert: 'geburtshoroskop', name: 'Birth chart', text: 'Personality, strengths and life themes', frei: true },
+      { wert: 'partnerschaft', name: 'Partnership horoscope', text: 'Two birth charts compared', frei: false },
+      { wert: 'kind', name: 'Child horoscope', text: 'Written for parents', frei: false },
+    ],
+    demnaechst: 'Coming soon',
+    weiterePerson: 'Another person', weiteres: 'Another horoscope', entfernen: 'Remove',
+    warenkorbHinweis: 'In the cart you can add more horoscopes, redeem a voucher and pay.',
+    zahlung: 'Pay by card, PayPal or Apple Pay. Our', agb: 'terms', daten: ' apply, information about your data is in the', datenschutz: 'privacy policy',
+    bald: 'Payment is currently being set up. Orders will be possible shortly.',
+  },
+};
+const t = T[lang];
+---
+
+<Base title={t.title} description={t.description} breadcrumbs={[{ name: t.crumb, path: routes.bestellen[lang] }]}>
+  <section class="abschnitt wrap bestellung">
+    <div class="bestellung__kopf">
+      <h1>{t.h1}</h1>
+    </div>
+    {/* Hinweise rechts, jeder Block in einem abgerundeten Rahmen */}
+    <div class="bestellung__info">
+      <div class="rahmen info__block">
+        <h2 class="info__titel">{t.datenschutzTitel}</h2>
+        <p class="info__leitsatz">{t.noetig}</p>
+        {/* Jeder Punkt klappt auf: zugeklappt nur der goldene Anfang, aufgeklappt der Text */}
+        {t.noetigAbsaetze.map(([vorweg, text]) => (
+          vorweg ? (
+            <details class="punkt">
+              <summary>{vorweg}</summary>
+              <p class="nebentext info__absatz">{text}</p>
+            </details>
+          ) : (
+            <p class="nebentext info__absatz">{text}</p>
+          )
+        ))}
+      </div>
+      <div class="rahmen info__block">
+        <h2 class="info__titel">{t.zeitFrage}</h2>
+        <p class="nebentext info__absatz"><strong>{t.zeitFrageVorweg}</strong> {t.zeitFrageText}</p>
+      </div>
+    </div>
+
+    <form
+      class="formular"
+      id="bestellformular"
+      novalidate
+      data-lang={lang}
+      data-warenkorb={routes.warenkorb[lang]}
+      data-preise={JSON.stringify({ grund: site.price, aufpreis: site.bothSurcharge })}
+    >
+      {/* Welches Horoskop: standardmäßig immer das Geburtshoroskop, die anderen folgen */}
+      <fieldset class="produktwahl">
+        <legend>{t.produktWahl}</legend>
+        <div class="produkte">
+          {t.produkte.map((p) => (
+            <label class:list={['produkt', { 'produkt--bald': !p.frei }]}>
+              <input type="radio" name="produkt" value={p.wert} checked={p.wert === 'geburtshoroskop'} disabled={!p.frei} />
+              <span class="produkt__name">{p.name}</span>
+              <span class="produkt__text">{p.frei ? p.text : t.demnaechst}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <div data-personen>
+        <PersonFelder n={0} lang={lang} t={t} erste />
+      </div>
+      <template id="person-vorlage"><PersonFelder n="__N__" lang={lang} t={t} /></template>
+      <button class="knopf knopf--rand weitere" type="button" data-weitere>+ {t.weiterePerson}</button>
+
+      <div class="abschluss">
+        {/* Was man bekommt, direkt über dem Knopf */}
+        <p class="nebentext abschluss__umfang">{t.umfang} {delivery.sentence(lang)}</p>
+        {site.vatNote[lang] && <p class="nebentext klein">{site.vatNote[lang]}</p>}
+        <button class="knopf knopf--voll knopf--gold" type="submit">
+          {t.inWarenkorb} · <span data-preis>{site.priceLabel[lang]}</span>
+        </button>
+        <p class="nebentext klein mitte">{t.warenkorbHinweis}</p>
+      </div>
+    </form>
+  </section>
+</Base>
+
+<script>
+  import { hinzufuegen, euro, type Fassung } from '../scripts/warenkorb';
+  const form = document.getElementById('bestellformular') as HTMLFormElement;
+  const personen = form.querySelector<HTMLElement>('[data-personen]')!;
+  const vorlage = document.getElementById('person-vorlage') as HTMLTemplateElement;
+  const lang = form.dataset.lang ?? 'de';
+  const preise = JSON.parse(form.dataset.preise!) as { grund: number; aufpreis: number };
+  const dach = ['DE', 'AT', 'CH'];
+  type Treffer = { name: string; admin1?: string; country?: string; country_code?: string; latitude: number; longitude: number; timezone: string };
+  type Regel = [HTMLElement, HTMLInputElement, () => boolean];
+  const regelnJePerson = new Map<HTMLElement, Regel[]>();
+
+  const fassungVon = (p: HTMLElement) =>
+    (p.querySelector<HTMLInputElement>('input[type="radio"]:checked')?.value ?? 'hell') as Fassung;
+
+  // Gesamtpreis über alle Personen, oben in der Infospalte und im Knopf
+  const zeigePreis = () => {
+    const gesamt = [...personen.querySelectorAll<HTMLElement>('[data-person]')].reduce(
+      (s, p) => s + preise.grund + (fassungVon(p) === 'beide' ? preise.aufpreis : 0),
+      0,
+    );
+    document.querySelectorAll('[data-preis]').forEach((el) => (el.textContent = euro(gesamt, lang)));
+  };
+
+  function setFehler(fehler: HTMLElement, an: boolean, feld?: HTMLElement) {
+    fehler.hidden = !an;
+    feld?.setAttribute('aria-invalid', String(an));
+    if (feld) feld.setAttribute('aria-describedby', an ? fehler.id : '');
+  }
+
+  function einrichten(p: HTMLElement) {
+    const f = (name: string) => p.querySelector<HTMLInputElement>(`[data-feld="${name}"]`)!;
+    const fehler = (name: string) => p.querySelector<HTMLElement>(`[id^="e-${name}-"]`)!;
+    const zeit = f('zeit');
+    const zeitUnbekannt = f('zeit-unbekannt');
+    const ort = f('ort');
+    const liste = p.querySelector<HTMLUListElement>('.ort__liste')!;
+
+    // Geburtszeit unbekannt: Feld sperren, Hinweis zeigen
+    zeitUnbekannt.addEventListener('change', () => {
+      zeit.disabled = zeitUnbekannt.checked;
+      zeit.required = !zeitUnbekannt.checked;
+      if (zeitUnbekannt.checked) zeit.value = '';
+      p.querySelector<HTMLElement>('[data-hinweis-zeit]')!.hidden = !zeitUnbekannt.checked;
+      setFehler(fehler('zeit'), false, zeit);
+    });
+
+    // Geburtsdatum vollständig (vierstellige Jahreszahl ab 1900): weiter zur Uhrzeit, ohne Uhrzeit gleich zum Ort
+    const datum = f('datum');
+    let gesprungen = '';
+    datum.addEventListener('input', () => {
+      const jahr = Number(datum.value.slice(0, 4));
+      if (!datum.value || jahr < 1900 || datum.value === gesprungen) return;
+      gesprungen = datum.value;
+      (zeitUnbekannt.checked ? ort : zeit).focus();
+    });
+
+    // Ortsvorschläge über die Open-Meteo-Ortssuche, erst ab drei Zeichen und mit kurzer Pause
+    let treffer: Treffer[] = [];
+    let aktiv = -1;
+    let timer: number | undefined;
+    const ortGewaehlt = () => f('lat').value !== '';
+    const schliessen = () => {
+      liste.hidden = true;
+      ort.setAttribute('aria-expanded', 'false');
+      ort.removeAttribute('aria-activedescendant');
+      aktiv = -1;
+    };
+    const waehle = (t: Treffer) => {
+      ort.value = [t.name, t.admin1, t.country].filter(Boolean).join(', ');
+      f('lat').value = String(t.latitude);
+      f('lon').value = String(t.longitude);
+      f('zeitzone').value = t.timezone;
+      setFehler(fehler('ort'), false, ort);
+      schliessen();
+    };
+    const zeigeListe = () => {
+      liste.innerHTML = '';
+      treffer.forEach((t, i) => {
+        const li = document.createElement('li');
+        li.id = `${liste.id}-${i}`;
+        li.role = 'option';
+        li.textContent = [t.name, t.admin1, t.country].filter(Boolean).join(', ');
+        li.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          waehle(t);
+        });
+        liste.append(li);
+      });
+      liste.hidden = treffer.length === 0;
+      ort.setAttribute('aria-expanded', String(treffer.length > 0));
+    };
+    const markiere = (i: number) => {
+      aktiv = i;
+      [...liste.children].forEach((li, j) => li.setAttribute('aria-selected', String(j === i)));
+      if (i >= 0) ort.setAttribute('aria-activedescendant', `${liste.id}-${i}`);
+    };
+    ort.addEventListener('input', () => {
+      ['lat', 'lon', 'zeitzone'].forEach((n) => (f(n).value = ''));
+      clearTimeout(timer);
+      const q = ort.value.trim();
+      if (q.length < 3) return schliessen();
+      timer = window.setTimeout(async () => {
+        try {
+          const res = await fetch(
+            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=10&language=${lang}&format=json`,
+          );
+          const data = await res.json();
+          // Auf der deutschen Seite Orte in Deutschland, Österreich und der Schweiz zuerst
+          treffer = (data.results ?? []) as Treffer[];
+          if (lang === 'de')
+            treffer.sort((a, b) => Number(!dach.includes(a.country_code ?? '')) - Number(!dach.includes(b.country_code ?? '')));
+        } catch {
+          treffer = [];
+        }
+        treffer = treffer.slice(0, 6);
+        zeigeListe();
+      }, 250);
+    });
+    ort.addEventListener('keydown', (e) => {
+      if (liste.hidden) return;
+      if (e.key === 'ArrowDown') { e.preventDefault(); markiere(Math.min(treffer.length - 1, aktiv + 1)); }
+      if (e.key === 'ArrowUp') { e.preventDefault(); markiere(Math.max(0, aktiv - 1)); }
+      if (e.key === 'Enter' && aktiv >= 0) { e.preventDefault(); waehle(treffer[aktiv]); }
+      if (e.key === 'Escape') schliessen();
+    });
+    ort.addEventListener('blur', () => setTimeout(schliessen, 100));
+
+    // Prüfen beim Verlassen eines Feldes, Fehler verschwinden sofort beim Korrigieren
+    const regeln: Regel[] = [
+      [fehler('vorname'), f('vorname'), () => f('vorname').value.trim().length > 0],
+      [fehler('datum'), f('datum'), () => f('datum').validity.valid && f('datum').value !== ''],
+      [fehler('zeit'), zeit, () => zeitUnbekannt.checked || zeit.value !== ''],
+      [fehler('ort'), ort, ortGewaehlt],
+    ];
+    regeln.forEach(([fe, feld, ok]) => {
+      feld.addEventListener('blur', () => setTimeout(() => feld.value !== '' && setFehler(fe, !ok(), feld), 120));
+      feld.addEventListener('input', () => ok() && setFehler(fe, false, feld));
+    });
+    regelnJePerson.set(p, regeln);
+
+    p.querySelectorAll('input[type="radio"]').forEach((r) => r.addEventListener('change', zeigePreis));
+    p.querySelector('[data-entfernen]')?.addEventListener('click', () => {
+      regelnJePerson.delete(p);
+      p.remove();
+      zeigePreis();
+      form.querySelector<HTMLElement>('[data-weitere]')!.focus();
+    });
+  }
+
+  // Weitere Person: gleiche Felder, eigene Fassung
+  let naechste = 1;
+  form.querySelector('[data-weitere]')!.addEventListener('click', () => {
+    const html = vorlage.innerHTML.replaceAll('__N__', String(naechste++));
+    personen.insertAdjacentHTML('beforeend', html);
+    const neu = personen.lastElementChild as HTMLElement;
+    einrichten(neu);
+    zeigePreis();
+    neu.querySelector<HTMLInputElement>('[data-feld="vorname"]')!.focus();
+  });
+
+  einrichten(personen.querySelector<HTMLElement>('[data-person]')!);
+  zeigePreis();
+
+  // Vorname von der Startseite übernehmen und gleich beim Geburtsdatum weitermachen
+  try {
+    const mitgebracht = sessionStorage.getItem('vorname');
+    if (mitgebracht) {
+      document.querySelector<HTMLInputElement>('[data-feld="vorname"]')!.value = mitgebracht;
+      sessionStorage.removeItem('vorname');
+      document.querySelector<HTMLInputElement>('[data-feld="datum"]')!.focus({ preventScroll: true });
+    }
+  } catch {}
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    let erstes: HTMLElement | null = null;
+    for (const regeln of regelnJePerson.values()) {
+      for (const [fe, feld, ok] of regeln) {
+        const falsch = !ok();
+        setFehler(fe, falsch, feld);
+        if (falsch && !erstes) erstes = feld;
+      }
+    }
+    if (erstes) return (erstes as HTMLElement).focus();
+    // Alle Personen in den Warenkorb; die Daten bleiben bis zum Bezahlen im Browser
+    for (const p of regelnJePerson.keys()) {
+      const f = (name: string) => p.querySelector<HTMLInputElement>(`[data-feld="${name}"]`)!;
+      hinzufuegen({
+        vorname: f('vorname').value.trim(),
+        datum: f('datum').value,
+        zeit: f('zeit-unbekannt').checked ? null : f('zeit').value,
+        ort: f('ort').value,
+        lat: f('lat').value,
+        lon: f('lon').value,
+        zeitzone: f('zeitzone').value,
+        fassung: fassungVon(p),
+      });
+    }
+    location.href = form.dataset.warenkorb!;
+  });
+</script>
+
+<style>
+  /* Formular links, Preis und Infos rechts */
+  .bestellung {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    grid-template-rows: auto auto;
+    gap: var(--s-48) var(--s-48);
+    /* Formular und Hinweise gleich hoch: beide Spalten enden auf derselben Linie */
+    align-items: stretch;
+  }
+  /* Der ganze Text in Schriftfarbe (in Dunkel weiß), nur die Hervorhebungen bleiben golden */
+  .bestellung :global(.nebentext) {
+    color: var(--tinte);
+  }
+  /* Kopf wie auf den anderen Seiten: mittig über beiden Spalten, Titel in Gold mit Goldstrich */
+  .bestellung__kopf {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    max-width: 46rem;
+    margin-inline: auto;
+    text-align: center;
+  }
+  .bestellung__kopf h1 {
+    color: var(--akzent);
+    font-weight: 700;
+  }
+  .bestellung__kopf h1::after {
+    content: '';
+    display: block;
+    width: 48px;
+    height: 1px;
+    margin: var(--s-24) auto 0;
+    background: var(--gold);
+  }
+  .bestellung__info {
+    grid-column: 2;
+    grid-row: 2;
+    display: grid;
+    grid-template-rows: auto 1fr; /* der letzte Block wächst, bis er mit dem Formular abschließt */
+    gap: var(--s-24);
+  }
+  .bestellung__kopf {
+    align-self: start;
+  }
+  .formular {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .abschluss__umfang {
+    text-align: center;
+  }
+  .info__block {
+    padding: var(--s-24) var(--s-32);
+  }
+  .info__block .info__titel:first-child {
+    margin-top: 0;
+  }
+  /* Zwischenüberschriften und Leitsatz fett in Schriftfarbe: in Dunkel weiß, in Hell dunkle Tinte */
+  /* Blocküberschriften (Datenschutz, Geburtszeit unbekannt?) groß und golden */
+  .info__titel {
+    font-size: var(--t-17);
+    font-weight: 700;
+    color: var(--akzent);
+    margin-block: var(--s-24) var(--s-8);
+  }
+  .info__absatz + .info__absatz {
+    margin-top: var(--s-12);
+  }
+  /* Der Anfang jeder Passage leuchtet in Gold */
+  .info__absatz strong {
+    font-weight: 600;
+    color: var(--akzent);
+  }
+  /* Aufklappbare Punkte im Datenschutz-Block */
+  .punkt {
+    padding-block: var(--s-12);
+  }
+  .punkt + .punkt {
+    border-top: 1px solid var(--linie);
+  }
+  .punkt summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--s-12);
+    font-weight: 600;
+    color: var(--akzent);
+    cursor: pointer;
+    list-style: none;
+  }
+  .punkt summary::-webkit-details-marker {
+    display: none;
+  }
+  .punkt summary::after {
+    content: '+';
+    font-family: var(--font-titel);
+    color: var(--akzent);
+  }
+  .punkt[open] summary::after {
+    content: '\2212';
+  }
+  .punkt summary:focus-visible {
+    outline: 2px solid var(--akzent);
+    outline-offset: 4px;
+  }
+  .punkt .info__absatz {
+    margin-top: var(--s-8);
+  }
+  .info__leitsatz {
+    font-family: var(--font-titel);
+    font-weight: 700;
+    font-size: var(--t-13);
+    line-height: 1.35;
+    color: var(--tinte);
+    margin-bottom: var(--s-16);
+  }
+
+  @media (max-width: 900px) {
+    /* Handy und Tablet: Preis, dann gleich das Formular, die Hinweise danach */
+    .bestellung {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: none;
+      gap: var(--s-32);
+    }
+    .bestellung__kopf,
+    .bestellung__info,
+    .formular {
+      grid-column: auto;
+      grid-row: auto;
+    }
+    .bestellung__info {
+      order: 1;
+    }
+  }
+  @media (max-width: 520px) {
+    .info__block {
+      padding: var(--s-16) var(--s-16) var(--s-24);
+      border-radius: 22px;
+    }
+  }
+</style>

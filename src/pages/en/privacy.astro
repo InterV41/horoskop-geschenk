@@ -1,0 +1,132 @@
+---
+import Rechtstext from '../../layouts/Rechtstext.astro';
+import Anbieter from '../../components/recht/Anbieter.astro';
+import { anbieter } from '../../site';
+---
+
+<Rechtstext titel="Privacy policy" pfad="/en/privacy" beschreibung="How Horoskop-Geschenk.de handles your data, what birth details are used for and when they are deleted.">
+  <p class="nebentext">Last updated: {anbieter.stand.en}</p>
+
+  <h2>In short</h2>
+  <p>
+    We only collect what we need for your horoscope: first name, date of birth, time of birth, place of birth and your
+    email address. We use no tracking cookies, create no customer account and do not pass your data on for
+    advertising. We delete the birth details 30 days after delivery.
+  </p>
+
+  <h2>Controller</h2>
+  <Anbieter lang="en" />
+
+  <h2>What data we process and why</h2>
+
+  <h3>Ordering and creating the horoscope</h3>
+  <p>
+    For the order we process the details of the person the horoscope is for (first name, date of birth, time of birth
+    or the note that it is unknown, place of birth with coordinates and time zone), the chosen edition and your email
+    address. We use them to calculate, create and send the horoscope. The legal basis is the performance of the
+    contract (Art. 6 (1) (b) GDPR).
+  </p>
+  <p>
+    Birth details are not special categories of personal data within the meaning of Art. 9 GDPR. We nevertheless treat
+    them with particular care: they are used only for your horoscope, not analysed and not passed on, except to the
+    service providers named below where this is necessary for creation.
+  </p>
+
+  <h3>Horoscopes as a gift</h3>
+  <p>
+    If you give a horoscope as a gift, you enter another person’s details. We process them solely to create the gift.
+    The legal basis is our and your legitimate interest in carrying out the gift order (Art. 6 (1) (f) GDPR). The
+    recipient can contact us at any time and has the same rights as you.
+  </p>
+
+  <h3>Creating the texts</h3>
+  <p>
+    To create the texts we use a technical service provider that works on our behalf and on our instructions (data
+    processing under Art. 28 GDPR). For this we transmit the calculated astrological positions and, where applicable,
+    the first name, but no email address and no payment data. The service provider may use the data only for this
+    purpose. <span class="platzhalter">[Place of processing: “Processing takes place in the EU.” or “Data may be transferred to the USA; the basis is the European Commission’s adequacy decision (EU-U.S. Data Privacy Framework) or standard contractual clauses.”]</span> The legal basis is Art. 6 (1) (b) GDPR. On request, we will tell you the name of the service
+    provider.
+  </p>
+
+  <h3>Payment</h3>
+  <p>
+    Payment is handled by Stripe (Stripe Payments Europe, Ltd., 1 Grand Canal Street Lower, Dublin 2, Ireland). Stripe
+    processes your name, payment details and email address under its own responsibility to process the payment and
+    prevent fraud. We never see card details. Stripe may also transfer data to the USA; the European Commission’s
+    adequacy decision (EU-U.S. Data Privacy Framework) and standard contractual clauses apply. The legal basis is
+    Art. 6 (1) (b) GDPR. More in Stripe’s privacy policy at stripe.com/privacy.
+  </p>
+
+  <h3>Sending emails</h3>
+  <p>
+    We send the order confirmation and the horoscope via an email service provider working on our behalf (Art. 28
+    GDPR). It processes your email address and the content of the message. <span class="platzhalter">[Place of processing: “Processing takes place in the EU.” or “Data may be transferred to the USA; the basis is the European Commission’s adequacy decision (EU-U.S. Data Privacy Framework) or standard contractual clauses.”]</span> The legal basis is Art. 6 (1) (b)
+    GDPR.
+  </p>
+
+  <h3>Hosting and server log files</h3>
+  <p>
+    The website is hosted by a hosting service provider working on our behalf (Art. 28 GDPR). <span class="platzhalter">[Place of processing: “Processing takes place in the EU.” or “Data may be transferred to the USA; the basis is the European Commission’s adequacy decision (EU-U.S. Data Privacy Framework) or standard contractual clauses.”]</span> When a page is accessed, the server processes technically necessary data such as IP
+    address, time, requested address and browser identifier in order to deliver the page and protect it against
+    attacks. The legal basis is our legitimate interest in secure operation (Art. 6 (1) (f) GDPR). Log data is deleted
+    after no more than <span class="platzhalter">[number]</span> days.
+  </p>
+
+  <h3>Place suggestions in the order form</h3>
+  <p>
+    So that you do not have to spell the place of birth exactly, the form suggests places. For this, the place name
+    you type is transmitted together with your IP address to the geocoding service of Open-Meteo (Switzerland). The
+    European Commission has adopted an adequacy decision for Switzerland. The legal basis is Art. 6 (1) (b) GDPR,
+    because the exact place is necessary for the calculation.
+  </p>
+
+  <h3>Storage in the browser</h3>
+  <p>
+    We do not set cookies. The site stores in the browser only what it needs to work: the chosen light or dark view for
+    the duration of the visit, and the cart with the birth details entered. The cart stays on your device until you
+    order and is deleted automatically after three days without an order. The legal basis is section 25 (2) no. 2
+    TDDDG (German Telecommunications Digital Services Data Protection Act), because this storage is strictly necessary
+    for the service you requested.
+  </p>
+
+  <h3>Fonts and audience measurement</h3>
+  <p>
+    All fonts are hosted on our own server; no data is transmitted to Google or other font providers.
+    <span class="platzhalter">[If Plausible is used: We count visits with Plausible Analytics (Plausible Insights OÜ,
+    Estonia), without cookies and without personal reference. Legal basis Art. 6 (1) (f) GDPR. Otherwise delete this
+    paragraph.]</span>
+  </p>
+
+  <h3>News by email</h3>
+  <p>
+    If you tick the box for news when ordering, we occasionally send you an email about new offers and vouchers. The
+    box is voluntary and not required for the order. So that nobody can enter someone else’s address, you confirm the
+    sign-up via a link in a first email. The legal basis is your consent (Art. 6 (1) (a) GDPR). You can withdraw it at
+    any time, via the unsubscribe link in every email or with a short message to us. For this we store only your email
+    address and the time of sign-up and confirmation, until you unsubscribe.
+  </p>
+
+  <h3>Contact</h3>
+  <p>If you email us, we process your message in order to answer it (Art. 6 (1) (b) or (f) GDPR).</p>
+
+  <h2>How long we store data</h2>
+  <ul>
+    <li>Birth details and the created horoscope: 30 days after delivery, so that we can recreate it if there was a typing error. They are then deleted.</li>
+    <li>Order and payment records: as long as tax and commercial law require, usually up to ten years (section 147 AO, section 257 HGB). These records contain no birth details.</li>
+    <li>Emails: as long as necessary for processing, at most until the end of the statutory retention periods.</li>
+  </ul>
+
+  <h2>Your rights</h2>
+  <p>
+    You have the right of access (Art. 15 GDPR), rectification (Art. 16), erasure (Art. 17), restriction of processing
+    (Art. 18) and data portability (Art. 20). Where we process data on the basis of a legitimate interest, you can
+    object at any time (Art. 21). An email to us is enough.
+  </p>
+  <p>
+    You can also lodge a complaint with a data protection supervisory authority, for example the authority in your
+    place of residence or the authority responsible for us:
+    <span class="platzhalter">[add competent state data protection authority]</span>.
+  </p>
+  <p>There is no automated decision-making within the meaning of Art. 22 GDPR that has legal effect on you.</p>
+  <p class="nebentext klein">This English version is provided for convenience. In case of doubt, the German version applies.</p>
+</Rechtstext>

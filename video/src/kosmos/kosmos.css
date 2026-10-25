@@ -1,0 +1,70 @@
+/* Aussehen der Kosmos-Radix im Film, wie in KosmosRadix.astro, fest je Fassung statt nach Seitenmodus.
+   Ohne Himmel (der bleibt live auf der Seite) und ohne Scheibe und weiße Ringe: die blenden bei der
+   Übergabe mit der Live-Radix ein. Keine CSS-Animationen, jedes Bild hängt nur von der Bildnummer ab. */
+.film-hell .radix {
+  --rx-gold: #9a7a33;
+  --rx-text: #96762f;
+  --rx-schnitt: 500;
+  --kx-schatten: #5a4a35;
+  --kx-hof: #e8a93c;
+  --kx-hof-o: 0.55;
+  --kx-hof2: #e3a347;
+  --kx-hof2-o: 0.22;
+}
+.film-dunkel .radix {
+  --rx-gold: #e0c27e;
+  --rx-text: #e0c27e;
+  --rx-schnitt: 400;
+  --kx-schatten: #0a0f22;
+  --kx-hof: #ffcf6e;
+  --kx-hof-o: 0.65;
+  --kx-hof2: #e0a240;
+  --kx-hof2-o: 0.24;
+}
+.radix {
+  --rx-disk: transparent;
+  --kx-nabe: transparent;
+  position: absolute;
+  inset: 0;
+  color: var(--rx-gold);
+}
+.radix svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+.radix .kx-ebene-ring {
+  transform-origin: 50% 50%;
+}
+.radix .kx-ebene-zeichen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.radix .kx-zeichen {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--rx-text);
+  font-weight: var(--rx-schnitt);
+  font-family: 'Noto Sans Symbols', 'Noto Sans Symbols 2', 'STIX Two Text', serif;
+}
+.radix .kx-zeichen.rx-zeichen { font-size: calc(24 * var(--kx-einheit, 1px)); }
+.radix .kx-zeichen.rx-planet { font-size: calc(29 * var(--kx-einheit, 1px)); }
+.radix .kx-zeichen.rx-planet.gross { font-size: calc(32 * var(--kx-einheit, 1px)); }
+.radix text {
+  fill: var(--rx-text);
+  font-weight: var(--rx-schnitt);
+  text-anchor: middle;
+  dominant-baseline: central;
+  font-family: 'STIX Two Text', 'Noto Sans Symbols', 'Noto Sans Symbols 2', serif;
+}
+.radix .rx-glyph { font-family: 'Noto Sans Symbols', 'Noto Sans Symbols 2', 'STIX Two Text', serif; }
+.radix .rx-name { font-size: 16px; letter-spacing: 4.2px; dominant-baseline: auto; }
+.radix .rx-achse { font-size: 13px; letter-spacing: 2.4px; }
+.radix .rx-haus { font-size: 17px; }

@@ -35,4 +35,15 @@ describe('film', () => {
     expect(Math.max(...lichtfaeden(filmLayout(0), 0).map((x) => x.deckkraft))).toBe(0);
     expect(Math.max(...lichtfaeden(filmLayout(filmLaenge() - 1), 0).map((x) => x.deckkraft))).toBe(0);
   });
+  it('kein Körper springt zwischen zwei Filmbildern, auch in beliebiger Reihenfolge berechnet', () => {
+    let max = 0;
+    for (let b = 1; b < filmLaenge(); b++) {
+      const a = filmLayout(b - 1), c = filmLayout(b);
+      for (const id of Object.keys(c.koerper) as (keyof typeof c.koerper)[])
+        max = Math.max(max, Math.hypot(c.koerper[id].x - a.koerper[id].x, c.koerper[id].y - a.koerper[id].y));
+    }
+    expect(max).toBeLessThan(25);
+    const rueckwaerts = filmLayout(Math.floor(filmLaenge() / 2));
+    expect(filmLayout(Math.floor(filmLaenge() / 2))).toEqual(rueckwaerts); // gleiches Bild, gleicher Inhalt
+  });
 });

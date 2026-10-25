@@ -59,8 +59,17 @@ const t = texte(sprache).partner;
       video.poster = `/video/${n}-anfang.jpg`;
       standbild.src = `/video/${n}-ende.jpg`;
       if (ruhig) return;
-      video.src = `/video/${n}.mp4`;
-      video.addEventListener('loadedmetadata', () => { video.currentTime = zeit; }, { once: true });
+      // Ganz laden und aus dem Speicher abspielen: Der Server kann keine Teilabrufe, ohne die spult Safari
+      // nicht. So springt das Video in jedem Browser sofort an jede Stelle.
+      fetch(`/video/${n}.mp4`)
+        .then((r) => (r.ok ? r.blob() : Promise.reject(r.status)))
+        .then((datei) => {
+          if (n !== geladen) return; // inzwischen eine andere Fassung gewählt
+          if (video.src.startsWith('blob:')) URL.revokeObjectURL(video.src);
+          video.src = URL.createObjectURL(datei);
+          video.addEventListener('loadedmetadata', () => { video.currentTime = zeit; }, { once: true });
+        })
+        .catch(() => film.classList.add('film--standbild'));
     };
     // Kann das Video nicht laden, steht das fertige Bild da
     video.addEventListener('error', () => film.classList.add('film--standbild'));

@@ -25,4 +25,9 @@ describe('durchsicht', () => {
     expect(entmische(0.98, 0.975, 0.99, 'weiss')[3]).toBe(0);
     expect(entmische(0.2, 0.2, 0.2, 'schwarz')[3]).toBeCloseTo(0.2, 5);
   });
+  it('graue Sprite-Ecken bis gut 5 % (gemessen: 14 von 255 unter dem Mond) werden ganz durchsichtig', () => {
+    expect(entmische(14 / 255, 13 / 255, 12 / 255, 'schwarz')[3]).toBe(0);
+    expect(entmische(1 - 14 / 255, 1 - 13 / 255, 1 - 12 / 255, 'weiss')[3]).toBe(0);
+    expect(entmische(0.3, 0.25, 0.15, 'schwarz')[3]).toBeCloseTo(0.3, 5); // echte Inhalte bleiben
+  });
 });

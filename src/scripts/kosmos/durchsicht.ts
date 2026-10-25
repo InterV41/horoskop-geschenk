@@ -4,9 +4,10 @@
 
 export type Grund = 'schwarz' | 'weiss';
 
-/* Kompressionsrauschen im reinen Grund: darunter ganz durchsichtig, bis OBEN weich hochgezogen */
-export const SCHWELLE = 0.03;
-const OBEN = 0.12;
+/* Kompressionsrauschen und leicht graue Bildecken im Grund (gemessen bis 14 von 255): darunter ganz
+   durchsichtig, bis OBEN weich hochgezogen. Sonst zeichnen sich um Sterne und Planeten Vierecke ab. */
+export const SCHWELLE = 0.06;
+const OBEN = 0.16;
 
 const klemm = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
 const smoothstep = (e0: number, e1: number, x: number) => {

@@ -105,4 +105,14 @@ describe('layout', () => {
     }
     expect(max).toBeLessThan(25);
   }, 60000);
+  it('Tiefe: hinten 1, vorne 0, in der Radix überall 0', () => {
+    const L0 = layout(0.3, 0, 180);
+    const tiefen = Object.values(L0.koerper).map((k) => k.tiefe);
+    expect(Math.min(...tiefen)).toBeGreaterThanOrEqual(0);
+    expect(Math.max(...tiefen)).toBeLessThanOrEqual(1);
+    expect(L0.koerper.sonne.tiefe).toBe(0);
+    for (const k of Object.values(layout(0.3, 1, 180).koerper)) expect(k.tiefe).toBe(0);
+    const hinten = Object.values(L0.koerper).filter((k) => k.hinten);
+    for (const k of hinten) expect(k.tiefe).toBeGreaterThan(0.5);
+  });
 });

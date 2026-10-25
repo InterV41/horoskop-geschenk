@@ -22,8 +22,10 @@ export interface Szene {
 }
 
 /* nurRadix: nur das fertige Rad, ohne Himmel und hinausfliegende Sterne (Partner-Radix) */
-export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de', optionen: { nurRadix?: boolean } = {}): Szene {
+/* tiefenschaerfe: Unschärfe in Zeichenflächen-Einheiten für ganz hinten liegende Planeten (Kosmos-Film) */
+export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de', optionen: { nurRadix?: boolean; tiefenschaerfe?: number } = {}): Szene {
   const nurRadix = optionen.nurRadix ?? false;
+  const tiefenschaerfe = optionen.tiefenschaerfe ?? 0;
   const id = (s: string) => `kx${nr}-${s}`;
   const tx = texte(sprache);
   const ebene = (cls: string, attrs: Attrs = { 'aria-hidden': 'true' }) => el('svg', { viewBox: '-470 -470 940 940', class: cls, ...attrs }, host);
@@ -254,6 +256,10 @@ export function baueSzene(host: HTMLElement, nr: number, sprache: Sprache = 'de'
       const k = kugeln[kid], kl = l.koerper[kid];
       if (kl.hinten !== k.hinten) { (kl.hinten ? hinten : vorne).appendChild(k.g); k.hinten = kl.hinten; }
       if (!sicht(k.g, kl.kugelDeckkraft)) continue;
+      if (tiefenschaerfe) {
+        const unschaerfe = tiefenschaerfe * kl.tiefe;
+        (k.g as SVGGElement).style.filter = unschaerfe >= 0.05 ? `blur(${unschaerfe.toFixed(2)}px)` : '';
+      }
       k.g.setAttribute('transform', `translate(${f2(kl.x)} ${f2(kl.y)})`);
       k.kreis.setAttribute('r', f2(kl.kugelR));
       if (k.ring) { k.ring.setAttribute('rx', f2(kl.kugelR * 2.1)); k.ring.setAttribute('ry', f2(kl.kugelR * 0.6)); }

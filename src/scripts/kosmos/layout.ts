@@ -40,7 +40,7 @@ const ZIELRINGE: Record<PlanetId, [number, number, number]> = {
 };
 const BAHN_STRICH = 1.1, BAHN_DECKKRAFT = 0.85; // fein, vorne klar; nach hinten blendet die Szene aus
 
-export interface KoerperLayout { x: number; y: number; kugelR: number; kugelDeckkraft: number; zeichenDeckkraft: number; punktX: number; punktY: number; hinten: boolean }
+export interface KoerperLayout { x: number; y: number; kugelR: number; kugelDeckkraft: number; zeichenDeckkraft: number; punktX: number; punktY: number; hinten: boolean; tiefe: number /* 0 vorne … 1 hinten, in der Radix 0 */ }
 export interface RingLayout { rx: number; ry: number; breite: number; deckkraft: number }
 export interface AspektLayout { a: RadixId; b: RadixId; x1: number; y1: number; x2: number; y2: number; breite: number; hart: boolean; deckkraft: number }
 export interface Layout {
@@ -146,6 +146,7 @@ export function layout(tau: number, p: number, asc: number, richtungen?: Richtun
       kugelR: groesse * massstab, kugelDeckkraft, zeichenDeckkraft,
       punktX: px, punktY: py,
       hinten: tiefe > 0 && p < 0.6,
+      tiefe: r0 > 0 ? ((tiefe + 1) / 2) * (1 - aufrichten) : 0,
     };
   };
 

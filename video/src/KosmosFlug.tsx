@@ -20,7 +20,7 @@ import { baueWeltraum, type Weltraum } from './flug/weltraum';
 import { ladeTexturen, zeichneKugel, zeichneSonnenlicht, type Texturen, type Licht, type KoerperId } from './flug/planeten';
 import { zeichneWarp } from './flug/warp';
 import { vorsprung, zusatzTempo, drehe, zeichneSpur } from './flug/umlauf';
-import { posterGrad, posterOrt, posterMitte, posterRand, zeichneBahn, POSTER_LN, POSTER_SONNE_R, POSTER_SONNE_X, POSTER_HELL, RAHMEN_HELL } from './flug/poster';
+import { posterGrad, posterOrt, posterMitte, posterRand, zeichneBahn, POSTER_LN, POSTER_SONNE_R, POSTER_SONNE_X, POSTER_ABSTAND, POSTER_HELL, RAHMEN_HELL } from './flug/poster';
 import { PLANETEN } from '../../src/scripts/kosmos/modell';
 
 export interface KosmosFlugProps {
@@ -170,7 +170,8 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache, alpha 
     const licht = (f: () => void) => f();
     const bildpunktRoh = (x: number, y: number): [number, number] => [MITTE + (x - cx) * S * PX, MITTE + (y - cy) * S * PX];
     // Orte der Szene erst in die Poster-Geometrie, dann aufs Bild
-    const bildpunkt = (x: number, y: number): [number, number] => bildpunktRoh(...posterOrt(x, y, l.K, P));
+    const abstand = POSTER_ABSTAND;
+    const bildpunkt = (x: number, y: number): [number, number] => bildpunktRoh(...posterOrt(x, y, l.K, P, abstand));
 
     // Raumschiff: Sterne rasen an der Kamera vorbei, bis wir vor dem Sonnensystem abbremsen
     zeichneWarp(c, frame, false);
@@ -178,7 +179,7 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache, alpha 
     // Umlaufbahnen: dauerhaft sichtbar, feine helle Ellipsen; beim Übergang in die Radix übernehmen deren Ringe
     const bahnDa = szeneDa * (1 - rampe(t, VERWANDLUNG_AB - 1.4, VERWANDLUNG_AB + 0.2));
     const bahnen = (von: number, bis: number) => {
-      if (bahnDa > 0.003) PLANETEN.forEach((pl, i) => zeichneBahn(c, bildpunktRoh, l.ringe[i].rx, l.K, P, 0.5 * bahnDa, 1.1, von, bis));
+      if (bahnDa > 0.003) PLANETEN.forEach((pl, i) => zeichneBahn(c, bildpunktRoh, l.ringe[i].rx, l.K, P, 0.28 * bahnDa, 0.8, von, bis, '#8f96a6', abstand));
     };
 
     // Sonne: aus der Ferne ein Stern mit Reflex, nah eine leuchtende Kugel
@@ -204,7 +205,7 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache, alpha 
     // Planeten, Erde und Mond, hinten (oben im Bild) zuerst
     const ids = (['merkur', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptun', 'pluto', 'erde', 'mond'] as const)
       .map((id) => ({ id, kl: l.koerper[id] }))
-      .sort((a, b) => posterOrt(a.kl.x, a.kl.y, l.K, P)[1] - posterOrt(b.kl.x, b.kl.y, l.K, P)[1]);
+      .sort((a, b) => posterOrt(a.kl.x, a.kl.y, l.K, P, abstand)[1] - posterOrt(b.kl.x, b.kl.y, l.K, P, abstand)[1]);
     // Leuchtspuren auf der Bahn, bis kurz vor der Verwandlung die echten Bahnlinien übernehmen
     // aus, bevor die Kamera auf die Erde zufliegt: sonst wüchse die Spur der Erde zum breiten Balken
     const spurDa = szeneDa * (1 - rampe(t, SCHWENK_AB - 1.2, SCHWENK_AB));
@@ -251,7 +252,13 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache, alpha 
     bahnen(0, Math.PI);
     hinten.forEach((f) => f());
     zeichneSonne();
+    // vordere Bögen enden an der Sonnenkante, sie ziehen nicht als Streifen über die Scheibe
+    c.save();
+    if (szeneDa > 0 && so.kugelDeckkraft > 0.003) {
+      c.beginPath(); c.rect(0, 0, BREITE, BREITE); c.arc(sx, sy, sonnenR + 1, 0, Math.PI * 2, true); c.clip('evenodd');
+    }
     bahnen(Math.PI, Math.PI * 2);
+    c.restore();
     vorn.forEach((f) => f());
 
     // im Poster: alles läuft am runden Rand weich aus, nichts endet an der Videokante
@@ -285,7 +292,7 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache, alpha 
   /* hell: das ganze Bild dunkelblau und voll deckend; die Seite schneidet es als Rechteck wie einen Film */
   const blauFlaeche = (farbe: string): React.CSSProperties => ({ ...voll, background: farbe, opacity: 0 });
   const silhouette: React.CSSProperties = { filter: 'brightness(0) invert(1)' };
-  /* hell: alles der Nachtszene hart auf das 16:9-Rechteck beschnitten, wie ein Filmbild; die helle Radix nicht */
+  /* hell: Nachtszene auf das Rechteck RAHMEN_HELL beschnitten (derzeit das ganze Bild); die helle Radix nicht */
   const R = RAHMEN_HELL;
   const film: React.CSSProperties = hell ? { clipPath: `inset(${R.y}px ${BREITE - R.x - R.b}px ${BREITE - R.y - R.h}px ${R.x}px)` } : {};
   return (

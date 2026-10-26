@@ -18,18 +18,24 @@ const ruhig = (bildRadius: number) => RUHIG_ERDE * Math.pow(160 / bildRadius, 1.
 const modell = (id: PlanetId, t: number) => sonnenWinkel(id, modellzeit(t * FPS));
 
 interface Plan { v0: number; w: number; v1: number; ende: number }
-const PLAN = new Map<PlanetId, Plan>();
-PLANETEN.forEach((pl, i) => {
-  const ziel = -6 - 2.5 * i; // Grad: rechts, leicht nach vorn, Pluto am weitesten
-  let v0 = ziel - modell(pl.id, POSTER_DA);
-  v0 = ((v0 % 360) + 360) % 360 - 360; // (−360, 0]
-  const w = ruhig(pl.bildRadius);
-  const v1 = v0 + w * (T1 - POSTER_DA);
-  // Ziel 360·k: vorwärts weiter, mindestens ein Stück weiter als der Schwung allein trägt
-  const h = T2 - T1;
-  const ende = 360 * Math.ceil((v1 + 0.35 * w * h) / 360);
-  PLAN.set(pl.id, { v0, w, v1, ende });
-});
+/* Merkur startet hinten und zieht im Halt schnell einmal hinter der Sonne durch */
+function plane() {
+  const plan = new Map<PlanetId, Plan>();
+  PLANETEN.forEach((pl, i) => {
+    const merkur = pl.id === 'merkur';
+    const ziel = merkur ? 25 : -6 - 2.5 * i; // Grad: rechts, leicht nach vorn, Pluto am weitesten
+    let v0 = ziel - modell(pl.id, POSTER_DA);
+    v0 = ((v0 % 360) + 360) % 360 - 360; // (−360, 0]
+    const w = merkur ? 66 : ruhig(pl.bildRadius);
+    const v1 = v0 + w * (T1 - POSTER_DA);
+    // Ziel 360·k: vorwärts weiter, mindestens ein Stück weiter als der Schwung allein trägt
+    const h = T2 - T1;
+    const ende = 360 * Math.ceil((v1 + 0.35 * w * h) / 360);
+    plan.set(pl.id, { v0, w, v1, ende });
+  });
+  return plan;
+}
+const PLAN = plane();
 
 /* Vorsprung des gezeichneten Planeten gegenüber dem Modell, in Grad */
 export function vorsprung(id: PlanetId, t: number): number {

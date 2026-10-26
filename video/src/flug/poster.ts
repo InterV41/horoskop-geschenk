@@ -6,13 +6,18 @@ import { BREITE, MITTE, PX, FLUG_TEMPO, SCHWENK_AB, rampe } from './drehbuch';
 
 export const POSTER_K = 0.2; // Neigung: so flach wie auf dem Poster
 export const POSTER_WINKEL = (-12 * Math.PI) / 180; // links unten nach rechts oben
-export const POSTER_LN = Math.log(1.75); // Maßstab: Pluto reicht fast bis an den rechten Rand
-export const POSTER_SONNE_X = 0.17 * BREITE; // Mitte der Sonne, am linken Rand angeschnitten
-export const POSTER_SONNE_R = 112; // Bildpunkte
-/* Hell: Film als 16:9-Rechteck, so breit wie das Rad (10 % Rand links und rechts), mittig; harte Kante.
-   Das Poster ist so klein, dass die Bahnen oben und unten nicht aus dem Rechteck ragen. */
-export const RAHMEN_HELL = { x: 0.1 * BREITE, y: (BREITE - 0.8 * BREITE * 9 / 16) / 2, b: 0.8 * BREITE, h: 0.8 * BREITE * 9 / 16 };
-export const POSTER_HELL = { ln: Math.log(1.42), sonneX: 0.125 * BREITE };
+export const POSTER_LN = Math.log(1.6); // Maßstab: Pluto reicht fast bis an den rechten Rand
+export const POSTER_SONNE_X = 0.24 * BREITE; // Mitte der Sonne, am linken Rand angeschnitten
+/* Sonne kleiner als die Merkurbahn und alle Bahnen um POSTER_ABSTAND Einheiten nach außen, damit Merkur
+   sichtbar hinter der Sonne durchziehen kann (dunkel und hell); dunkel liegt die Sonne ganz im runden Verlauf */
+export const POSTER_SONNE_R = 78; // Bildpunkte
+export const POSTER_ABSTAND = 32;
+/* Hell: das ganze Videobild ist die dunkle Fläche; die Seite schneidet je nach Platz ein Rechteck heraus,
+   mindestens das Radfeld (mittleres Quadrat, 10 % Rand). Alles Wichtige liegt im Radfeld: die Sonne wird an
+   dessen linker Kante angeschnitten, die Planeten bis Neptun liegen darin; nach außen laufen Bahnen und Sterne weiter.
+   Sonne, Merkur und Bahnlinien wie dunkel. */
+export const RAHMEN_HELL = { x: 0, y: 0, b: BREITE, h: BREITE };
+export const POSTER_HELL = { ln: Math.log(2.1), sonneX: 0.12 * BREITE };
 
 /* Ein: während das Sonnensystem ankommt; aus: zusammen mit dem Schwenk zur Erde */
 export const POSTER_DA = 11.5 * FLUG_TEMPO + 0.4; // ab hier voll im Poster
@@ -21,9 +26,9 @@ export function posterGrad(t: number): number {
 }
 
 /* Punkt der Szene (ungekippt x, gekippt y = −sin · r · K) in die Poster-Geometrie überführen */
-export function posterOrt(x: number, y: number, K: number, P: number): [number, number] {
+export function posterOrt(x: number, y: number, K: number, P: number, abstand = 0): [number, number] {
   if (P <= 0) return [x, y];
-  const r = Math.hypot(x, y / K), a = Math.atan2(-y / K, x);
+  const r = Math.hypot(x, y / K) + (Math.hypot(x, y / K) > 1e-6 ? abstand * P : 0), a = Math.atan2(-y / K, x);
   const k = K + (POSTER_K - K) * P, w = POSTER_WINKEL * P;
   const x1 = Math.cos(a) * r, y1 = -Math.sin(a) * r * k;
   return [x1 * Math.cos(w) - y1 * Math.sin(w), x1 * Math.sin(w) + y1 * Math.cos(w)];
@@ -40,17 +45,18 @@ export function zeichneBahn(
   bildpunkt: (x: number, y: number) => [number, number],
   r: number, K: number, P: number, deckkraft: number, breite: number,
   von = 0, bis = Math.PI * 2, // Winkelbereich: 0…π hinterer Bogen (hinter der Sonne), π…2π vorderer
+  farbe = '#cfd4e0', abstand = 0,
 ) {
   if (deckkraft <= 0.003) return;
   ctx.save();
   ctx.globalAlpha = deckkraft;
-  ctx.strokeStyle = '#cfd4e0';
+  ctx.strokeStyle = farbe;
   ctx.lineWidth = breite;
   ctx.beginPath();
   const n = 120;
   for (let i = 0; i <= n; i++) {
     const a = von + (i / n) * (bis - von);
-    const [x, y] = posterOrt(Math.cos(a) * r, -Math.sin(a) * r * K, K, P);
+    const [x, y] = posterOrt(Math.cos(a) * r, -Math.sin(a) * r * K, K, P, abstand);
     const [px, py] = bildpunkt(x, y);
     if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
   }

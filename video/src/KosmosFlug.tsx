@@ -20,7 +20,7 @@ import { baueWeltraum, type Weltraum } from './flug/weltraum';
 import { ladeTexturen, zeichneKugel, zeichneSonnenlicht, zeichneSonnenrand, type Texturen, type Licht, type KoerperId } from './flug/planeten';
 import { zeichneWarp } from './flug/warp';
 import { vorsprung, zusatzTempo, drehe, zeichneSpur } from './flug/umlauf';
-import { posterGrad, posterOrt, posterMitte, posterRand, zeichneBahn, POSTER_LN, POSTER_SONNE_R, POSTER_SONNE_X, POSTER_ABSTAND, POSTER_HELL, RAHMEN_HELL } from './flug/poster';
+import { posterGrad, posterOrt, posterMitte, posterRand, zeichneBahn, zeichneBahnBogen, POSTER_DA, POSTER_LN, POSTER_SONNE_R, POSTER_SONNE_X, POSTER_ABSTAND, POSTER_HELL, RAHMEN_HELL } from './flug/poster';
 import { PLANETEN } from '../../src/scripts/kosmos/modell';
 
 export interface KosmosFlugProps {
@@ -188,8 +188,19 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache, alpha 
 
     // Umlaufbahnen: dauerhaft sichtbar, feine helle Ellipsen; beim Übergang in die Radix übernehmen deren Ringe
     const bahnDa = szeneDa * (1 - rampe(t, VERWANDLUNG_AB - 1.4, VERWANDLUNG_AB + 0.2));
+    // Die Bahnen zeichnen sich ein, sobald die Planeten stehen: von innen nach außen, jede wächst vom Planeten
+    // aus nach beiden Seiten, bis sie sich gegenüber schließt. Feines, leichtes Gold.
     const bahnen = (von: number, bis: number) => {
-      if (bahnDa > 0.003) PLANETEN.forEach((pl, i) => zeichneBahn(c, bildpunktRoh, l.ringe[i].rx, l.K, P, (hell ? 0.4 : 0.28) * bahnDa, 0.8, von, bis, hell ? '#6f7684' : '#8f96a6', abstand));
+      if (bahnDa <= 0.003) return;
+      PLANETEN.forEach((pl, i) => {
+        const anteil = rampe(t, POSTER_DA - 0.8 + i * 0.2, POSTER_DA - 0.8 + i * 0.2 + 2.2);
+        if (anteil <= 0.001) return;
+        const kl = l.koerper[pl.id];
+        const [ox, oy] = drehe(kl.x, kl.y, l.K, vorsprung(pl.id, t));
+        const a = Math.atan2(-oy / l.K, ox);
+        const halb = anteil >= 0.999 ? Math.PI + 0.01 : anteil * Math.PI;
+        zeichneBahnBogen(c, bildpunktRoh, l.ringe[i].rx, l.K, P, (hell ? 0.75 : 0.7) * bahnDa, 1.1, a - halb, a + halb, von, bis, hell ? '#9a7a33' : '#c9a24f', abstand);
+      });
     };
 
     // Sonne: aus der Ferne ein Stern mit Reflex, nah eine leuchtende Kugel

@@ -40,6 +40,20 @@ export function posterMitte(S: number, sonneX = POSTER_SONNE_X): [number, number
 }
 
 /* Bahnellipse als Linie, in Bildpunkten */
+/* Bahn nur auf einem Bogen [a0, a1] zeichnen, geschnitten mit dem Bereich [von, bis] (hinten/vorn) */
+export function zeichneBahnBogen(
+  ctx: CanvasRenderingContext2D,
+  bildpunkt: (x: number, y: number) => [number, number],
+  r: number, K: number, P: number, deckkraft: number, breite: number,
+  a0: number, a1: number, von: number, bis: number, farbe: string, abstand: number,
+) {
+  if (a1 - a0 <= 1e-4) return;
+  for (let k = -2; k <= 2; k++) {
+    const s = Math.max(a0, von + k * 2 * Math.PI), e = Math.min(a1, bis + k * 2 * Math.PI);
+    if (e > s) zeichneBahn(ctx, bildpunkt, r, K, P, deckkraft, breite, s, e, farbe, abstand);
+  }
+}
+
 export function zeichneBahn(
   ctx: CanvasRenderingContext2D,
   bildpunkt: (x: number, y: number) => [number, number],
@@ -53,7 +67,7 @@ export function zeichneBahn(
   ctx.strokeStyle = farbe;
   ctx.lineWidth = breite;
   ctx.beginPath();
-  const n = 120;
+  const n = Math.max(8, Math.ceil(120 * (bis - von) / Math.PI));
   for (let i = 0; i <= n; i++) {
     const a = von + (i / n) * (bis - von);
     const [x, y] = posterOrt(Math.cos(a) * r, -Math.sin(a) * r * K, K, P, abstand);

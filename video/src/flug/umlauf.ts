@@ -23,9 +23,9 @@ function plane() {
   const plan = new Map<PlanetId, Plan>();
   PLANETEN.forEach((pl, i) => {
     const merkur = pl.id === 'merkur';
-    const ziel = merkur ? 25 : -6 - 2.5 * i; // Grad: rechts, leicht nach vorn, Pluto am weitesten
-    let v0 = ziel - modell(pl.id, POSTER_DA);
-    v0 = ((v0 % 360) + 360) % 360 - 360; // (−360, 0]
+    // Beim Ankommen stehen alle an ihrer echten Stellung (Wunsch von Valentin), danach kreisen sie
+    const v0 = 0;
+    void i;
     const w = merkur ? 66 : ruhig(pl.bildRadius);
     const v1 = v0 + w * (T1 - POSTER_DA);
     // Ziel 360·k: vorwärts weiter, mindestens ein Stück weiter als der Schwung allein trägt

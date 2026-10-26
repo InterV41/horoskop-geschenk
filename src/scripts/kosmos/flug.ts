@@ -9,7 +9,7 @@ export const FLUG_FPS = 30;
 /* Gesamttempo des Flugs: 4/3 = ein Drittel langsamer als der erste Schnitt (Wunsch von Valentin) */
 export const FLUG_TEMPO = 4 / 3;
 /* Haltezeit im Sonnensystem (Poster-Ansicht mit Bahnen), eingeschoben zwischen Ankunft und Schwenk zur Erde */
-export const FLUG_HALT = 3.5;
+export const FLUG_HALT = 2;
 export const FLUG_SEKUNDEN = 24 * FLUG_TEMPO + FLUG_HALT;
 export const FLUG_BILDER = FLUG_FPS * FLUG_SEKUNDEN;
 

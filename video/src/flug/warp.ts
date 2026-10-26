@@ -11,7 +11,8 @@ const NAH = 0.25; // näher als dies: gerade vorbeigezogen, blendet aus
 const BRENN = BREITE * 0.55;
 
 /* Fahrt je Zoomschritt: nur solange wir durch die Sterne fliegen */
-const fahrt = (ln: number) => rampe(ln, -16.2, -14.8) * (1 - rampe(ln, -6.5, -3.2));
+// bis das Sonnensystem gut zu sehen ist, sonst entsteht dazwischen ein leeres, stehendes Bild
+const fahrt = (ln: number) => rampe(ln, -16.2, -14.8) * (1 - rampe(ln, -3.4, -0.8));
 const SCHUB = 3.2; // Tunneleinheiten je Einheit ln
 
 /* Zurückgelegte Strecke je Bild, Mittelwertregel über Teilschritte */
@@ -52,15 +53,16 @@ const ort = (s: (typeof STERNE)[number], d: number) => {
 /* Wie stark der Tunnel gerade zu sehen ist (für Abstimmung mit dem Himmel dahinter) */
 export function warpSichtbar(t: number): number {
   const ln = lnMassstab(t);
-  return rampe(ln, -16.2, -15) * (1 - rampe(ln, -4.2, -1.8));
+  return rampe(ln, -16.2, -15) * (1 - rampe(ln, -1.8, -0.3));
 }
 
 export function zeichneWarp(ctx: CanvasRenderingContext2D, bild: number, hell: boolean) {
   const t = bild / FPS;
   const da = warpSichtbar(t);
   if (da <= 0.002) return;
-  const b = Math.min(D.length - 1, Math.max(1, Math.round(bild)));
-  const jetzt = D[b], vorher = D[b - 1];
+  // zwischen den Bildern weich (in der Zeitlupe kommen Bruchteile von Bildern an)
+  const b = Math.min(D.length - 1.001, Math.max(1, bild)), i = Math.floor(b), f = b - i;
+  const jetzt = D[i] + (D[i + 1] - D[i]) * f, vorher = D[i - 1] + (D[i] - D[i - 1]) * f;
   const tempo = jetzt - vorher; // Tunneleinheiten pro Bild
   // Streifen zeigen den Weg mehrerer Bilder, dann wirken sie wie Belichtung
   const spur = Math.min(0.9, tempo * 3.5);

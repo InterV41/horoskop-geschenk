@@ -12,7 +12,7 @@ import { POSTER_DA } from './poster';
    2. Anflug auf die Erde (T1 bis T2): Den Rest bis zu ihrer Stellung im Modell holen sie auf, während die übrigen
       Planeten aus dem Bild sind; die Kamera folgt der Erde dort, wo sie gezeichnet ist. Ab T2 gilt das Modell. */
 const T1 = SCHWENK_AB - 1.4, T2 = VERWANDLUNG_AB - 0.3;
-const RUHIG_ERDE = 7; // Grad pro Sekunde
+const RUHIG_ERDE = 11; // Grad pro Sekunde
 // innen deutlich schneller: Merkur zieht im Poster einmal hinter der Sonne durch
 const ruhig = (bildRadius: number) => RUHIG_ERDE * Math.pow(160 / bildRadius, 1.9);
 const modell = (id: PlanetId, t: number) => sonnenWinkel(id, modellzeit(t * FPS));

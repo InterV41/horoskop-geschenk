@@ -232,7 +232,8 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache, alpha 
       .sort((a, b) => posterOrt(a.kl.x, a.kl.y, l.K, P, abstand)[1] - posterOrt(b.kl.x, b.kl.y, l.K, P, abstand)[1]);
     // Leuchtspuren auf der Bahn, bis kurz vor der Verwandlung die echten Bahnlinien übernehmen
     // aus, bevor die Kamera auf die Erde zufliegt: sonst wüchse die Spur der Erde zum breiten Balken
-    const spurDa = szeneDa * (1 - rampe(t, SCHWENK_AB - 1.2, SCHWENK_AB));
+    const spurDa = 0; // keine Schweife (Wunsch von Valentin)
+    void SCHWENK_AB;
     const erdVorsprung = vorsprung('erde', t);
     // hinten (oberer Bahnbogen, weiter weg als die Sonne) und vorn getrennt sammeln
     const hinten: (() => void)[] = [], vorn: (() => void)[] = [];

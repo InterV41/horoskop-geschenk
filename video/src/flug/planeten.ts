@@ -95,6 +95,7 @@ function ringFarbe(r: number): [number, number, number] {
   return [214, 198, 162];
 }
 
+const GEDECKT = 0.62, HELLIGKEIT = 0.9;
 const FARBE_NACHT = [3, 5, 12];
 const SAUM = [95, 150, 255];
 
@@ -260,6 +261,11 @@ export function zeichneKugel(ctx: CanvasRenderingContext2D, tex: Texturen, k: Ku
           R = R * (1 - dichte) + fr * licht * dichte; G = G * (1 - dichte) + fg * licht * dichte; B = B * (1 - dichte) + fb * licht * dichte;
           A = A + dichte * (1 - A);
         }
+      }
+      if (!sonne) {
+        // gedeckte Farben (Wunsch von Valentin): Sättigung um gut ein Drittel zurück, etwas weniger hell
+        const L = 0.3 * R + 0.59 * G + 0.11 * B;
+        R = (L + (R - L) * GEDECKT) * HELLIGKEIT; G = (L + (G - L) * GEDECKT) * HELLIGKEIT; B = (L + (B - L) * GEDECKT) * HELLIGKEIT;
       }
       px[i] = Math.min(255, R); px[i + 1] = Math.min(255, G); px[i + 2] = Math.min(255, B); px[i + 3] = 255 * Math.max(0, A);
     }

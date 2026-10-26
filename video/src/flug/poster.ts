@@ -9,6 +9,10 @@ export const POSTER_WINKEL = (-12 * Math.PI) / 180; // links unten nach rechts o
 export const POSTER_LN = Math.log(1.75); // Maßstab: Pluto reicht fast bis an den rechten Rand
 export const POSTER_SONNE_X = 0.17 * BREITE; // Mitte der Sonne, am linken Rand angeschnitten
 export const POSTER_SONNE_R = 112; // Bildpunkte
+/* Hell: Film als 16:9-Rechteck, so breit wie das Rad (10 % Rand links und rechts), mittig; harte Kante.
+   Das Poster ist so klein, dass die Bahnen oben und unten nicht aus dem Rechteck ragen. */
+export const RAHMEN_HELL = { x: 0.1 * BREITE, y: (BREITE - 0.8 * BREITE * 9 / 16) / 2, b: 0.8 * BREITE, h: 0.8 * BREITE * 9 / 16 };
+export const POSTER_HELL = { ln: Math.log(1.42), sonneX: 0.125 * BREITE };
 
 /* Ein: während das Sonnensystem ankommt; aus: zusammen mit dem Schwenk zur Erde */
 export const POSTER_DA = 11.5 * FLUG_TEMPO + 0.4; // ab hier voll im Poster
@@ -26,8 +30,8 @@ export function posterOrt(x: number, y: number, K: number, P: number): [number, 
 }
 
 /* Kameramitte im Poster (Einheiten der Szene), damit die Sonne links steht */
-export function posterMitte(S: number): [number, number] {
-  return [(MITTE - POSTER_SONNE_X) / (S * PX), 0];
+export function posterMitte(S: number, sonneX = POSTER_SONNE_X): [number, number] {
+  return [(MITTE - sonneX) / (S * PX), 0];
 }
 
 /* Bahnellipse als Linie, in Bildpunkten */
@@ -35,6 +39,7 @@ export function zeichneBahn(
   ctx: CanvasRenderingContext2D,
   bildpunkt: (x: number, y: number) => [number, number],
   r: number, K: number, P: number, deckkraft: number, breite: number,
+  von = 0, bis = Math.PI * 2, // Winkelbereich: 0…π hinterer Bogen (hinter der Sonne), π…2π vorderer
 ) {
   if (deckkraft <= 0.003) return;
   ctx.save();
@@ -42,9 +47,9 @@ export function zeichneBahn(
   ctx.strokeStyle = '#cfd4e0';
   ctx.lineWidth = breite;
   ctx.beginPath();
-  const n = 240;
+  const n = 120;
   for (let i = 0; i <= n; i++) {
-    const a = (i / n) * Math.PI * 2;
+    const a = von + (i / n) * (bis - von);
     const [x, y] = posterOrt(Math.cos(a) * r, -Math.sin(a) * r * K, K, P);
     const [px, py] = bildpunkt(x, y);
     if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);

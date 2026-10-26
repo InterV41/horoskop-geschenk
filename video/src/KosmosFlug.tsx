@@ -20,7 +20,7 @@ import { baueWeltraum, type Weltraum } from './flug/weltraum';
 import { ladeTexturen, zeichneKugel, zeichneSonnenlicht, type Texturen, type Licht, type KoerperId } from './flug/planeten';
 import { zeichneWarp } from './flug/warp';
 import { vorsprung, zusatzTempo, drehe, zeichneSpur } from './flug/umlauf';
-import { posterGrad, posterOrt, posterMitte, posterRand, zeichneBahn, POSTER_LN, POSTER_SONNE_R } from './flug/poster';
+import { posterGrad, posterOrt, posterMitte, posterRand, zeichneBahn, POSTER_LN, POSTER_SONNE_R, POSTER_SONNE_X, POSTER_HELL, RAHMEN_HELL } from './flug/poster';
 import { PLANETEN } from '../../src/scripts/kosmos/modell';
 
 export interface KosmosFlugProps {
@@ -117,7 +117,8 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache, alpha 
     // Poster-Ansicht im Sonnensystem: eigener Maßstab, Sonne links, flache Schrägsicht
     const P = posterGrad(t);
     const lnKurve = lnMassstab(t);
-    const ln = lnKurve + (POSTER_LN - lnKurve) * P, S = Math.exp(ln);
+    const posterLn = hell ? POSTER_HELL.ln : POSTER_LN, posterSonneX = hell ? POSTER_HELL.sonneX : POSTER_SONNE_X;
+    const ln = lnKurve + (posterLn - lnKurve) * P, S = Math.exp(ln);
     const { l, l0 } = szenenStand(frame);
 
     /* Kameramitte in Einheiten der Szene: erst die Sonne, dann gleitet die Erde in die Bildmitte und bleibt dort */
@@ -131,7 +132,7 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache, alpha 
       cx = E0.x - (E0.x * S0 * (1 - g)) / S;
       cy = E0.y - (E0.y * S0 * (1 - g)) / S;
     }
-    if (P > 0) { const [px, py] = posterMitte(S); cx += (px - cx) * P; cy += (py - cy) * P; }
+    if (P > 0) { const [px, py] = posterMitte(S, posterSonneX); cx += (px - cx) * P; cy += (py - cy) * P; }
 
     /* Weltraum: verblasst etwas, wenn die Radix steht, damit sie ruhig liest */
     // Kamera und Himmel rechnen in der Zeit des ersten Schnitts, der Film ist um FLUG_TEMPO gedehnt
@@ -176,7 +177,9 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache, alpha 
 
     // Umlaufbahnen: dauerhaft sichtbar, feine helle Ellipsen; beim Übergang in die Radix übernehmen deren Ringe
     const bahnDa = szeneDa * (1 - rampe(t, VERWANDLUNG_AB - 1.4, VERWANDLUNG_AB + 0.2));
-    if (bahnDa > 0.003) PLANETEN.forEach((pl, i) => zeichneBahn(c, bildpunktRoh, l.ringe[i].rx, l.K, P, 0.5 * bahnDa, 1.1));
+    const bahnen = (von: number, bis: number) => {
+      if (bahnDa > 0.003) PLANETEN.forEach((pl, i) => zeichneBahn(c, bildpunktRoh, l.ringe[i].rx, l.K, P, 0.5 * bahnDa, 1.1, von, bis));
+    };
 
     // Sonne: aus der Ferne ein Stern mit Reflex, nah eine leuchtende Kugel
     const so = l.koerper.sonne;
@@ -188,6 +191,7 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache, alpha 
     const fern = sonneImBild(k);
     const stern = rampe(ln, -15, -9);
     if (fern && szeneDa < 1) licht(() => zeichneSonnenlicht(c, fern[0], fern[1], 0.1 + 0.25 * rampe(ln, -10, -5) * (1 - rampe(ln, -5, -2.6)), stern * (1 - szeneDa), MITTE));
+    const zeichneSonne = () => {
     if (szeneDa > 0 && so.kugelDeckkraft > 0.003) {
       zeichneKugel(c, w.tex, { id: 'sonne', x: sx, y: sy, r: sonnenR, drehung: t * DREHUNG.sonne![0], neigung: DREHUNG.sonne![2], deckkraft: szeneDa * so.kugelDeckkraft }, { x: 0, y: 0, z: 1 });
       // je größer die Erde im Bild, desto mehr tritt das Sonnenlicht zurück
@@ -195,6 +199,7 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache, alpha 
       // Sonne ruhiger, damit die Planeten daneben nicht untergehen
       licht(() => zeichneSonnenlicht(c, sx, sy, Math.min(1, 0.08 + 0.12 * Math.max(0, ln)), 0.45 * szeneDa * blend * so.kugelDeckkraft, MITTE));
     }
+    };
 
     // Planeten, Erde und Mond, hinten (oben im Bild) zuerst
     const ids = (['merkur', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptun', 'pluto', 'erde', 'mond'] as const)
@@ -204,6 +209,9 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache, alpha 
     // aus, bevor die Kamera auf die Erde zufliegt: sonst wüchse die Spur der Erde zum breiten Balken
     const spurDa = szeneDa * (1 - rampe(t, SCHWENK_AB - 1.2, SCHWENK_AB));
     const erdVorsprung = vorsprung('erde', t);
+    // hinten (oberer Bahnbogen, weiter weg als die Sonne) und vorn getrennt sammeln
+    const hinten: (() => void)[] = [], vorn: (() => void)[] = [];
+    const erdeHinten = drehe(l.koerper.erde.x, l.koerper.erde.y, l.K, erdVorsprung)[1] < 0;
     for (const { id, kl } of ids) {
       if (kl.kugelDeckkraft <= 0.003) continue;
       // im Sonnensystem kreisen die Planeten sichtbar schneller; vor dem Schwenk zur Erde holen sie das Modell ein
@@ -227,16 +235,27 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache, alpha 
       const deckel = Math.max(0.9, 0.45 * 45 * S * PX * Math.hypot(Math.cos(richtung), l.K * Math.sin(richtung)));
       // im Poster: Größenverhältnisse grob wie in echt, gut erkennbar
       const r = Math.max(wahr, Math.min(mindest, deckel)) * (1 - P) + kl.kugelR * 1.6 * P;
-      if (id !== 'mond' && spurDa > 0.003) {
-        const farbe = PLANETEN.find((p) => p.id === id)!.farbe;
-        const laenge = 16 + 1.1 * zusatzTempo(id, t);
-        zeichneSpur(c, bildpunkt, ox, oy, l.K, laenge, Math.min(3, Math.max(1.2, r * 0.6)), farbe, 0.85 * spurDa * kl.kugelDeckkraft, false);
-      }
-      zeichneKugel(c, w.tex, { id, x, y, r, drehung: start + t * v, neigung: nei, deckkraft: kl.kugelDeckkraft * szeneDa }, licht);
+      const zeichne = () => {
+        if (id !== 'mond' && spurDa > 0.003) {
+          const farbe = PLANETEN.find((p) => p.id === id)!.farbe;
+          const laenge = 16 + 1.1 * zusatzTempo(id, t);
+          zeichneSpur(c, bildpunkt, ox, oy, l.K, laenge, Math.min(3, Math.max(1.2, r * 0.6)), farbe, 0.85 * spurDa * kl.kugelDeckkraft, false);
+        }
+        zeichneKugel(c, w.tex, { id, x, y, r, drehung: start + t * v, neigung: nei, deckkraft: kl.kugelDeckkraft * szeneDa }, licht);
+      };
+      // der Mond gehört zur Seite der Erde
+      ((id === 'mond' ? erdeHinten : oy < 0) ? hinten : vorn).push(zeichne);
     }
 
+    // Reihenfolge der Tiefe: hintere Bahnbögen, hintere Planeten, Sonne, vordere Bahnbögen, vordere Planeten
+    bahnen(0, Math.PI);
+    hinten.forEach((f) => f());
+    zeichneSonne();
+    bahnen(Math.PI, Math.PI * 2);
+    vorn.forEach((f) => f());
+
     // im Poster: alles läuft am runden Rand weich aus, nichts endet an der Videokante
-    posterRand(c, P);
+    if (!hell) posterRand(c, P); // hell: harter rechteckiger Rahmen wie ein Film, kein runder Verlauf
 
     /* Deckkraft: Weltraum nach Helligkeit, Körper und Lichter nach ihrem Alphakanal (als Weiß) */
     if (alpha) {
@@ -263,28 +282,31 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache, alpha 
   const rad = 940 * PX;
   const platz = { left: MITTE - rad / 2, top: MITTE - rad / 2, width: rad, height: rad };
   const voll: React.CSSProperties = { position: 'absolute', inset: 0 };
-  /* runde Fläche mit weichem Rand: keine Kante auf der weißen Seite */
-  const blauFlaeche = (farbe: string): React.CSSProperties => ({ ...voll, background: `radial-gradient(circle closest-side, ${farbe} 0%, ${farbe} 72%, transparent 100%)`, opacity: 0 });
+  /* hell: das ganze Bild dunkelblau und voll deckend; die Seite schneidet es als Rechteck wie einen Film */
+  const blauFlaeche = (farbe: string): React.CSSProperties => ({ ...voll, background: farbe, opacity: 0 });
   const silhouette: React.CSSProperties = { filter: 'brightness(0) invert(1)' };
+  /* hell: alles der Nachtszene hart auf das 16:9-Rechteck beschnitten, wie ein Filmbild; die helle Radix nicht */
+  const R = RAHMEN_HELL;
+  const film: React.CSSProperties = hell ? { clipPath: `inset(${R.y}px ${BREITE - R.x - R.b}px ${BREITE - R.y - R.h}px ${R.x}px)` } : {};
   return (
     <AbsoluteFill style={{ background: '#000' }}>
       {/* Bild: Szene vormultipliziert auf Schwarz */}
       <div style={{ position: 'absolute', left: 0, top: 0, width: BREITE, height: BREITE, overflow: 'hidden' }}>
-        {hell && <div ref={nacht} style={blauFlaeche(NACHTBLAU)} />}
-        <canvas ref={raum} width={BREITE} height={BREITE} style={{ ...voll, mixBlendMode: 'screen' }} />
+        {hell && <div ref={nacht} style={{ ...blauFlaeche(NACHTBLAU), ...film }} />}
+        <canvas ref={raum} width={BREITE} height={BREITE} style={{ ...voll, mixBlendMode: 'screen', ...film }} />
         {/* Planeten über der Radix-Szene: Die Erde verdeckt ihre eigene Bahn; zu Zeichen werden sie ohnehin ausgeblendet */}
-        <div className="flug-dunkel"><div ref={hostD} className="radix flug-szene" style={platz} /></div>
+        <div className="flug-dunkel" style={{ ...voll, ...film }}><div ref={hostD} className="radix flug-szene" style={platz} /></div>
         {hell && <div className="flug-hell"><div ref={hostH} className="radix flug-szene" style={platz} /></div>}
-        <canvas ref={koerper} width={BREITE} height={BREITE} style={voll} />
+        <canvas ref={koerper} width={BREITE} height={BREITE} style={{ ...voll, ...film }} />
       </div>
       {/* Deckkraft: dieselbe Szene als Weiß auf Schwarz */}
       {alpha && (
         <div style={{ position: 'absolute', left: 0, top: BREITE, width: BREITE, height: BREITE, overflow: 'hidden' }}>
-          {hell && <div ref={nachtA} style={blauFlaeche('#ffffff')} />}
-          <canvas ref={raumA} width={BREITE} height={BREITE} style={{ ...voll, mixBlendMode: 'screen' }} />
-          <div className="flug-dunkel" style={silhouette}><div ref={hostDA} className="radix flug-szene" style={platz} /></div>
+          {hell && <div ref={nachtA} style={{ ...blauFlaeche('#ffffff'), ...film }} />}
+          <canvas ref={raumA} width={BREITE} height={BREITE} style={{ ...voll, mixBlendMode: 'screen', ...film }} />
+          <div className="flug-dunkel" style={{ ...voll, ...silhouette, ...film }}><div ref={hostDA} className="radix flug-szene" style={platz} /></div>
           {hell && <div className="flug-hell" style={silhouette}><div ref={hostHA} className="radix flug-szene" style={platz} /></div>}
-          <canvas ref={koerperA} width={BREITE} height={BREITE} style={voll} />
+          <canvas ref={koerperA} width={BREITE} height={BREITE} style={{ ...voll, ...film }} />
         </div>
       )}
     </AbsoluteFill>

@@ -73,6 +73,28 @@ export async function ladeTexturen(quelle: (pfad: string) => string): Promise<Te
   return t;
 }
 
+/* Saturnring, in Planetenradien: C-Ring zart, B-Ring hell, Cassini-Teilung, A-Ring etwas dunkler */
+const RING_INNEN = 1.22, RING_AUSSEN = 2.2;
+const RING_DREH = (-17 * Math.PI) / 180; // im Bild leicht steiler als die Bahnebene (−12°)
+const RING_OEFFNUNG = 0.3; // kleine Achse zur großen: flach, aber als Ellipse lesbar
+const glattStufe = (a: number, b: number, x: number) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+/* Deckkraft des Rings am Radius r; w = ein Bildpunkt in Planetenradien, für weiche Kanten */
+function ringDichte(r: number, w: number): number {
+  const k = Math.max(0.02, w * 1.2);
+  const band = (a: number, b: number, d: number) => d * glattStufe(a - k, a + k, r) * (1 - glattStufe(b - k, b + k, r));
+  return Math.min(1,
+    band(RING_INNEN, 1.45, 0.22) + // C-Ring
+    band(1.45, 1.84, 0.92) + // B-Ring
+    band(1.84, 1.9, 0.12) + // Cassini-Teilung
+    band(1.9, RING_AUSSEN, 0.7) * (1 - 0.35 * glattStufe(2.05, RING_AUSSEN, r)), // A-Ring, außen auslaufend
+  );
+}
+function ringFarbe(r: number): [number, number, number] {
+  if (r < 1.45) return [190, 176, 150];
+  if (r < 1.9) return [236, 220, 184];
+  return [214, 198, 162];
+}
+
 const FARBE_NACHT = [3, 5, 12];
 const SAUM = [95, 150, 255];
 
@@ -111,7 +133,7 @@ export function zeichneKugel(ctx: CanvasRenderingContext2D, tex: Texturen, k: Ku
     return;
   }
   const saum = erde ? k.r * 0.07 : 0;
-  const ringAussen = saturn ? 2.3 : 0;
+  const ringAussen = saturn ? RING_AUSSEN + 0.05 : 0;
   const halb = Math.ceil(k.r * Math.max(1 + saum / k.r, ringAussen || 1)) + 2;
   const g = halb * 2;
   const a = arbeitsflaeche(g);
@@ -124,8 +146,11 @@ export function zeichneKugel(ctx: CanvasRenderingContext2D, tex: Texturen, k: Ku
   const Lx = licht.x / ln, Ly = licht.y / ln, Lz = licht.z / ln;
   const dreh = (k.drehung * Math.PI) / 180;
   const nei = (k.neigung * Math.PI) / 180, cn = Math.cos(nei), sn = Math.sin(nei);
-  // Ringebene: um die Bildwaagrechte gekippt (Normale zum Betrachter hin geneigt)
-  const rN = saturn ? [0, Math.cos(0.42), Math.sin(0.42)] : [0, 0, 1];
+  // Ringebene: im Bild um RING_DREH gedreht (wie die Bahnebene, leicht stärker), um RING_OEFFNUNG geöffnet.
+  // Achsen der Ebene: eu (in der Bildebene) und ew (vorn unten zum Betrachter hin), beide Länge 1.
+  const cb = Math.cos(RING_DREH), sb = Math.sin(RING_DREH), oz = Math.sqrt(1 - RING_OEFFNUNG ** 2);
+  const eu = [cb, sb, 0], ew = [-sb * RING_OEFFNUNG, cb * RING_OEFFNUNG, oz];
+  const rn = [eu[1] * ew[2] - eu[2] * ew[1], eu[2] * ew[0] - eu[0] * ew[2], eu[0] * ew[1] - eu[1] * ew[0]];
 
   const abtasten = (s: { b: number; h: number; d: Uint8ClampedArray }, lon: number, lat: number, aus: number[]) => {
     // bilinear
@@ -194,17 +219,34 @@ export function zeichneKugel(ctx: CanvasRenderingContext2D, tex: Texturen, k: Ku
         }
       }
       if (saturn) {
-        // Schnittpunkt mit der Ringebene (Blick parallel): z aus der Ebenengleichung
-        const rz = -(rN[0] * dx + rN[1] * dy) / rN[2];
-        const rad = Math.hypot(dx, dy, rz);
-        if (rad >= 1.24 && rad <= 2.3 && rz > kugelZ) {
-          const ui = Math.min(tex.ring.b - 1, Math.floor(((rad - 1.24) / (2.3 - 1.24)) * tex.ring.b)) * 4;
-          const ra = tex.ring.d[ui + 3] / 255;
-          // Ring im Schatten der Kugel: hinter der Kugel von der Sonne aus
-          const schatten = rz < 0 && Math.hypot(dx - Lx * rz, dy - Ly * rz) < 1 ? 0.15 : 1;
-          const rr = tex.ring.d[ui] * 0.95 * schatten, rg = tex.ring.d[ui + 1] * 0.9 * schatten, rb = tex.ring.d[ui + 2] * 0.8 * schatten;
-          R = R * (1 - ra) + rr * ra; G = G * (1 - ra) + rg * ra; B = B * (1 - ra) + rb * ra;
-          A = A + ra * (1 - A);
+        // Schatten des Rings auf der Kugel: vom Kugelpunkt zur Sonne, trifft der Strahl den Ring?
+        if (kugelZ > -Infinity) {
+          const pz = kugelZ, dn = Lx * rn[0] + Ly * rn[1] + Lz * rn[2];
+          if (Math.abs(dn) > 1e-4) {
+            const lam = -(dx * rn[0] + dy * rn[1] + pz * rn[2]) / dn;
+            if (lam > 0) {
+              const hx = dx + lam * Lx, hy = dy + lam * Ly, hz = pz + lam * Lz;
+              const dichte = ringDichte(Math.hypot(hx, hy, hz), 1 / k.r);
+              R *= 1 - 0.6 * dichte; G *= 1 - 0.6 * dichte; B *= 1 - 0.6 * dichte;
+            }
+          }
+        }
+        // Ring: Bildpunkt auf die Ringebene (Blick parallel zur z-Achse)
+        const v = -dx * sb + dy * cb; // quer zur Ringachse im Bild, unten = vorn
+        const t = v / RING_OEFFNUNG; // Lage entlang ew
+        const u = dx * cb + dy * sb;
+        const rad = Math.hypot(u, t), rz = t * oz;
+        const dichte = rad > RING_INNEN - 0.05 && rad < RING_AUSSEN + 0.05 && rz > kugelZ ? ringDichte(rad, 1 / k.r) : 0;
+        if (dichte > 0.002) {
+          // Schatten der Kugel auf dem Ring: vom Ringpunkt zur Sonne, trifft der Strahl die Kugel?
+          const rx = u * eu[0] + t * ew[0], ry = u * eu[1] + t * ew[1], rzz = t * ew[2];
+          const bq = rx * Lx + ry * Ly + rzz * Lz, cq = rx * rx + ry * ry + rzz * rzz - 1;
+          const schatten = bq < 0 && bq * bq - cq > 0 ? 0.12 : 1;
+          // Licht auf dem Ring: schräg von der Sonne, die Rückseite etwas dunkler
+          const licht = (0.62 + 0.38 * Math.min(1, Math.abs(Lx * rn[0] + Ly * rn[1] + Lz * rn[2]) * 2.2)) * schatten;
+          const [fr, fg, fb] = ringFarbe(rad);
+          R = R * (1 - dichte) + fr * licht * dichte; G = G * (1 - dichte) + fg * licht * dichte; B = B * (1 - dichte) + fb * licht * dichte;
+          A = A + dichte * (1 - A);
         }
       }
       px[i] = Math.min(255, R); px[i + 1] = Math.min(255, G); px[i + 2] = Math.min(255, B); px[i + 3] = 255 * Math.max(0, A);
@@ -214,7 +256,7 @@ export function zeichneKugel(ctx: CanvasRenderingContext2D, tex: Texturen, k: Ku
   ctx.save();
   // rund zuschneiden: außerhalb von Kugel, Saum und Ring bleibt das Bild exakt leer
   ctx.beginPath();
-  ctx.arc(k.x, k.y, saturn ? k.r * 2.32 : k.r + saum + 1, 0, Math.PI * 2);
+  ctx.arc(k.x, k.y, saturn ? k.r * (RING_AUSSEN + 0.06) : k.r + saum + 1, 0, Math.PI * 2);
   ctx.clip();
   ctx.globalAlpha = k.deckkraft;
   ctx.drawImage(a.canvas, 0, 0, g, g, k.x - halb, k.y - halb, g, g);

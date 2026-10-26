@@ -18,6 +18,9 @@ import { BREITE, MITTE, PX, FPS, FLUG_TEMPO, VERWANDLUNG_AB, SCHWENK_AB, SCHWENK
 import { kamera, SONNE, type Fassung, type Kamera } from './flug/galaxie';
 import { baueWeltraum, type Weltraum } from './flug/weltraum';
 import { ladeTexturen, zeichneKugel, zeichneSonnenlicht, type Texturen, type Licht, type KoerperId } from './flug/planeten';
+import { zeichneWarp } from './flug/warp';
+import { vorsprung, zusatzTempo, drehe, zeichneSpur } from './flug/umlauf';
+import { PLANETEN } from '../../src/scripts/kosmos/modell';
 
 export interface KosmosFlugProps {
   fassung: Fassung;
@@ -132,6 +135,9 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache }) => {
     const licht = (f: () => void) => { if (fassung === 'hell') { c.save(); c.filter = 'url(#flug-tinte)'; f(); c.restore(); } else f(); };
     const bildpunkt = (x: number, y: number): [number, number] => [MITTE + (x - cx) * S * PX, MITTE + (y - cy) * S * PX];
 
+    // Raumschiff: Sterne rasen an der Kamera vorbei, bis wir vor dem Sonnensystem abbremsen
+    zeichneWarp(c, frame, fassung === 'hell');
+
     // Sonne: aus der Ferne ein Stern mit Reflex, nah eine leuchtende Kugel
     const so = l.koerper.sonne;
     const [sx, sy] = bildpunkt(so.x, so.y);
@@ -152,9 +158,14 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache }) => {
     const ids = (['merkur', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptun', 'pluto', 'erde', 'mond'] as const)
       .map((id) => ({ id, kl: l.koerper[id] }))
       .sort((a, b) => a.kl.y - b.kl.y);
+    // Leuchtspuren auf der Bahn, bis kurz vor der Verwandlung die echten Bahnlinien übernehmen
+    const spurDa = szeneDa * (1 - rampe(t, VERWANDLUNG_AB - 1.6, VERWANDLUNG_AB - 0.2));
+    const erdVorsprung = vorsprung('erde', t);
     for (const { id, kl } of ids) {
       if (kl.kugelDeckkraft <= 0.003) continue;
-      const [x, y] = bildpunkt(kl.x, kl.y);
+      // im Sonnensystem kreisen die Planeten sichtbar schneller; vor dem Schwenk zur Erde holen sie das Modell ein
+      const [ox, oy] = id === 'mond' ? drehe(kl.x, kl.y, l.K, erdVorsprung) : drehe(kl.x, kl.y, l.K, vorsprung(id, t));
+      const [x, y] = bildpunkt(ox, oy);
       if (x < -400 || x > BREITE + 400 || y < -400 || y > BREITE + 400) continue;
       // Licht kommt von der Sonne, im Bild von deren Ort aus
       const lx = sx - x, ly = sy - y, lh = Math.hypot(lx, ly) || 1;
@@ -171,6 +182,11 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache }) => {
       const richtung = Math.atan2(kl.y / Math.max(l.K, 1e-3), kl.x);
       const deckel = Math.max(0.9, 0.45 * 45 * S * PX * Math.hypot(Math.cos(richtung), l.K * Math.sin(richtung)));
       const r = Math.max(wahr, Math.min(mindest, deckel));
+      if (id !== 'mond' && spurDa > 0.003) {
+        const farbe = fassung === 'hell' ? '#9a7a33' : PLANETEN.find((p) => p.id === id)!.farbe;
+        const laenge = 16 + 1.1 * zusatzTempo(id, t);
+        zeichneSpur(c, bildpunkt, ox, oy, l.K, laenge, Math.max(1.2, r * 0.85), farbe, 0.55 * spurDa * kl.kugelDeckkraft, fassung === 'hell');
+      }
       zeichneKugel(c, w.tex, { id, x, y, r, drehung: start + t * v, neigung: nei, deckkraft: kl.kugelDeckkraft * szeneDa }, licht);
     }
   }, [frame, bereit]);

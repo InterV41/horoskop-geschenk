@@ -111,6 +111,7 @@ export interface Kugel {
   drehung: number; // Grad, Länge in der Bildmitte
   neigung: number; // Grad, Achse zum Betrachter gekippt
   deckkraft: number;
+  zeit?: number; // Sekunden, für die bewegte Sonnenoberfläche
 }
 
 /* Eine Kugel zeichnen */
@@ -184,9 +185,18 @@ export function zeichneKugel(ctx: CanvasRenderingContext2D, tex: Texturen, k: Ku
         abtasten(st, lon, lat, f);
         const lam = dx * Lx + dy * Ly + nz * Lz;
         if (sonne) {
-          // Sonne leuchtet selbst, zum Rand dunkler (Randverdunkelung)
+          // Sonne leuchtet selbst, zum Rand dunkler (Randverdunkelung). Die Oberfläche brodelt: zwei gegeneinander
+          // treibende Lagen der Textur werden langsam überblendet, dazu wandernde helle Flecken (Fackeln)
+          const z = k.zeit ?? 0;
+          // ruhig: nur leichte Bewegung (Wunsch von Valentin)
+          abtasten(st, lon + z * 0.012 + 0.015 * Math.sin(lat * 7 + z * 0.3), lat + 0.008 * Math.sin(lon * 5 - z * 0.25), f);
+          abtasten(st, lon - z * 0.009 + 1.7, lat * 0.96 + 0.012 * Math.sin(lon * 4 + z * 0.2), fw);
+          const mischung = 0.5 + 0.25 * Math.sin(z * 0.18 + lon * 3.1 + lat * 2.3);
+          const fackel = Math.max(0, Math.sin(lon * 11 + z * 0.25) * Math.sin(lat * 9 - z * 0.17)) ** 6 * 0.12;
           const rand = 0.55 + 0.45 * Math.pow(nz, 0.6);
-          R = Math.min(255, f[0] * 1.25 * rand + 40); G = Math.min(255, f[1] * 1.15 * rand + 25); B = Math.min(255, f[2] * 0.9 * rand);
+          const hell = rand * (1 + fackel);
+          for (let c = 0; c < 3; c++) f[c] = f[c] * (1 - mischung) + fw[c] * mischung;
+          R = Math.min(255, f[0] * 1.25 * hell + 40); G = Math.min(255, f[1] * 1.15 * hell + 25); B = Math.min(255, f[2] * 0.9 * hell);
         } else {
           const tag = Math.min(1, Math.max(0, (lam + 0.06) / 0.28));
           const hell = 0.02 + 1.05 * Math.pow(Math.max(0, lam), 0.85);
@@ -297,5 +307,35 @@ export function zeichneSonnenlicht(ctx: CanvasRenderingContext2D, x: number, y: 
   }
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   // keine farbigen Linsengeister: sie standen als Ringe frei im Bild
+  ctx.restore();
+}
+
+/* Sonnenrand in Bewegung: Korona mit züngelnden Flammen und Protuberanzen (Bögen glühenden Gases), die
+   langsam aufsteigen und wieder vergehen. Jedes Bild hängt nur von der Zeit ab. */
+const PROTUBERANZEN = Array.from({ length: 6 }, (_, i) => ({ w: i * 2.39 + 0.4, takt: 9 + (i % 3) * 3, versatz: i * 2.3, groesse: 0.6 + ((i * 37) % 10) / 25 }));
+export function zeichneSonnenrand(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, zeit: number, deckkraft: number) {
+  if (deckkraft <= 0.003 || r < 4) return;
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  // kein Schein um die Sonne (Wunsch von Valentin): nur die Protuberanzen am Rand
+  // Protuberanzen: Bögen am Rand, steigen auf und vergehen
+  ctx.lineCap = 'round';
+  for (const p of PROTUBERANZEN) {
+    const phase = ((zeit + p.versatz) % p.takt) / p.takt; // 0…1
+    const stark = Math.sin(Math.PI * phase); // auf und ab
+    if (stark < 0.05) continue;
+    const w = p.w + zeit * 0.025, breite = 0.07 * p.groesse, hoch = r * (0.04 + 0.13 * phase) * p.groesse;
+    const a0 = w - breite, a1 = w + breite;
+    const fuss0 = [x + Math.cos(a0) * r, y + Math.sin(a0) * r], fuss1 = [x + Math.cos(a1) * r, y + Math.sin(a1) * r];
+    const spitze = [x + Math.cos(w) * (r + hoch * 1.6), y + Math.sin(w) * (r + hoch * 1.6)];
+    for (const [dicke, alpha] of [[r * 0.05, 0.16], [r * 0.018, 0.4]] as const) {
+      ctx.strokeStyle = `rgba(255,${Math.round(120 + 60 * (1 - phase))},60,${alpha * stark * deckkraft})`;
+      ctx.lineWidth = dicke;
+      ctx.beginPath();
+      ctx.moveTo(fuss0[0], fuss0[1]);
+      ctx.quadraticCurveTo(spitze[0], spitze[1], fuss1[0], fuss1[1]);
+      ctx.stroke();
+    }
+  }
   ctx.restore();
 }

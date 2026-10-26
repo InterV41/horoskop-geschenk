@@ -17,7 +17,7 @@ import type { Sprache } from '../../src/scripts/kosmos/texte';
 import { BREITE, MITTE, PX, FPS, FLUG_TEMPO, ablaufBild, VERWANDLUNG_AB, SCHWENK_AB, SCHWENK_BIS, lnMassstab, verwandlung, modellzeit, aszendentImFilm, rampe } from './flug/drehbuch';
 import { kamera, SONNE, type Fassung, type Kamera } from './flug/galaxie';
 import { baueWeltraum, type Weltraum } from './flug/weltraum';
-import { ladeTexturen, zeichneKugel, zeichneSonnenlicht, type Texturen, type Licht, type KoerperId } from './flug/planeten';
+import { ladeTexturen, zeichneKugel, zeichneSonnenlicht, zeichneSonnenrand, type Texturen, type Licht, type KoerperId } from './flug/planeten';
 import { zeichneWarp } from './flug/warp';
 import { vorsprung, zusatzTempo, drehe, zeichneSpur } from './flug/umlauf';
 import { posterGrad, posterOrt, posterMitte, posterRand, zeichneBahn, POSTER_LN, POSTER_SONNE_R, POSTER_SONNE_X, POSTER_ABSTAND, POSTER_HELL, RAHMEN_HELL } from './flug/poster';
@@ -42,9 +42,12 @@ const GRUND: Record<Fassung, string> = { dunkel: '#000000', hell: '#ffffff' };
 
 /* Je Körper: Drehung in Grad pro Sekunde, Startlänge, Neigung der Achse zum Betrachter */
 const DREHUNG: Partial<Record<KoerperId, [number, number, number]>> = {
-  erde: [10, 20, 18], mond: [0, 0, 6], merkur: [8, 0, 0], venus: [3, 0, 0], mars: [9, 40, 15],
+  erde: [6, 0, 34], mond: [0, 0, 6], merkur: [8, 0, 0], venus: [3, 0, 0], mars: [9, 40, 15],
   jupiter: [16, 0, 5], saturn: [14, 0, 10], uranus: [6, 0, 50], neptun: [7, 0, 20], pluto: [4, 0, 0], sonne: [2, 0, 6],
 };
+
+/* Länge der Bildmitte der Erdkarte: Mitte der Textur ist Greenwich, die Kugel zeigt bei drehung d die Länge d − 180° */
+const EUROPA = 180 + 10;
 
 /* Zustand der Szene in einem Bild. Die Drehwege der Verwandlung werden ab ihrem Beginn nachgerechnet,
    so ist jedes Bild unabhängig von der Reihenfolge, in der gerendert wird. */
@@ -201,11 +204,14 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache, alpha 
     if (fern && szeneDa < 1) licht(() => zeichneSonnenlicht(c, fern[0], fern[1], 0.1 + 0.25 * rampe(ln, -10, -5) * (1 - rampe(ln, -5, -2.6)), stern * (1 - szeneDa), MITTE));
     const zeichneSonne = () => {
     if (szeneDa > 0 && so.kugelDeckkraft > 0.003) {
-      zeichneKugel(c, w.tex, { id: 'sonne', x: sx, y: sy, r: sonnenR, drehung: t * DREHUNG.sonne![0], neigung: DREHUNG.sonne![2], deckkraft: szeneDa * so.kugelDeckkraft }, { x: 0, y: 0, z: 1 });
+      // bewegter Rand hinter der Scheibe: Protuberanzen, solange die Sonne groß im Bild steht
+      zeichneSonnenrand(c, sx, sy, sonnenR, t, szeneDa * so.kugelDeckkraft * (1 - verwandlung(t)));
+      zeichneKugel(c, w.tex, { id: 'sonne', x: sx, y: sy, r: sonnenR, drehung: t * DREHUNG.sonne![0], neigung: DREHUNG.sonne![2], deckkraft: szeneDa * so.kugelDeckkraft, zeit: t }, { x: 0, y: 0, z: 1 });
       // je größer die Erde im Bild, desto mehr tritt das Sonnenlicht zurück
       const blend = (1 - 0.65 * rampe(ln, 0.5, 2.6)) * (1 - verwandlung(t));
       // Sonne ruhiger, damit die Planeten daneben nicht untergehen
-      licht(() => zeichneSonnenlicht(c, sx, sy, Math.min(1, 0.08 + 0.12 * Math.max(0, ln)), 0.45 * szeneDa * blend * so.kugelDeckkraft, MITTE));
+      // kein Lichthof um die nahe Sonne (Wunsch von Valentin)
+      void blend;
     }
     };
 
@@ -249,7 +255,9 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache, alpha 
           const laenge = 16 + 1.1 * zusatzTempo(id, t);
           zeichneSpur(c, bildpunkt, ox, oy, l.K, laenge, Math.min(3, Math.max(1.2, r * 0.6)), farbe, 0.85 * spurDa * kl.kugelDeckkraft, false);
         }
-        zeichneKugel(c, w.tex, { id, x, y, r, drehung: start + t * v, neigung: nei, deckkraft: kl.kugelDeckkraft * szeneDa }, licht);
+        // Erde: beim Anflug zeigt Europa (≈ 10° Ost) zur Kamera, von dort dreht sie sich weiter
+        const drehung = id === 'erde' ? EUROPA + (t - SCHWENK_BIS) * v : start + t * v;
+        zeichneKugel(c, w.tex, { id, x, y, r, drehung, neigung: nei, deckkraft: kl.kugelDeckkraft * szeneDa }, licht);
       };
       // der Mond gehört zur Seite der Erde
       ((id === 'mond' ? erdeHinten : oy < 0) ? hinten : vorn).push(zeichne);

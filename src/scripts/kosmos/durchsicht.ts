@@ -3,6 +3,9 @@
 // Die Rechnung läuft als WebGL-Shader auf der Grafikkarte; dieselbe Formel liegt als reine Funktion vor.
 
 export type Grund = 'schwarz' | 'weiss';
+/* 'maske': Video doppelt so hoch, oben die Szene vormultipliziert auf Schwarz, unten die Deckkraft als Graustufe.
+   Dann bleiben auch dunkle, undurchsichtige Stellen (Nachtseite eines Planeten) deckend. */
+export type Art = Grund | 'maske';
 
 /* Kompressionsrauschen und leicht graue Bildecken im Grund (gemessen bis 14 von 255): darunter ganz
    durchsichtig, bis OBEN weich hochgezogen. Sonst zeichnen sich um Sterne und Planeten Vierecke ab. */
@@ -27,18 +30,35 @@ export function entmische(r: number, g: number, b: number, grund: Grund): [numbe
   return [farbe(r), farbe(g), farbe(b), a];
 }
 
+/* Rauschen in der Maske: darunter ganz durchsichtig */
+const MASKE_SCHWELLE = 0.02, MASKE_OBEN = 0.05;
+
+/* Farbe aus der oberen Hälfte (vormultipliziert auf Schwarz) und Deckkraft aus der Maske */
+export function entmischeMaske(r: number, g: number, b: number, maske: number): [number, number, number, number] {
+  const a = maske * smoothstep(MASKE_SCHWELLE, MASKE_OBEN, maske);
+  if (a <= 0) return [0, 0, 0, 0];
+  return [klemm(r / a), klemm(g / a), klemm(b / a), a];
+}
+
 export interface Durchsicht {
   zeichne(quelle: HTMLVideoElement | HTMLImageElement): void;
-  setzeGrund(g: Grund): void;
+  setzeGrund(g: Art): void;
   frei(): void;
 }
 
 const ECKEN = `attribute vec2 p; varying vec2 uv;
 void main() { uv = vec2((p.x + 1.0) / 2.0, (1.0 - p.y) / 2.0); gl_Position = vec4(p, 0.0, 1.0); }`;
 
-const FLAECHE = `precision mediump float;
-uniform sampler2D bild; uniform float weiss; varying vec2 uv;
+const FLAECHE = () => `precision mediump float;
+uniform sampler2D bild; uniform float weiss; uniform float maske; varying vec2 uv;
 void main() {
+  if (maske > 0.5) {
+    vec3 oben = texture2D(bild, vec2(uv.x, uv.y * 0.5)).rgb;
+    float m = texture2D(bild, vec2(uv.x, 0.5 + uv.y * 0.5)).r;
+    float am = m * smoothstep(${MASKE_SCHWELLE.toFixed(3)}, ${MASKE_OBEN.toFixed(3)}, m);
+    gl_FragColor = vec4(clamp(oben / max(am, 1e-4), 0.0, 1.0) * am, am);
+    return;
+  }
   vec3 c = texture2D(bild, uv).rgb;
   float a = weiss > 0.5 ? 1.0 - min(c.r, min(c.g, c.b)) : max(c.r, max(c.g, c.b));
   vec3 f = weiss > 0.5 ? (c - (1.0 - a)) / max(a, 1e-4) : c / max(a, 1e-4);
@@ -47,7 +67,7 @@ void main() {
 }`;
 
 /* WebGL-Abspieler: zeichnet Video oder Bild durchsichtig gerechnet auf den Canvas. Ohne WebGL: null */
-export function erzeugeDurchsicht(canvas: HTMLCanvasElement, grund: Grund): Durchsicht | null {
+export function erzeugeDurchsicht(canvas: HTMLCanvasElement, grund: Art): Durchsicht | null {
   const gl = canvas.getContext('webgl', { premultipliedAlpha: true, alpha: true, antialias: false });
   if (!gl) return null;
   const shader = (art: number, quelle: string) => {
@@ -56,7 +76,7 @@ export function erzeugeDurchsicht(canvas: HTMLCanvasElement, grund: Grund): Durc
     gl.compileShader(s);
     return gl.getShaderParameter(s, gl.COMPILE_STATUS) ? s : null;
   };
-  const v = shader(gl.VERTEX_SHADER, ECKEN), f = shader(gl.FRAGMENT_SHADER, FLAECHE);
+  const v = shader(gl.VERTEX_SHADER, ECKEN), f = shader(gl.FRAGMENT_SHADER, FLAECHE());
   if (!v || !f) return null;
   const prog = gl.createProgram()!;
   gl.attachShader(prog, v);
@@ -78,8 +98,8 @@ export function erzeugeDurchsicht(canvas: HTMLCanvasElement, grund: Grund): Durc
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  const weissOrt = gl.getUniformLocation(prog, 'weiss');
-  const setzeGrund = (g: Grund) => gl.uniform1f(weissOrt, g === 'weiss' ? 1 : 0);
+  const weissOrt = gl.getUniformLocation(prog, 'weiss'), maskeOrt = gl.getUniformLocation(prog, 'maske');
+  const setzeGrund = (g: Art) => { gl.uniform1f(weissOrt, g === 'weiss' ? 1 : 0); gl.uniform1f(maskeOrt, g === 'maske' ? 1 : 0); };
   setzeGrund(grund);
 
   return {

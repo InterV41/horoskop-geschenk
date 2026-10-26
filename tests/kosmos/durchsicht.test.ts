@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { entmische } from '../../src/scripts/kosmos/durchsicht';
+import { entmische, entmischeMaske } from '../../src/scripts/kosmos/durchsicht';
 
 const ueber = (c: number[], a: number, grund: number) => c.map((x) => x * a + grund * (1 - a));
 
@@ -29,5 +29,19 @@ describe('durchsicht', () => {
     expect(entmische(14 / 255, 13 / 255, 12 / 255, 'schwarz')[3]).toBe(0);
     expect(entmische(1 - 14 / 255, 1 - 13 / 255, 1 - 12 / 255, 'weiss')[3]).toBe(0);
     expect(entmische(0.3, 0.25, 0.15, 'schwarz')[3]).toBeCloseTo(0.3, 5); // echte Inhalte bleiben
+  });
+  it('mit Maske: dunkle, aber undurchsichtige Stellen (Nachtseite der Erde) bleiben voll deckend', () => {
+    const nacht = [0.03, 0.04, 0.08];
+    const [r, g, b, a] = entmischeMaske(nacht[0], nacht[1], nacht[2], 1);
+    expect(a).toBe(1);
+    expect(r).toBeCloseTo(0.03); expect(g).toBeCloseTo(0.04); expect(b).toBeCloseTo(0.08);
+  });
+  it('mit Maske: halbe Deckkraft ergibt die volle Farbe zurück (oben vormultipliziert auf Schwarz)', () => {
+    const [r, , , a] = entmischeMaske(0.4, 0.3, 0.2, 0.5);
+    expect(a).toBeCloseTo(0.5); expect(r).toBeCloseTo(0.8);
+  });
+  it('mit Maske: Rauschen in der Maske unter 2 % ist ganz durchsichtig', () => {
+    expect(entmischeMaske(0.01, 0.01, 0.01, 0.015)[3]).toBe(0);
+    expect(entmischeMaske(0, 0, 0, 0)[3]).toBe(0);
   });
 });

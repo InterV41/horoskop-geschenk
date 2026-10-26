@@ -35,13 +35,15 @@ const filmArt = film === 'flug' ? 'flug' : film ? 'kosmos' : undefined;
   import type { Layout } from '../scripts/kosmos/layout';
 
   /* Die beiden Filme: was die Seite über jeden wissen muss, um ihn zu spielen und danach live weiterzumachen */
-  interface Film { quelle: string; laenge: number; fps: number; layout(b: number): Layout; uhr(b: number): Uhr; phase(b: number): number; art: string }
+  /* maske: Video doppelt so hoch mit mitgelieferter Deckkraft (Dateien mit -alpha), dann bleiben auch dunkle,
+     undurchsichtige Stellen deckend und der Film darf eine eigene Nachtfläche mitbringen */
+  interface Film { quelle: string; laenge: number; fps: number; layout(b: number): Layout; uhr(b: number): Uhr; phase(b: number): number; art: string; maske?: boolean }
   const FILME: Record<string, Film> = {
     kosmos: { art: 'kosmos', quelle: 'kosmos', laenge: filmLaenge(), fps: FILM_FPS, layout: filmLayout, uhr: (b) => ({ ...filmUhren()[b] }), phase: filmPhase },
-    flug: { art: 'flug', quelle: 'kosmos-flug', fps: FLUG_FPS, ...flugSeite }, // ab 6 s, wo die Sterne heranrasen
+    flug: { art: 'flug', quelle: 'kosmos-flug', fps: FLUG_FPS, maske: true, ...flugSeite }, // ab dem Einstieg, wo die Sterne heranrasen
   };
   import { erzeugeFilmsteuerung } from '../scripts/kosmos/filmsteuerung';
-  import { erzeugeDurchsicht, type Grund } from '../scripts/kosmos/durchsicht';
+  import { erzeugeDurchsicht, type Art } from '../scripts/kosmos/durchsicht';
 
 
   document.querySelectorAll<HTMLElement>('[data-kosmos]').forEach((host, nr) => {
@@ -92,8 +94,11 @@ const filmArt = film === 'flug' ? 'flug' : film ? 'kosmos' : undefined;
       if (t === 'dark' || t === 'light') return t === 'dark' ? 'dunkel' : 'hell';
       return matchMedia('(prefers-color-scheme: dark)').matches ? 'dunkel' : 'hell';
     };
-    const grund = (): Grund => (fassung() === 'dunkel' ? 'schwarz' : 'weiss');
-    const quelle = () => `/video/${welcher.quelle}-${fassung()}-${spr}`;
+    const grund = (): Art => (welcher.maske ? 'maske' : fassung() === 'dunkel' ? 'schwarz' : 'weiss');
+    const quelle = () => `/video/${welcher.quelle}-${fassung()}-${spr}${welcher.maske ? '-alpha' : ''}`;
+    /* In der letzten Filmsekunde liegt die Live-Radix schon bildgenau unter dem Film, dann blendet der Film aus:
+       So sieht man keinen Wechsel, auch wenn die Videokompression die feinen Goldlinien leicht verändert. */
+    const UEBERBLENDEN = 1.2; // Sekunden
     /* Film beenden: bei 'uebergabe' übernimmt die Live-Radix den Stand des letzten Filmbilds und bleibt;
        bei einem Abbruch geht es live genau ab dem gezeigten Bild weiter. Beides blendet weich über. */
     const beendeFilm = (bild: number) => {
@@ -104,6 +109,7 @@ const filmArt = film === 'flug' ? 'flug' : film ? 'kosmos' : undefined;
       radixFest = welcher.phase(bild) === 1;
       host.classList.remove('kx-im-film');
       host.removeAttribute('data-film-art');
+      host.removeAttribute('data-film-ende');
       canvas.style.opacity = '0';
       setTimeout(() => { canvas.remove(); durchsicht.frei(); }, 600);
       video.pause();
@@ -129,7 +135,7 @@ const filmArt = film === 'flug' ? 'flug' : film ? 'kosmos' : undefined;
       video.src = `${quelle()}.mp4`;
       const zeichenEbene = host.querySelector('.kx-ebene-zeichen');
       host.insertBefore(video, zeichenEbene);
-      host.insertBefore(canvas, zeichenEbene);
+      host.appendChild(canvas); // über allen Live-Ebenen, damit sie am Ende darunter einblenden können
       host.classList.add('kx-im-film');
       host.dataset.filmArt = welcher.art;
       film = { video, canvas, durchsicht, steuerung: erzeugeFilmsteuerung(welcher.laenge, welcher.fps), fehler: false };
@@ -152,6 +158,15 @@ const filmArt = film === 'flug' ? 'flug' : film ? 'kosmos' : undefined;
       if (d.art === 'live') { beendeFilm(d.bild); return false; }
       szene.zeichne(welcher.layout(d.bild));
       if (d.art === 'zeichnen') f.durchsicht.zeichne(v);
+      // Übergabe vorbereiten: Live-Ebenen unter dem Film einblenden, danach den Film ausblenden
+      const ab = welcher.laenge - 1 - UEBERBLENDEN * welcher.fps;
+      if (d.art === 'zeichnen' && d.bild >= ab) {
+        host.classList.remove('kx-im-film');
+        host.dataset.filmEnde = ''; // Live-Himmel blendet ein, während der Film mit seinen Sternen ausblendet
+        const q = (d.bild - ab) / (UEBERBLENDEN * welcher.fps);
+        f.canvas.style.transition = 'none';
+        f.canvas.style.opacity = (q < 0.45 ? 1 : Math.max(0, 1 - (q - 0.45) / 0.55)).toFixed(3);
+      }
       return true;
     };
 
@@ -304,9 +319,13 @@ const filmArt = film === 'flug' ? 'flug' : film ? 'kosmos' : undefined;
     -webkit-mask-image: radial-gradient(circle closest-side, #000 70%, rgb(0 0 0 / 0.55) 88%, transparent 100%);
     mask-image: radial-gradient(circle closest-side, #000 70%, rgb(0 0 0 / 0.55) 88%, transparent 100%);
   }
-  .radix[data-film-art='flug'] :global(.kx-ebene-himmel),
-  .radix[data-film-art='flug'] :global(.kx-ebene-funken) {
+  .radix[data-film-art='flug']:not([data-film-ende]) :global(.kx-ebene-himmel),
+  .radix[data-film-art='flug']:not([data-film-ende]) :global(.kx-ebene-funken) {
     opacity: 0;
+  }
+  .radix[data-film-ende] :global(.kx-ebene-himmel),
+  .radix[data-film-ende] :global(.kx-ebene-funken) {
+    transition: opacity 1.2s ease;
   }
   .radix:not([data-film-art]) :global(.kx-ebene-himmel),
   .radix:not([data-film-art]) :global(.kx-ebene-funken) {

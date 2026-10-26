@@ -26,7 +26,8 @@ function plane() {
     // Beim Ankommen stehen alle an ihrer echten Stellung (Wunsch von Valentin), danach kreisen sie
     const v0 = 0;
     void i;
-    const w = merkur ? 66 : ruhig(pl.bildRadius);
+    // die Erde läuft genau wie im Modell: beim Zoom steht sie schon an ihrem richtigen Platz
+    const w = merkur ? 66 : pl.id === 'erde' ? 0 : ruhig(pl.bildRadius);
     const v1 = v0 + w * (T1 - POSTER_DA);
     // Ziel 360·k: vorwärts weiter, mindestens ein Stück weiter als der Schwung allein trägt
     const h = T2 - T1;

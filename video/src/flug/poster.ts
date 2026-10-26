@@ -4,10 +4,10 @@
 // die Erde ist P wieder 0, ab dann gilt die Geometrie der Radix-Szene unverändert.
 import { BREITE, MITTE, PX, FLUG_TEMPO, SCHWENK_AB, rampe } from './drehbuch';
 
-export const POSTER_K = 0.2; // Neigung: so flach wie auf dem Poster
-export const POSTER_WINKEL = (-12 * Math.PI) / 180; // links unten nach rechts oben
-export const POSTER_LN = Math.log(1.6); // Maßstab: Pluto reicht fast bis an den rechten Rand
-export const POSTER_SONNE_X = 0.24 * BREITE; // Mitte der Sonne, am linken Rand angeschnitten
+export const POSTER_K = 0.36; // Neigung: leicht von oben, die Bahnen als ruhige Ellipsen um die Sonne
+export const POSTER_WINKEL = 0; // nicht gedreht: die Sonne ist der Fixpunkt in der Mitte (Wunsch von Valentin)
+export const POSTER_LN = Math.log(1.08); // Maßstab: Pluto reicht fast bis an den rechten Rand
+export const POSTER_SONNE_X = 0.5 * BREITE; // Sonne genau in der Bildmitte // Mitte der Sonne, am linken Rand angeschnitten
 /* Sonne kleiner als die Merkurbahn und alle Bahnen um POSTER_ABSTAND Einheiten nach außen, damit Merkur
    sichtbar hinter der Sonne durchziehen kann (dunkel und hell); dunkel liegt die Sonne ganz im runden Verlauf */
 export const POSTER_SONNE_R = 78; // Bildpunkte

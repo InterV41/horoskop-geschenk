@@ -3,7 +3,7 @@
 # Aufruf im Ordner video/:  bash flug-rendern.sh  [ids …]
 set -euo pipefail
 mkdir -p out/voll
-ids=("$@"); [ ${#ids[@]} -eq 0 ] && ids=(kosmos-flug-dunkel-de kosmos-flug-hell-de kosmos-flug-dunkel-en kosmos-flug-hell-en)
+ids=("$@"); [ ${#ids[@]} -eq 0 ] && ids=(kosmos-flug-dunkel-de-alpha kosmos-flug-hell-de-alpha kosmos-flug-dunkel-en-alpha kosmos-flug-hell-en-alpha)
 for id in "${ids[@]}"; do
   npx remotion render src/index.ts "$id" "out/voll/$id.mp4" --log=error --gl=angle
   echo "gerendert: $id"

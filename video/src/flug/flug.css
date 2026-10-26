@@ -1,8 +1,8 @@
 /* Farben der Szene wie auf der Startseite (KosmosRadix.astro), hier fest je Fassung statt nach Seitenmodus */
 .flug-hell .radix {
-  /* Gold kräftiger als auf der Seite: Das Video halbiert die Farbe feiner Linien, danach sieht es aus wie die Live-Radix */
-  --rx-gold: #b57a10;
-  --rx-text: #b07510;
+  /* exakt wie die Live-Radix (KosmosRadix.astro), damit man die Übergabe nicht sieht */
+  --rx-gold: #9a7a33;
+  --rx-text: #96762f;
   --rx-dick: 1.6;
   --rx-schnitt: 500;
   --rx-disk: #fefcf8;
@@ -14,8 +14,8 @@
   --kx-hof2-o: 0.22;
 }
 .flug-dunkel .radix {
-  --rx-gold: #f5c046;
-  --rx-text: #f5c046;
+  --rx-gold: #e0c27e;
+  --rx-text: #e0c27e;
   --rx-dick: 1;
   --rx-schnitt: 400;
   --rx-disk: rgb(7 16 42 / 0.5);
@@ -27,9 +27,6 @@
   --kx-hof2-o: 0.24;
 }
 .flug-szene {
-  /* Scheibe und Nabe bleiben im Film durchsichtig: Sie blenden bei der Übergabe mit der Live-Radix ein */
-  --rx-disk: transparent !important;
-  --kx-nabe: transparent !important;
   position: absolute;
   transform-origin: 50% 50%;
 }

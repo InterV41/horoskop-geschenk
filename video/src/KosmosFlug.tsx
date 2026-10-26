@@ -25,7 +25,14 @@ import { PLANETEN } from '../../src/scripts/kosmos/modell';
 export interface KosmosFlugProps {
   fassung: Fassung;
   sprache: Sprache;
+  /* doppelt hoch: oben die Szene vormultipliziert auf Schwarz, unten ihre Deckkraft (Weiß = undurchsichtig) */
+  alpha?: boolean;
 }
+
+/* Hell: die Nachtszene liegt auf einer runden, dunkelblauen Fläche (Seitenblau), die mit der Verwandlung
+   ausblendet; die Radix wechselt dabei von den dunklen auf die hellen Live-Farben */
+const NACHTBLAU = '#07102a';
+const hellAnteil = (t: number) => rampe(verwandlung(t), 0.55, 0.95);
 
 /* Reines Schwarz und Weiß: Die Seite rechnet den Grund wieder heraus, dann liegt nur das Licht über ihr */
 const GRUND: Record<Fassung, string> = { dunkel: '#000000', hell: '#ffffff' };
@@ -59,23 +66,33 @@ function sonneImBild(k: Kamera): [number, number] | null {
   return [MITTE + (f * (vx * k.rx + vy * k.ry + vz * k.rz)) / tz, MITTE - (f * (vx * k.ux + vy * k.uy + vz * k.uz)) / tz];
 }
 
-export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache }) => {
+export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache, alpha = false }) => {
   const frame = useCurrentFrame();
-  const host = useRef<HTMLDivElement>(null);
+  const hostD = useRef<HTMLDivElement>(null), hostH = useRef<HTMLDivElement>(null);
+  const hostDA = useRef<HTMLDivElement>(null), hostHA = useRef<HTMLDivElement>(null);
   const raum = useRef<HTMLCanvasElement>(null);
   const koerper = useRef<HTMLCanvasElement>(null);
-  const welt = useRef<{ szene: Szene; weltraum: Weltraum; tex: Texturen; bahnen: SVGElement[] } | null>(null);
+  const raumA = useRef<HTMLCanvasElement>(null), koerperA = useRef<HTMLCanvasElement>(null);
+  const nacht = useRef<HTMLDivElement>(null), nachtA = useRef<HTMLDivElement>(null);
+  type Rad = { host: HTMLDivElement; szene: Szene; bahnen: SVGElement[]; dick: number };
+  const welt = useRef<{ raeder: Rad[]; weltraum: Weltraum; tex: Texturen } | null>(null);
   const [warten] = useState(() => delayRender('Weltraum, Texturen und Schriften', { timeoutInMilliseconds: 120000 }));
   const [bereit, setBereit] = useState(false);
+  const hell = fassung === 'hell';
 
   useLayoutEffect(() => {
-    const szene = baueSzene(host.current!, 301, sprache, { nurRadix: true });
-    szene.setzeStrich(fassung === 'hell' ? 1.6 : 1);
-    // Die gezeichneten Kugeln und die Sonne der Szene ersetzen wir durch echte Oberflächen
-    const h = host.current!;
-    h.querySelectorAll<SVGElement>('circle[fill^="url(#kx301-p-"]').forEach((c) => ((c.parentElement as unknown as SVGElement).style.display = 'none'));
-    h.querySelectorAll<SVGElement>('circle[fill="url(#kx301-hof)"], circle[fill="url(#kx301-kern)"]').forEach((c) => (c.style.display = 'none'));
-    const bahnen = Array.from(h.querySelectorAll<SVGElement>('ellipse[stroke="url(#kx301-bahn)"]'));
+    /* Radix-Szenen: dunkel immer, hell nur in der hellen Fassung; jede auch als Silhouette für die Deckkraft */
+    const baue = (host: HTMLDivElement | null, nr: number, dick: number): Rad | null => {
+      if (!host) return null;
+      const szene = baueSzene(host, nr, sprache, { nurRadix: true });
+      szene.setzeStrich(dick);
+      // Die gezeichneten Kugeln und die Sonne der Szene ersetzen wir durch echte Oberflächen
+      host.querySelectorAll<SVGElement>(`circle[fill^="url(#kx${nr}-p-"]`).forEach((c) => ((c.parentElement as unknown as SVGElement).style.display = 'none'));
+      host.querySelectorAll<SVGElement>(`circle[fill="url(#kx${nr}-hof)"], circle[fill="url(#kx${nr}-kern)"]`).forEach((c) => (c.style.display = 'none'));
+      const bahnen = Array.from(host.querySelectorAll<SVGElement>(`ellipse[stroke="url(#kx${nr}-bahn)"]`));
+      return { host, szene, bahnen, dick };
+    };
+    const raeder = [baue(hostD.current, 301, 1), baue(hostH.current, 302, 1.6), baue(hostDA.current, 303, 1), baue(hostHA.current, 304, 1.6)].filter(Boolean) as Rad[];
     Promise.all([
       baueWeltraum(raum.current!, staticFile),
       ladeTexturen(staticFile),
@@ -85,7 +102,7 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache }) => {
       document.fonts.load('500 16px "STIX Two Text"', 'WIDDER'),
     ])
       .then(([weltraum, tex]) => {
-        welt.current = { szene, weltraum, tex, bahnen };
+        welt.current = { raeder, weltraum, tex };
         return document.fonts.ready;
       })
       .then(() => setBereit(true))
@@ -113,30 +130,40 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache }) => {
     // Kamera und Himmel rechnen in der Zeit des ersten Schnitts, der Film ist um FLUG_TEMPO gedehnt
     const k = kamera(ln, t / FLUG_TEMPO);
     w.weltraum.zeichne(k, t / FLUG_TEMPO);
-    raum.current!.style.opacity = (1 - 0.55 * rampe(t, VERWANDLUNG_AB + 1, VERWANDLUNG_AB + 6)).toFixed(3);
-    // Hell: der Weltraum als goldene Zeichnung auf Weiß (Licht wird zu Tinte), Planeten bleiben echt
-    if (fassung === 'hell') raum.current!.style.filter = 'url(#flug-tinte)';
+    const raumDeck = (1 - 0.55 * rampe(t, VERWANDLUNG_AB + 1, VERWANDLUNG_AB + 6)) * (hell ? 1 - hellAnteil(t) : 1);
+    raum.current!.style.opacity = raumDeck.toFixed(3);
+    // Hell: dunkelblaue Fläche unter der Nachtszene, blendet mit der Verwandlung aus
+    const blau = hell ? 1 - hellAnteil(t) : 0;
+    if (nacht.current) nacht.current.style.opacity = blau.toFixed(3);
+    if (nachtA.current) nachtA.current.style.opacity = blau.toFixed(3);
 
     /* Radix-Szene: Bahnen sind im Sonnensystem nur ein Hauch und werden erst mit der Verwandlung zu Ringen */
     const szeneDa = rampe(ln, -5.2, -2.6);
-    const st = host.current!.style;
-    st.visibility = szeneDa <= 0.001 ? 'hidden' : '';
-    st.transform = `scale(${S}) translate(${(-cx * PX).toFixed(3)}px, ${(-cy * PX).toFixed(3)}px)`;
-    w.szene.setzeStrich((fassung === 'hell' ? 1.75 : 1.25) / Math.max(1, S));
-    w.szene.zeichne(l);
     // Umlaufbahnen nur beim Übergang in die Radix, dann deutlich
     const bahn = rampe(t, VERWANDLUNG_AB - 1.4, VERWANDLUNG_AB + 0.2);
-    w.bahnen.forEach((b) => (b.style.opacity = bahn.toFixed(3)));
+    const hA = hell ? hellAnteil(t) : 0;
+    w.raeder.forEach((rad) => {
+      const st = rad.host.style;
+      // dunkle Räder (301, 303) weichen in der hellen Fassung den hellen (302, 304)
+      const anteil = rad.dick === 1 ? 1 - hA : hA;
+      st.visibility = szeneDa <= 0.001 || anteil <= 0.001 ? 'hidden' : '';
+      st.opacity = anteil.toFixed(3);
+      st.transform = `scale(${S}) translate(${(-cx * PX).toFixed(3)}px, ${(-cy * PX).toFixed(3)}px)`;
+      // Linien wie live (--rx-dick), beim Zoomen auf dem Bild gleich fein
+      rad.szene.setzeStrich(rad.dick / Math.max(1, S));
+      rad.szene.zeichne(l);
+      rad.bahnen.forEach((b) => (b.style.opacity = bahn.toFixed(3)));
+    });
 
     /* Sonne und Planeten mit echten Oberflächen */
     const c = koerper.current!.getContext('2d')!;
     c.clearRect(0, 0, BREITE, BREITE);
     // Hell: Licht der Sonne als Goldtinte, wie der Weltraum dahinter
-    const licht = (f: () => void) => { if (fassung === 'hell') { c.save(); c.filter = 'url(#flug-tinte)'; f(); c.restore(); } else f(); };
+    const licht = (f: () => void) => f();
     const bildpunkt = (x: number, y: number): [number, number] => [MITTE + (x - cx) * S * PX, MITTE + (y - cy) * S * PX];
 
     // Raumschiff: Sterne rasen an der Kamera vorbei, bis wir vor dem Sonnensystem abbremsen
-    zeichneWarp(c, frame, fassung === 'hell');
+    zeichneWarp(c, frame, false);
 
     // Sonne: aus der Ferne ein Stern mit Reflex, nah eine leuchtende Kugel
     const so = l.koerper.sonne;
@@ -184,11 +211,28 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache }) => {
       const deckel = Math.max(0.9, 0.45 * 45 * S * PX * Math.hypot(Math.cos(richtung), l.K * Math.sin(richtung)));
       const r = Math.max(wahr, Math.min(mindest, deckel));
       if (id !== 'mond' && spurDa > 0.003) {
-        const farbe = fassung === 'hell' ? '#9a7a33' : PLANETEN.find((p) => p.id === id)!.farbe;
+        const farbe = PLANETEN.find((p) => p.id === id)!.farbe;
         const laenge = 16 + 1.1 * zusatzTempo(id, t);
-        zeichneSpur(c, bildpunkt, ox, oy, l.K, laenge, Math.min(3, Math.max(1.2, r * 0.6)), farbe, 0.85 * spurDa * kl.kugelDeckkraft, fassung === 'hell');
+        zeichneSpur(c, bildpunkt, ox, oy, l.K, laenge, Math.min(3, Math.max(1.2, r * 0.6)), farbe, 0.85 * spurDa * kl.kugelDeckkraft, false);
       }
       zeichneKugel(c, w.tex, { id, x, y, r, drehung: start + t * v, neigung: nei, deckkraft: kl.kugelDeckkraft * szeneDa }, licht);
+    }
+
+    /* Deckkraft: Weltraum nach Helligkeit, Körper und Lichter nach ihrem Alphakanal (als Weiß) */
+    if (alpha) {
+      const ra = raumA.current!.getContext('2d')!;
+      ra.globalCompositeOperation = 'copy';
+      ra.globalAlpha = raumDeck;
+      ra.filter = 'grayscale(1) brightness(1.25)';
+      ra.drawImage(raum.current!, 0, 0);
+      ra.filter = 'none';
+      ra.globalAlpha = 1;
+      ra.globalCompositeOperation = 'source-over';
+      const ka = koerperA.current!.getContext('2d')!;
+      ka.clearRect(0, 0, BREITE, BREITE);
+      ka.filter = 'brightness(0) invert(1)';
+      ka.drawImage(koerper.current!, 0, 0);
+      ka.filter = 'none';
     }
   }, [frame, bereit]);
 
@@ -197,18 +241,32 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache }) => {
   }, [bereit]);
 
   const rad = 940 * PX;
+  const platz = { left: MITTE - rad / 2, top: MITTE - rad / 2, width: rad, height: rad };
+  const voll: React.CSSProperties = { position: 'absolute', inset: 0 };
+  /* runde Fläche mit weichem Rand: keine Kante auf der weißen Seite */
+  const blauFlaeche = (farbe: string): React.CSSProperties => ({ ...voll, background: `radial-gradient(circle closest-side, ${farbe} 0%, ${farbe} 72%, transparent 100%)`, opacity: 0 });
+  const silhouette: React.CSSProperties = { filter: 'brightness(0) invert(1)' };
   return (
-    <AbsoluteFill className={`flug-${fassung}`} style={{ background: GRUND[fassung] }}>
-      {/* Hell: Helligkeit L wird zu Goldtinte, Farbe = 1 − L · (1 − Gold #9a7a33); Schwarz bleibt reines Weiß */}
-      <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
-        <filter id="flug-tinte" colorInterpolationFilters="sRGB">
-          <feColorMatrix type="matrix" values={[0.4, 0.52, 0.8].map((k) => `${(-k * 0.3 * 0.85).toFixed(4)} ${(-k * 0.59 * 0.85).toFixed(4)} ${(-k * 0.11 * 0.85).toFixed(4)} 0 1`).join(' ') + ' 0 0 0 1 0'} />
-        </filter>
-      </svg>
-      <canvas ref={raum} width={BREITE} height={BREITE} style={{ position: 'absolute', inset: 0 }} />
-      {/* Planeten über der Radix-Szene: Die Erde verdeckt ihre eigene Bahn; zu Zeichen werden sie ohnehin ausgeblendet */}
-      <div ref={host} className="radix flug-szene" style={{ left: MITTE - rad / 2, top: MITTE - rad / 2, width: rad, height: rad }} />
-      <canvas ref={koerper} width={BREITE} height={BREITE} style={{ position: 'absolute', inset: 0 }} />
+    <AbsoluteFill style={{ background: '#000' }}>
+      {/* Bild: Szene vormultipliziert auf Schwarz */}
+      <div style={{ position: 'absolute', left: 0, top: 0, width: BREITE, height: BREITE, overflow: 'hidden' }}>
+        {hell && <div ref={nacht} style={blauFlaeche(NACHTBLAU)} />}
+        <canvas ref={raum} width={BREITE} height={BREITE} style={{ ...voll, mixBlendMode: 'screen' }} />
+        {/* Planeten über der Radix-Szene: Die Erde verdeckt ihre eigene Bahn; zu Zeichen werden sie ohnehin ausgeblendet */}
+        <div className="flug-dunkel"><div ref={hostD} className="radix flug-szene" style={platz} /></div>
+        {hell && <div className="flug-hell"><div ref={hostH} className="radix flug-szene" style={platz} /></div>}
+        <canvas ref={koerper} width={BREITE} height={BREITE} style={voll} />
+      </div>
+      {/* Deckkraft: dieselbe Szene als Weiß auf Schwarz */}
+      {alpha && (
+        <div style={{ position: 'absolute', left: 0, top: BREITE, width: BREITE, height: BREITE, overflow: 'hidden' }}>
+          {hell && <div ref={nachtA} style={blauFlaeche('#ffffff')} />}
+          <canvas ref={raumA} width={BREITE} height={BREITE} style={{ ...voll, mixBlendMode: 'screen' }} />
+          <div className="flug-dunkel" style={silhouette}><div ref={hostDA} className="radix flug-szene" style={platz} /></div>
+          {hell && <div className="flug-hell" style={silhouette}><div ref={hostHA} className="radix flug-szene" style={platz} /></div>}
+          <canvas ref={koerperA} width={BREITE} height={BREITE} style={voll} />
+        </div>
+      )}
     </AbsoluteFill>
   );
 };

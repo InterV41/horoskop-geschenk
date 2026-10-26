@@ -81,12 +81,56 @@ export function flugUhr(bild: number): Uhr {
 /* Tempo der Radix-Phase, nur zur Prüfung: am Ende läuft die Sonne wie auf der Seite */
 export const SONNENTEMPO_AM_ENDE = TEMPO_RADIX * SEITENTEMPO;
 
-/* Auf der Seite beginnt der Flug erst, wo die Sterne heranrasen (6 s im ersten Schnitt, Wunsch von Valentin): Die Videos für
-   die Seite sind ab hier zugeschnitten. Bild 0 der Seite ist Bild FLUG_EINSTIEG_BILD des vollen Flugs. */
-export const FLUG_EINSTIEG_BILD = Math.round(6 * FLUG_TEMPO * FLUG_FPS);
+/* Zeitlupe (Wunsch von Valentin): Ab dem Sonnensystem läuft alles 1,5-mal langsamer, bis die Radix steht.
+   Der Ablauf oben (Kamera, Planeten, Verwandlung) bleibt in „Ablaufzeit“ beschrieben; der Film rechnet jedes
+   Filmbild in ein Ablaufbild um. Vor der Übergabe läuft er wieder im normalen Tempo, damit die Live-Radix
+   im selben Takt weitermacht. Die Übergänge des Tempos sind weich. */
+export const ZEITLUPE = 1.5;
+const LUPE_AB = 11.5 * FLUG_TEMPO; // das Sonnensystem steht
+const LUPE_BIS = VERWANDLUNG_BIS; // die Radix steht
+const LUPE_WEICH = 0.6; // Sekunden Ablaufzeit für den Übergang des Tempos
+/* Ablaufsekunden je Filmsekunde, abhängig von der Ablaufzeit */
+function lupenTempo(alt: number): number {
+  const w = glatt((alt - (LUPE_AB - LUPE_WEICH)) / (2 * LUPE_WEICH)) * (1 - glatt((alt - (LUPE_BIS - LUPE_WEICH)) / (2 * LUPE_WEICH)));
+  return 1 - (1 - 1 / ZEITLUPE) * w;
+}
+const TEILSCHRITTE = 24;
+/* Länge des Films in Bildern */
+export const FILM_BILDER = (() => {
+  let neu = 0;
+  const h = 1 / (FLUG_FPS * TEILSCHRITTE);
+  for (let alt = 0; alt < FLUG_SEKUNDEN; alt += h) neu += h / lupenTempo(alt + h / 2);
+  return Math.round(neu * FLUG_FPS);
+})();
+export const FILM_SEKUNDEN = FILM_BILDER / FLUG_FPS;
+/* Ablaufbild je Filmbild, vom Ende her gerechnet: das letzte Filmbild ist genau das letzte Ablaufbild */
+let ABLAUF: Float64Array | null = null;
+function ablaufListe(): Float64Array {
+  if (ABLAUF) return ABLAUF;
+  const liste = new Float64Array(FILM_BILDER + 1);
+  let alt = FLUG_SEKUNDEN;
+  liste[FILM_BILDER] = alt * FLUG_FPS;
+  const h = 1 / (FLUG_FPS * TEILSCHRITTE);
+  for (let b = FILM_BILDER - 1; b >= 0; b--) {
+    for (let k = 0; k < TEILSCHRITTE; k++) alt -= h * lupenTempo(alt - (h * lupenTempo(alt)) / 2);
+    liste[b] = Math.max(0, alt * FLUG_FPS);
+  }
+  return (ABLAUF = liste);
+}
+export function ablaufBild(filmBild: number): number {
+  const liste = ablaufListe();
+  const b = Math.min(FILM_BILDER, Math.max(0, filmBild));
+  const i = Math.floor(b), f = b - i;
+  return i >= FILM_BILDER ? liste[FILM_BILDER] : liste[i] + (liste[i + 1] - liste[i]) * f;
+}
+
+/* Auf der Seite beginnt der Flug erst mitten im Sternenflug (Einstieg 11 s Filmzeit, Wunsch von Valentin: 3 s
+   später als zuvor). Die Videos für die Seite sind ab hier zugeschnitten. Bild 0 der Seite ist Filmbild
+   FLUG_EINSTIEG_BILD; der Ablauf dazu kommt über ablaufBild. */
+export const FLUG_EINSTIEG_BILD = Math.round((6 * FLUG_TEMPO + 3) * FLUG_FPS);
 export const flugSeite = {
-  laenge: FLUG_BILDER - FLUG_EINSTIEG_BILD,
-  layout: (bild: number) => flugLayout(bild + FLUG_EINSTIEG_BILD),
-  uhr: (bild: number) => flugUhr(bild + FLUG_EINSTIEG_BILD),
-  phase: (bild: number) => flugPhase(bild + FLUG_EINSTIEG_BILD),
+  laenge: FILM_BILDER - FLUG_EINSTIEG_BILD,
+  layout: (bild: number) => flugLayout(ablaufBild(bild + FLUG_EINSTIEG_BILD)),
+  uhr: (bild: number) => flugUhr(ablaufBild(bild + FLUG_EINSTIEG_BILD)),
+  phase: (bild: number) => flugPhase(ablaufBild(bild + FLUG_EINSTIEG_BILD)),
 };

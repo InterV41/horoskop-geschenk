@@ -1,7 +1,7 @@
 import { Composition } from 'remotion';
 import { PartnerVideo, type PartnerVideoProps } from './PartnerVideo';
 import { KosmosFlug } from './KosmosFlug';
-import { BILDER as FLUG_BILDER, FPS as FLUG_FPS, BREITE as FLUG_BREITE } from './flug/drehbuch';
+import { FILM_BILDER as FLUG_BILDER, FPS as FLUG_FPS, BREITE as FLUG_BREITE } from './flug/drehbuch';
 
 /* 12 Sekunden bei 30 Bildern: Zerfall, Wirbel, Aufbau, Nachzeichnen */
 const LAENGE = 360;

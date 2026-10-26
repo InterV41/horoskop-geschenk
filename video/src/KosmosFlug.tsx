@@ -14,7 +14,7 @@ import { AbsoluteFill, cancelRender, continueRender, delayRender, staticFile, us
 import { baueSzene, type Szene } from '../../src/scripts/kosmos/szene';
 import { layout, type Richtungen, type Layout } from '../../src/scripts/kosmos/layout';
 import type { Sprache } from '../../src/scripts/kosmos/texte';
-import { BREITE, MITTE, PX, FPS, FLUG_TEMPO, VERWANDLUNG_AB, SCHWENK_AB, SCHWENK_BIS, lnMassstab, verwandlung, modellzeit, aszendentImFilm, rampe } from './flug/drehbuch';
+import { BREITE, MITTE, PX, FPS, FLUG_TEMPO, ablaufBild, VERWANDLUNG_AB, SCHWENK_AB, SCHWENK_BIS, lnMassstab, verwandlung, modellzeit, aszendentImFilm, rampe } from './flug/drehbuch';
 import { kamera, SONNE, type Fassung, type Kamera } from './flug/galaxie';
 import { baueWeltraum, type Weltraum } from './flug/weltraum';
 import { ladeTexturen, zeichneKugel, zeichneSonnenlicht, type Texturen, type Licht, type KoerperId } from './flug/planeten';
@@ -115,14 +115,16 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache, alpha 
   useLayoutEffect(() => {
     const w = welt.current;
     if (!w || !bereit) return;
-    const t = frame / FPS;
+    // Filmbild → Ablaufbild: ab dem Sonnensystem läuft der Ablauf in Zeitlupe
+    const bild = ablaufBild(frame);
+    const t = bild / FPS;
     // Poster-Ansicht im Sonnensystem: eigener Maßstab, Sonne links, flache Schrägsicht
     const P = posterGrad(t);
     const lnKurve = lnMassstab(t);
     // hell und dunkel: dieselbe Komposition
     const posterLn = POSTER_LN, posterSonneX = POSTER_SONNE_X;
     const ln = lnKurve + (posterLn - lnKurve) * P, S = Math.exp(ln);
-    const { l, l0 } = szenenStand(frame);
+    const { l, l0 } = szenenStand(bild);
 
     /* Kameramitte in Einheiten der Szene: erst die Sonne, dann gleitet die Erde in die Bildmitte und bleibt dort */
     // die Erde dort, wo sie gezeichnet ist (sie holt beim Anflug ihren Vorsprung auf das Modell auf)
@@ -179,7 +181,7 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache, alpha 
     const bildpunkt = (x: number, y: number): [number, number] => bildpunktRoh(...posterOrt(x, y, l.K, P, abstand));
 
     // Raumschiff: Sterne rasen an der Kamera vorbei, bis wir vor dem Sonnensystem abbremsen
-    zeichneWarp(c, frame, hell); // hell: Streifen in gedecktem Gold
+    zeichneWarp(c, bild, hell); // hell: Streifen in gedecktem Gold
 
     // Umlaufbahnen: dauerhaft sichtbar, feine helle Ellipsen; beim Übergang in die Radix übernehmen deren Ringe
     const bahnDa = szeneDa * (1 - rampe(t, VERWANDLUNG_AB - 1.4, VERWANDLUNG_AB + 0.2));

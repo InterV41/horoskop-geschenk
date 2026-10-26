@@ -10,7 +10,7 @@
 #                           bash flug-fuers-netz.sh <name> …   (nur diese, z. B. kosmos-flug-hell-de-alpha)
 set -euo pipefail
 ziel=../public/video
-EINSTIEG=8
+EINSTIEG=11
 mkdir -p "$ziel"
 namen=("$@")
 if [ ${#namen[@]} -eq 0 ]; then

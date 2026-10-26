@@ -56,15 +56,30 @@ describe('Kosmos-Flug auf der Seite', () => {
   });
 });
 
-describe('Kosmos-Flug gekürzt für die Seite', () => {
-  it('beginnt bei 6 s, wo die Sterne heranrasen, und endet am selben letzten Bild wie der volle Flug', () => {
-    expect(FLUG_EINSTIEG_BILD).toBe(8 * FLUG_FPS);
-    expect(flugSeite.laenge).toBe(FLUG_BILDER - FLUG_EINSTIEG_BILD);
-    expect(flugSeite.layout(0)).toEqual(flugLayout(FLUG_EINSTIEG_BILD));
+import { FILM_BILDER, FILM_SEKUNDEN, ZEITLUPE, ablaufBild } from '../../src/scripts/kosmos/flug';
+
+describe('Kosmos-Flug auf der Seite: Einstieg und Zeitlupe', () => {
+  it('beginnt bei 11 s Filmzeit, mitten im Sternenflug, und endet am selben letzten Ablaufbild', () => {
+    expect(FLUG_EINSTIEG_BILD).toBe(11 * FLUG_FPS);
+    expect(flugSeite.laenge).toBe(FILM_BILDER - FLUG_EINSTIEG_BILD);
+    expect(flugSeite.layout(0)).toEqual(flugLayout(ablaufBild(FLUG_EINSTIEG_BILD)));
     const letztes = flugSeite.laenge - 1;
-    expect(flugSeite.layout(letztes)).toEqual(flugLayout(FLUG_BILDER - 1));
-    expect(flugSeite.uhr(letztes)).toEqual(flugUhr(FLUG_BILDER - 1));
-    expect(flugSeite.phase(letztes)).toBe(flugPhase(FLUG_BILDER - 1));
+    expect(ablaufBild(FILM_BILDER - 1)).toBeCloseTo(FLUG_BILDER - 1, 6);
+    expect(flugSeite.uhr(letztes).tau).toBeCloseTo(flugUhr(FLUG_BILDER - 1).tau, 9);
+    expect(flugSeite.uhr(letztes).t).toBeCloseTo(flugUhr(FLUG_BILDER - 1).t, 6);
+    expect(flugSeite.phase(letztes)).toBe(1);
     expect(flugSeite.phase(0)).toBe(0); // am Einstieg noch Flug, keine Verwandlung
+  });
+  it('vor dem Sonnensystem gleich schnell, dort langsamer, am Ende wieder im Takt der Seite', () => {
+    // Anfang: Filmzeit = Ablaufzeit (bis auf weniger als ein Bild)
+    expect(Math.abs(ablaufBild(100) - 100)).toBeLessThan(1);
+    // mitten im Sonnensystem: 1,5-mal langsamer
+    const m = Math.round(17 * FLUG_FPS);
+    expect(ablaufBild(m + 1) - ablaufBild(m)).toBeCloseTo(1 / ZEITLUPE, 3);
+    // die letzten Bilder: wieder ein Ablaufbild je Filmbild
+    expect(ablaufBild(FILM_BILDER - 1) - ablaufBild(FILM_BILDER - 2)).toBeCloseTo(1, 6);
+    // stetig und vorwärts
+    for (let b = 1; b <= FILM_BILDER; b++) expect(ablaufBild(b)).toBeGreaterThan(ablaufBild(b - 1));
+    expect(FILM_SEKUNDEN).toBeGreaterThan(FLUG_BILDER / FLUG_FPS);
   });
 });

@@ -5,6 +5,7 @@
 import { glatt, teil } from '../../../src/scripts/kosmos/zeitplan';
 import { FLUG_FPS, FLUG_SEKUNDEN, FLUG_BILDER, FLUG_TEMPO, FLUG_HALT, RAD_ANTEIL, VERWANDLUNG_AB, verwandlung } from '../../../src/scripts/kosmos/flug';
 export { FLUG_TEMPO, FLUG_HALT };
+export { FILM_BILDER, ablaufBild } from '../../../src/scripts/kosmos/flug';
 export { SEITENTEMPO, VERWANDLUNG_AB, VERWANDLUNG_BIS, verwandlung, modellzeit, aszendentImFilm } from '../../../src/scripts/kosmos/flug';
 
 export const FPS = FLUG_FPS;

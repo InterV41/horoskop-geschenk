@@ -2,35 +2,47 @@
 // damit man ihre Bewegung auf der Bahn sieht. Der Vorsprung schrumpft auf 0, bevor die Kamera die Erde
 // ansteuert; ab dann stehen alle genau dort, wo das Modell sie hat, und die Verwandlung bleibt stetig.
 // Dazu die Leuchtspur: ein kurzer, weich auslaufender Bogen auf der eigenen Bahn hinter dem Planeten.
-import { PLANETEN, type PlanetId } from '../../../src/scripts/kosmos/modell';
-import { SCHWENK_AB, rampe } from './drehbuch';
+import { PLANETEN, sonnenWinkel, type PlanetId } from '../../../src/scripts/kosmos/modell';
+import { SCHWENK_AB, VERWANDLUNG_AB, FPS, modellzeit } from './drehbuch';
+import { POSTER_DA } from './poster';
 
-/* Zusätzliche Winkelgeschwindigkeit in Grad pro Sekunde, innen schneller (wie Kepler, gemildert) */
-const EXTRA_ERDE = 22;
-const extraTempo = (id: PlanetId) => {
-  const pl = PLANETEN.find((p) => p.id === id)!;
-  return EXTRA_ERDE * Math.pow(160 / pl.bildRadius, 1.1);
-};
+/* Zwei Phasen:
+   1. Poster (bis T1): Bei POSTER_DA stehen alle aufgereiht rechts vorn auf ihrer Bahn und kreisen dann ruhig,
+      innen schneller als außen.
+   2. Anflug auf die Erde (T1 bis T2): Den Rest bis zu ihrer Stellung im Modell holen sie auf, während die übrigen
+      Planeten aus dem Bild sind; die Kamera folgt der Erde dort, wo sie gezeichnet ist. Ab T2 gilt das Modell. */
+const T1 = SCHWENK_AB - 1.4, T2 = VERWANDLUNG_AB - 0.3;
+const RUHIG_ERDE = 7; // Grad pro Sekunde
+const ruhig = (bildRadius: number) => RUHIG_ERDE * Math.pow(160 / bildRadius, 1.1);
+const modell = (id: PlanetId, t: number) => sonnenWinkel(id, modellzeit(t * FPS));
 
-/* g(t): 1 im Sonnensystem, läuft vor dem Schwenk zur Erde weich auf 0 aus */
-const AUS_AB = SCHWENK_AB - 1.2, AUS_BIS = SCHWENK_AB + 0.8;
-const g = (t: number) => 1 - rampe(t, AUS_AB, AUS_BIS);
-/* ∫ g von t bis AUS_BIS: der noch fehlende Weg, numerisch */
-function rest(t: number): number {
-  if (t >= AUS_BIS) return 0;
-  const a = Math.max(t, 0), n = 120, h = (AUS_BIS - a) / n;
-  let s = 0;
-  for (let i = 0; i < n; i++) s += g(a + (i + 0.5) * h) * h;
-  return s;
-}
+interface Plan { v0: number; w: number; v1: number; ende: number }
+const PLAN = new Map<PlanetId, Plan>();
+PLANETEN.forEach((pl, i) => {
+  const ziel = -6 - 2.5 * i; // Grad: rechts, leicht nach vorn, Pluto am weitesten
+  let v0 = ziel - modell(pl.id, POSTER_DA);
+  v0 = ((v0 % 360) + 360) % 360 - 360; // (−360, 0]
+  const w = ruhig(pl.bildRadius);
+  const v1 = v0 + w * (T1 - POSTER_DA);
+  // Ziel 360·k: vorwärts weiter, mindestens ein Stück weiter als der Schwung allein trägt
+  const h = T2 - T1;
+  const ende = 360 * Math.ceil((v1 + 0.35 * w * h) / 360);
+  PLAN.set(pl.id, { v0, w, v1, ende });
+});
 
-/* Vorsprung-Winkel (Grad, im Sinne des Modells): negativ, der Planet holt bis AUS_BIS auf */
+/* Vorsprung des gezeichneten Planeten gegenüber dem Modell, in Grad */
 export function vorsprung(id: PlanetId, t: number): number {
-  return -extraTempo(id) * rest(t);
+  const p = PLAN.get(id)!;
+  if (t <= T1) return p.v0 + p.w * (t - POSTER_DA);
+  if (t >= T2) return 0;
+  // Hermite: Lage v1 mit Tempo w → Lage ende mit Tempo 0, danach gilt das Modell (ende ist ein Vielfaches von 360)
+  const h = T2 - T1, s = (t - T1) / h;
+  const h00 = 2 * s ** 3 - 3 * s ** 2 + 1, h10 = s ** 3 - 2 * s ** 2 + s, h01 = -2 * s ** 3 + 3 * s ** 2;
+  return h00 * p.v1 + h10 * h * p.w + h01 * p.ende;
 }
 /* Momentane Zusatzgeschwindigkeit, für die Länge der Spur */
 export function zusatzTempo(id: PlanetId, t: number): number {
-  return extraTempo(id) * g(t);
+  return Math.abs(vorsprung(id, t + 0.02) - vorsprung(id, t - 0.02)) / 0.04;
 }
 
 /* Punkt im Bild der Szene (ungekippt x, gekippt y = −sin · r · K) um die Sonne drehen */

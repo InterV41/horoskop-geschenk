@@ -8,7 +8,9 @@ import { layout, ASC0, ASC_V, type Layout } from './layout';
 export const FLUG_FPS = 30;
 /* Gesamttempo des Flugs: 4/3 = ein Drittel langsamer als der erste Schnitt (Wunsch von Valentin) */
 export const FLUG_TEMPO = 4 / 3;
-export const FLUG_SEKUNDEN = 24 * FLUG_TEMPO;
+/* Haltezeit im Sonnensystem (Poster-Ansicht mit Bahnen), eingeschoben zwischen Ankunft und Schwenk zur Erde */
+export const FLUG_HALT = 3.5;
+export const FLUG_SEKUNDEN = 24 * FLUG_TEMPO + FLUG_HALT;
 export const FLUG_BILDER = FLUG_FPS * FLUG_SEKUNDEN;
 
 /* Der Film läuft im selben Tempo wie die Radix auf der Seite */
@@ -19,8 +21,8 @@ export const SEITENTEMPO = TEMPO_SEITE;
 export const RAD_ANTEIL = 0.8;
 
 /* Die Verwandlung Erde → Radix im Film, in Sekunden ab Filmbeginn */
-export const VERWANDLUNG_AB = 16.3 * FLUG_TEMPO;
-export const VERWANDLUNG_BIS = 21.8 * FLUG_TEMPO;
+export const VERWANDLUNG_AB = 16.3 * FLUG_TEMPO + FLUG_HALT;
+export const VERWANDLUNG_BIS = 21.8 * FLUG_TEMPO + FLUG_HALT;
 
 /* Sekunde im Zyklus der Endlosschleife, mit der die Seite nach dem Film weitermacht:
    kurz nach der fertigen Verwandlung, die Radix steht */

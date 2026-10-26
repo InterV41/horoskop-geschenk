@@ -252,21 +252,6 @@ export function zeichneSonnenlicht(ctx: CanvasRenderingContext2D, x: number, y: 
     ctx.fillRect(0, -0.6, l, 1.2);
   }
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  // Geister: auf der Linie Sonne → Bildmitte → gegenüber
-  const gx = (s: number) => mitte + (x - mitte) * s, gy = (s: number) => mitte + (y - mitte) * s;
-  const geist = (s: number, r: number, farbe: string, a: number) => {
-    const px = gx(s), py = gy(s);
-    const gr = ctx.createRadialGradient(px, py, r * 0.55, px, py, r);
-    gr.addColorStop(0, farbe.replace('A', '0'));
-    gr.addColorStop(0.8, farbe.replace('A', String(a * o)));
-    gr.addColorStop(1, farbe.replace('A', '0'));
-    ctx.fillStyle = gr;
-    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.fill();
-  };
-  const sichtbar = 0.5 + 0.5 * groesse;
-  geist(-0.55, 34, 'rgba(255,90,80,A)', 0.12 * sichtbar);
-  geist(-0.6, 30, 'rgba(70,220,255,A)', 0.12 * sichtbar);
-  geist(0.35, 16, 'rgba(120,255,200,A)', 0.08 * sichtbar);
-  geist(-1.2, 60, 'rgba(255,170,80,A)', 0.05 * sichtbar);
+  // keine farbigen Linsengeister: sie standen als Ringe frei im Bild
   ctx.restore();
 }

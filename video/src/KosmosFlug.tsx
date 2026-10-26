@@ -159,7 +159,8 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache }) => {
       .map((id) => ({ id, kl: l.koerper[id] }))
       .sort((a, b) => a.kl.y - b.kl.y);
     // Leuchtspuren auf der Bahn, bis kurz vor der Verwandlung die echten Bahnlinien übernehmen
-    const spurDa = szeneDa * (1 - rampe(t, VERWANDLUNG_AB - 1.6, VERWANDLUNG_AB - 0.2));
+    // aus, bevor die Kamera auf die Erde zufliegt: sonst wüchse die Spur der Erde zum breiten Balken
+    const spurDa = szeneDa * (1 - rampe(t, SCHWENK_AB - 1.2, SCHWENK_AB));
     const erdVorsprung = vorsprung('erde', t);
     for (const { id, kl } of ids) {
       if (kl.kugelDeckkraft <= 0.003) continue;
@@ -185,7 +186,7 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache }) => {
       if (id !== 'mond' && spurDa > 0.003) {
         const farbe = fassung === 'hell' ? '#9a7a33' : PLANETEN.find((p) => p.id === id)!.farbe;
         const laenge = 16 + 1.1 * zusatzTempo(id, t);
-        zeichneSpur(c, bildpunkt, ox, oy, l.K, laenge, Math.max(1.2, r * 0.85), farbe, 0.55 * spurDa * kl.kugelDeckkraft, fassung === 'hell');
+        zeichneSpur(c, bildpunkt, ox, oy, l.K, laenge, Math.min(3, Math.max(1.2, r * 0.6)), farbe, 0.85 * spurDa * kl.kugelDeckkraft, fassung === 'hell');
       }
       zeichneKugel(c, w.tex, { id, x, y, r, drehung: start + t * v, neigung: nei, deckkraft: kl.kugelDeckkraft * szeneDa }, licht);
     }

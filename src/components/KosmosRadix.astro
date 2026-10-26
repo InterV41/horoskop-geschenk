@@ -96,6 +96,10 @@ const filmArt = film === 'flug' ? 'flug' : film ? 'kosmos' : undefined;
     };
     const grund = (): Art => (welcher.maske ? 'maske' : fassung() === 'dunkel' ? 'schwarz' : 'weiss');
     const quelle = () => `/video/${welcher.quelle}-${fassung()}-${spr}${welcher.maske ? '-alpha' : ''}`;
+    /* Kleine Bildschirme (Handy, kleines Tablet) laden die halb so große Fassung (900 statt 1600 breit), das spart
+       etwa zwei Drittel der Ladezeit. Entschieden wird einmal beim Laden der Seite. */
+    const KLEIN = welcher.maske && matchMedia('(max-width: 900px)').matches;
+    const videoQuelle = () => `${quelle()}${KLEIN ? '-klein' : ''}.mp4`;
     /* In der letzten Filmsekunde liegt die Live-Radix schon bildgenau unter dem Film, dann blendet der Film aus:
        So sieht man keinen Wechsel, auch wenn die Videokompression die feinen Goldlinien leicht verändert. */
     const UEBERBLENDEN = 1.2; // Sekunden
@@ -132,7 +136,7 @@ const filmArt = film === 'flug' ? 'flug' : film ? 'kosmos' : undefined;
       video.setAttribute('playsinline', '');
       video.setAttribute('aria-hidden', 'true');
       video.className = 'kx-film-quelle';
-      video.src = `${quelle()}.mp4`;
+      video.src = videoQuelle();
       const zeichenEbene = host.querySelector('.kx-ebene-zeichen');
       host.insertBefore(video, zeichenEbene);
       host.appendChild(canvas); // über allen Live-Ebenen, damit sie am Ende darunter einblenden können
@@ -210,7 +214,7 @@ const filmArt = film === 'flug' ? 'flug' : film ? 'kosmos' : undefined;
       const { video, durchsicht } = film;
       const zeit = video.currentTime;
       durchsicht.setzeGrund(grund());
-      video.src = `${quelle()}.mp4`;
+      video.src = videoQuelle();
       video.addEventListener('loadedmetadata', () => { video.currentTime = zeit; if (document.visibilityState === 'visible') video.play().catch(() => {}); }, { once: true });
     };
 

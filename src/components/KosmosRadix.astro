@@ -109,6 +109,7 @@ const filmArt = film === 'flug' ? 'flug' : film ? 'kosmos' : undefined;
       radixFest = welcher.phase(bild) === 1;
       host.classList.remove('kx-im-film');
       host.removeAttribute('data-film-art');
+      host.removeAttribute('data-film-fassung');
       host.removeAttribute('data-film-ende');
       canvas.style.opacity = '0';
       setTimeout(() => { canvas.remove(); durchsicht.frei(); }, 600);
@@ -138,6 +139,7 @@ const filmArt = film === 'flug' ? 'flug' : film ? 'kosmos' : undefined;
       host.appendChild(canvas); // über allen Live-Ebenen, damit sie am Ende darunter einblenden können
       host.classList.add('kx-im-film');
       host.dataset.filmArt = welcher.art;
+      host.dataset.filmFassung = fassung();
       film = { video, canvas, durchsicht, steuerung: erzeugeFilmsteuerung(welcher.laenge, welcher.fps), fehler: false };
       const f = film;
       // Bis das Video läuft, steht sein erstes Bild da
@@ -210,6 +212,7 @@ const filmArt = film === 'flug' ? 'flug' : film ? 'kosmos' : undefined;
       const { video, durchsicht } = film;
       const zeit = video.currentTime;
       durchsicht.setzeGrund(grund());
+      host.dataset.filmFassung = fassung();
       video.src = `${quelle()}.mp4`;
       video.addEventListener('loadedmetadata', () => { video.currentTime = zeit; if (document.visibilityState === 'visible') video.play().catch(() => {}); }, { once: true });
     };
@@ -318,6 +321,12 @@ const filmArt = film === 'flug' ? 'flug' : film ? 'kosmos' : undefined;
     height: 125%;
     -webkit-mask-image: radial-gradient(circle closest-side, #000 70%, rgb(0 0 0 / 0.55) 88%, transparent 100%);
     mask-image: radial-gradient(circle closest-side, #000 70%, rgb(0 0 0 / 0.55) 88%, transparent 100%);
+  }
+  /* Hell: das Video bringt ein hartes 16:9-Filmbild in Radbreite mit, ohne weichen Rand. Die Randmaske würde
+     seine Kanten verwischen. Beim Übergang blendet das Filmbild im Video selbst zur weißen Radix aus. */
+  .radix[data-film-art='flug'][data-film-fassung='hell'] :global(.kx-film) {
+    -webkit-mask-image: none;
+    mask-image: none;
   }
   .radix[data-film-art='flug']:not([data-film-ende]) :global(.kx-ebene-himmel),
   .radix[data-film-art='flug']:not([data-film-ende]) :global(.kx-ebene-funken) {

@@ -20,7 +20,7 @@ import { baueWeltraum, type Weltraum } from './flug/weltraum';
 import { ladeTexturen, zeichneKugel, zeichneSonnenlicht, type Texturen, type Licht, type KoerperId } from './flug/planeten';
 import { zeichneWarp } from './flug/warp';
 import { vorsprung, zusatzTempo, drehe, zeichneSpur } from './flug/umlauf';
-import { posterGrad, posterOrt, posterMitte, zeichneBahn, POSTER_LN, POSTER_SONNE_R } from './flug/poster';
+import { posterGrad, posterOrt, posterMitte, posterRand, zeichneBahn, POSTER_LN, POSTER_SONNE_R } from './flug/poster';
 import { PLANETEN } from '../../src/scripts/kosmos/modell';
 
 export interface KosmosFlugProps {
@@ -234,6 +234,9 @@ export const KosmosFlug: React.FC<KosmosFlugProps> = ({ fassung, sprache, alpha 
       }
       zeichneKugel(c, w.tex, { id, x, y, r, drehung: start + t * v, neigung: nei, deckkraft: kl.kugelDeckkraft * szeneDa }, licht);
     }
+
+    // im Poster: alles läuft am runden Rand weich aus, nichts endet an der Videokante
+    posterRand(c, P);
 
     /* Deckkraft: Weltraum nach Helligkeit, Körper und Lichter nach ihrem Alphakanal (als Weiß) */
     if (alpha) {

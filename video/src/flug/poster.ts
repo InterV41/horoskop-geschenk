@@ -6,8 +6,8 @@ import { BREITE, MITTE, PX, FLUG_TEMPO, SCHWENK_AB, rampe } from './drehbuch';
 
 export const POSTER_K = 0.2; // Neigung: so flach wie auf dem Poster
 export const POSTER_WINKEL = (-12 * Math.PI) / 180; // links unten nach rechts oben
-export const POSTER_LN = Math.log(2.1); // Maßstab: Pluto reicht fast bis an den rechten Rand
-export const POSTER_SONNE_X = 0.04 * BREITE; // Mitte der Sonne, am linken Rand angeschnitten
+export const POSTER_LN = Math.log(1.75); // Maßstab: Pluto reicht fast bis an den rechten Rand
+export const POSTER_SONNE_X = 0.17 * BREITE; // Mitte der Sonne, am linken Rand angeschnitten
 export const POSTER_SONNE_R = 112; // Bildpunkte
 
 /* Ein: während das Sonnensystem ankommt; aus: zusammen mit dem Schwenk zur Erde */
@@ -50,5 +50,23 @@ export function zeichneBahn(
     if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
   }
   ctx.stroke();
+  ctx.restore();
+}
+
+/* Weicher runder Rand im Poster: Sonne, Bahnen und Planeten laufen vor dem Videorand und innerhalb der
+   dunkelblauen Fläche (hell) weich aus, statt an einer Kante zu enden. Voll bis INNEN, 0 ab AUSSEN. */
+const INNEN = 0.3 * BREITE, AUSSEN = 0.42 * BREITE;
+export function posterRand(ctx: CanvasRenderingContext2D, P: number) {
+  if (P <= 0.001) return;
+  const g = ctx.createRadialGradient(MITTE, MITTE, INNEN, MITTE, MITTE, AUSSEN);
+  for (let i = 0; i <= 10; i++) {
+    const x = i / 10, s = x * x * (3 - 2 * x); // weich
+    g.addColorStop(x, `rgba(0,0,0,${(1 - P * s).toFixed(4)})`);
+  }
+  ctx.save();
+  ctx.globalCompositeOperation = 'destination-in';
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, BREITE, BREITE);
+  // außerhalb des Verlaufs gilt die letzte Farbe (1 − P)
   ctx.restore();
 }

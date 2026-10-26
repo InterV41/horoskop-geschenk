@@ -55,6 +55,7 @@ attribute float flaeche; // Ausdehnung in Lichtjahren (0 = punktförmiger Stern)
 uniform float brenn;     // Bildpunkte bei Abstand 1
 uniform float belicht;
 uniform float nahAus;    // Sterne näher als dies (Lichtjahre) blenden aus
+uniform float dichte;    // Geräte-Bildpunkte je Bildpunkt (höhere Auflösung)
 varying vec3 vFarbe;
 varying float vDeck;
 void main() {
@@ -83,7 +84,7 @@ void main() {
   // große Flecken (Wolke von nahem) lösen sich auf, statt als Kleckse durchs Bild zu ziehen
   // von nahem löst sich ein Fleck in einen scharfen Lichtpunkt auf (ein Sternhaufen), statt zum Klecks zu wachsen
   if (flaeche > 0.0 && px > 1.5) { vDeck = licht * (0.55 + 0.08 * min(px, 12.0)); g = 1.5 + 1.4 * smoothstep(1.5, 30.0, px); }
-  gl_PointSize = min(g, 48.0);
+  gl_PointSize = min(g, 48.0) * dichte;
   vFarbe = farbe;
 }`;
 const PUNKT_FLAECHE = `
@@ -128,9 +129,9 @@ export interface Weltraum {
   zeichne(k: Kamera, t: number): void;
 }
 
-export async function baueWeltraum(canvas: HTMLCanvasElement, quelle: (pfad: string) => string): Promise<Weltraum> {
+export async function baueWeltraum(canvas: HTMLCanvasElement, quelle: (pfad: string) => string, dichte = 1): Promise<Weltraum> {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(1);
+  renderer.setPixelRatio(dichte);
   renderer.setSize(BREITE, BREITE, false);
   renderer.setClearColor(0x000000, 1);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -209,7 +210,7 @@ export async function baueWeltraum(canvas: HTMLCanvasElement, quelle: (pfad: str
   const punktMat = (nahAus: number) =>
     new THREE.ShaderMaterial({
       vertexShader: PUNKT_ECKEN, fragmentShader: PUNKT_FLAECHE,
-      uniforms: { brenn: { value: BRENNWEITE }, belicht: { value: 1 }, nahAus: { value: nahAus } },
+      uniforms: { brenn: { value: BRENNWEITE }, belicht: { value: 1 }, nahAus: { value: nahAus }, dichte: { value: dichte } },
       transparent: true, depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending,
     });
   const wolkeMat = punktMat(30);
@@ -295,7 +296,7 @@ export async function baueWeltraum(canvas: HTMLCanvasElement, quelle: (pfad: str
 
   /* Leuchten wie bei einer echten Kamera: Helles strahlt weich in die Umgebung */
   const komp = new EffectComposer(renderer);
-  komp.setPixelRatio(1);
+  komp.setPixelRatio(dichte);
   komp.setSize(BREITE, BREITE);
   komp.addPass(new RenderPass(szene, kam));
   // Leuchten aus: Es rechnet auf grob verkleinerten Stufen und macht Lichthöfe eckig

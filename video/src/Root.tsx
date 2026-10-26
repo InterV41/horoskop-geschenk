@@ -37,8 +37,8 @@ export const Root: React.FC = () => (
     {(['de', 'en'] as const).flatMap((sprache) =>
       (['dunkel', 'hell'] as const).flatMap((fassung) => [
         <Composition key={`flug-${fassung}-${sprache}`} id={`kosmos-flug-${fassung}-${sprache}`} component={KosmosFlug} durationInFrames={FLUG_BILDER} fps={FLUG_FPS} width={FLUG_BREITE} height={FLUG_BREITE} defaultProps={{ fassung, sprache }} />,
-        /* mit Deckkraft: oben das Bild, unten die Deckkraft */
-        <Composition key={`flug-${fassung}-${sprache}-alpha`} id={`kosmos-flug-${fassung}-${sprache}-alpha`} component={KosmosFlug} durationInFrames={FLUG_BILDER} fps={FLUG_FPS} width={FLUG_BREITE} height={FLUG_BREITE * 2} defaultProps={{ fassung, sprache, alpha: true }} />,
+        /* mit Deckkraft: oben das Bild, unten die Deckkraft; in doppelter Auflösung gezeichnet (2160 breit) */
+        <Composition key={`flug-${fassung}-${sprache}-alpha`} id={`kosmos-flug-${fassung}-${sprache}-alpha`} component={KosmosFlug} durationInFrames={FLUG_BILDER} fps={FLUG_FPS} width={FLUG_BREITE * 2} height={FLUG_BREITE * 4} defaultProps={{ fassung, sprache, alpha: true, dichte: 2 }} />,
       ]),
     )}
   </>

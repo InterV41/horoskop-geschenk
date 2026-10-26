@@ -132,16 +132,18 @@ export function zeichneKugel(ctx: CanvasRenderingContext2D, tex: Texturen, k: Ku
     ctx.restore();
     return;
   }
-  const saum = erde ? k.r * 0.07 : 0;
+  // Zeichenfläche kann höher aufgelöst sein (ctx skaliert): Kugel in echten Bildpunkten rechnen
+  const dpr = ctx.getTransform().a || 1, kr = k.r * dpr;
+  const saum = erde ? kr * 0.07 : 0;
   const ringAussen = saturn ? RING_AUSSEN + 0.05 : 0;
-  const halb = Math.ceil(k.r * Math.max(1 + saum / k.r, ringAussen || 1)) + 2;
+  const halb = Math.ceil(kr * Math.max(1 + saum / kr, ringAussen || 1)) + 2;
   const g = halb * 2;
   const a = arbeitsflaeche(g);
   const bild = a.createImageData(g, g), px = bild.data;
 
-  const st = waehle(ober, k.r);
-  const nacht = erde ? waehle(tex.nacht, k.r) : null;
-  const wolken = erde ? waehle(tex.wolken, k.r) : null;
+  const st = waehle(ober, kr);
+  const nacht = erde ? waehle(tex.nacht, kr) : null;
+  const wolken = erde ? waehle(tex.wolken, kr) : null;
   const ln = Math.hypot(licht.x, licht.y, licht.z) || 1;
   const Lx = licht.x / ln, Ly = licht.y / ln, Lz = licht.z / ln;
   const dreh = (k.drehung * Math.PI) / 180;
@@ -167,7 +169,7 @@ export function zeichneKugel(ctx: CanvasRenderingContext2D, tex: Texturen, k: Ku
   for (let y = 0; y < g; y++)
     for (let x = 0; x < g; x++) {
       const i = (y * g + x) * 4;
-      const dx = (x + 0.5 - halb) / k.r, dy = (y + 0.5 - halb) / k.r;
+      const dx = (x + 0.5 - halb) / kr, dy = (y + 0.5 - halb) / kr;
       const q = dx * dx + dy * dy;
       let R = 0, G = 0, B = 0, A = 0;
       let kugelZ = -Infinity;
@@ -207,10 +209,10 @@ export function zeichneKugel(ctx: CanvasRenderingContext2D, tex: Texturen, k: Ku
           // Nachtseite fast schwarz, mit einem Hauch Blau
           R += FARBE_NACHT[0] * (1 - tag); G += FARBE_NACHT[1] * (1 - tag); B += FARBE_NACHT[2] * (1 - tag);
         }
-        A = Math.min(1, (1 - Math.sqrt(q)) * k.r * 1.3);
+        A = Math.min(1, (1 - Math.sqrt(q)) * kr * 1.3);
       } else if (erde) {
         // Saum aus Atmosphäre außerhalb der Kugel
-        const dist = (Math.sqrt(q) - 1) * k.r;
+        const dist = (Math.sqrt(q) - 1) * kr;
         if (dist < saum) {
           const lx = dx / Math.sqrt(q), ly = dy / Math.sqrt(q);
           const seiteL = Math.max(0, lx * Lx + ly * Ly + 0.3 * Lz + 0.15);
@@ -226,7 +228,7 @@ export function zeichneKugel(ctx: CanvasRenderingContext2D, tex: Texturen, k: Ku
             const lam = -(dx * rn[0] + dy * rn[1] + pz * rn[2]) / dn;
             if (lam > 0) {
               const hx = dx + lam * Lx, hy = dy + lam * Ly, hz = pz + lam * Lz;
-              const dichte = ringDichte(Math.hypot(hx, hy, hz), 1 / k.r);
+              const dichte = ringDichte(Math.hypot(hx, hy, hz), 1 / kr);
               R *= 1 - 0.6 * dichte; G *= 1 - 0.6 * dichte; B *= 1 - 0.6 * dichte;
             }
           }
@@ -236,7 +238,7 @@ export function zeichneKugel(ctx: CanvasRenderingContext2D, tex: Texturen, k: Ku
         const t = v / RING_OEFFNUNG; // Lage entlang ew
         const u = dx * cb + dy * sb;
         const rad = Math.hypot(u, t), rz = t * oz;
-        const dichte = rad > RING_INNEN - 0.05 && rad < RING_AUSSEN + 0.05 && rz > kugelZ ? ringDichte(rad, 1 / k.r) : 0;
+        const dichte = rad > RING_INNEN - 0.05 && rad < RING_AUSSEN + 0.05 && rz > kugelZ ? ringDichte(rad, 1 / kr) : 0;
         if (dichte > 0.002) {
           // Schatten der Kugel auf dem Ring: vom Ringpunkt zur Sonne, trifft der Strahl die Kugel?
           const rx = u * eu[0] + t * ew[0], ry = u * eu[1] + t * ew[1], rzz = t * ew[2];
@@ -256,10 +258,10 @@ export function zeichneKugel(ctx: CanvasRenderingContext2D, tex: Texturen, k: Ku
   ctx.save();
   // rund zuschneiden: außerhalb von Kugel, Saum und Ring bleibt das Bild exakt leer
   ctx.beginPath();
-  ctx.arc(k.x, k.y, saturn ? k.r * (RING_AUSSEN + 0.06) : k.r + saum + 1, 0, Math.PI * 2);
+  ctx.arc(k.x, k.y, saturn ? k.r * (RING_AUSSEN + 0.06) : k.r + (saum + 1) / dpr, 0, Math.PI * 2);
   ctx.clip();
   ctx.globalAlpha = k.deckkraft;
-  ctx.drawImage(a.canvas, 0, 0, g, g, k.x - halb, k.y - halb, g, g);
+  ctx.drawImage(a.canvas, 0, 0, g, g, k.x - halb / dpr, k.y - halb / dpr, g / dpr, g / dpr);
   ctx.restore();
 }
 

@@ -82,13 +82,13 @@ export function zeichneWarp(ctx: CanvasRenderingContext2D, bild: number, hell: b
     const len = Math.hypot(a.x - p.x, a.y - p.y);
     if (len < 1.2) {
       ctx.globalAlpha = o;
-      ctx.fillStyle = hell ? '#9a7a33' : s.farbe;
+      ctx.fillStyle = hell ? '#7a6128' : s.farbe;
       ctx.beginPath(); ctx.arc(a.x, a.y, breite * 0.6, 0, Math.PI * 2); ctx.fill();
       continue;
     }
     // Streifen: hinten durchsichtig, vorn hell
     const g = ctx.createLinearGradient(p.x, p.y, a.x, a.y);
-    const farbe = hell ? '154,122,51' : s.farbe === '#ffffff' ? '255,255,255' : s.farbe === '#dfe8ff' ? '223,232,255' : s.farbe === '#cfdcff' ? '207,220,255' : s.farbe === '#fff1dc' ? '255,241,220' : '255,226,176';
+    const farbe = hell ? '122,97,40' : s.farbe === '#ffffff' ? '255,255,255' : s.farbe === '#dfe8ff' ? '223,232,255' : s.farbe === '#cfdcff' ? '207,220,255' : s.farbe === '#fff1dc' ? '255,241,220' : '255,226,176';
     g.addColorStop(0, `rgba(${farbe},0)`);
     g.addColorStop(1, `rgba(${farbe},${o.toFixed(3)})`);
     ctx.globalAlpha = 1;

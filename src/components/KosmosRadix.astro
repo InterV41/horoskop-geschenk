@@ -141,6 +141,7 @@ const filmArt = film === 'flug' ? 'flug' : film ? 'kosmos' : undefined;
       host.dataset.filmArt = welcher.art;
       host.dataset.filmFassung = fassung();
       film = { video, canvas, durchsicht, steuerung: erzeugeFilmsteuerung(welcher.laenge, welcher.fps), fehler: false };
+      setzeRahmen();
       const f = film;
       // Bis das Video läuft, steht sein erstes Bild da
       const vorschau = new Image();
@@ -149,6 +150,38 @@ const filmArt = film === 'flug' ? 'flug' : film ? 'kosmos' : undefined;
       video.addEventListener('error', () => { f.fehler = true; });
       // Abspielen startet erst, wenn die Seite sichtbar ist (pruefe); Fristen und Ausweichen regelt die Steuerung
     };
+    /* Hell: Der Film spielt in einem harten Rechteck, so groß wie möglich. Es reicht bis an die Kante der Leinwand,
+       höchstens bis an den Rand des Abschnitts und nie in die Schrift, mindestens aber über das ganze Rad. */
+    const ABSTAND_SCHRIFT = 24; // px Luft zur Schrift
+    const setzeRahmen = () => {
+      const f = film;
+      if (!f) return;
+      const c = f.canvas;
+      if (welcher.art !== 'flug' || fassung() !== 'hell') { c.style.clipPath = ''; return; }
+      const k = c.getBoundingClientRect(), r = host.getBoundingClientRect();
+      if (!k.width) return;
+      let oben = k.top, unten = k.bottom, links = Math.max(k.left, 0), rechts = Math.min(k.right, document.documentElement.clientWidth);
+      const bereich = host.closest('section');
+      if (bereich) {
+        const b = bereich.getBoundingClientRect();
+        oben = Math.max(oben, b.top);
+        unten = Math.min(unten, b.bottom);
+      }
+      const schrift = bereich?.querySelector('h1, form, p');
+      const text = schrift ? (schrift.closest('form') ?? schrift).getBoundingClientRect() : null;
+      if (text && text.width) {
+        if (text.top >= r.bottom - 1) unten = Math.min(unten, text.top - ABSTAND_SCHRIFT);
+        else if (text.left >= r.right - 1) rechts = Math.min(rechts, text.left - ABSTAND_SCHRIFT);
+        else if (text.bottom <= r.top + 1) oben = Math.max(oben, text.bottom + ABSTAND_SCHRIFT);
+        else if (text.right <= r.left + 1) links = Math.max(links, text.right + ABSTAND_SCHRIFT);
+      }
+      oben = Math.min(oben, r.top); unten = Math.max(unten, r.bottom);
+      links = Math.min(links, r.left); rechts = Math.max(rechts, r.right);
+      const px = (n: number) => `${Math.max(0, n).toFixed(1)}px`;
+      c.style.clipPath = `inset(${px(oben - k.top)} ${px(k.right - rechts)} ${px(k.bottom - unten)} ${px(links - k.left)})`;
+    };
+    addEventListener('resize', setzeRahmen, { passive: true });
+    new ResizeObserver(setzeRahmen).observe(host);
     const filmBild = () => {
       const f = film;
       if (!f) return false;
@@ -213,6 +246,7 @@ const filmArt = film === 'flug' ? 'flug' : film ? 'kosmos' : undefined;
       const zeit = video.currentTime;
       durchsicht.setzeGrund(grund());
       host.dataset.filmFassung = fassung();
+      setzeRahmen();
       video.src = `${quelle()}.mp4`;
       video.addEventListener('loadedmetadata', () => { video.currentTime = zeit; if (document.visibilityState === 'visible') video.play().catch(() => {}); }, { once: true });
     };
